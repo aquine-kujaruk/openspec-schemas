@@ -1,6 +1,6 @@
-import { type Block, operationsOf, tagOf } from "../../../../toolkit/plan.ts";
-import type { Standing } from "../../../../toolkit/consolidated.ts";
-import type { Candidate, Finding, Validator } from "../../../../toolkit/validation.ts";
+import { type Block, operationsOf, tagOf } from "../../../../toolkit/flow/plan.ts";
+import type { Standing } from "../../../../toolkit/flow/consolidated.ts";
+import type { Candidate, Finding, Validator } from "../../../../toolkit/flow/validation.ts";
 
 type Rule = (candidate: Candidate) => Finding[];
 type Kind = "decision" | "procedure";

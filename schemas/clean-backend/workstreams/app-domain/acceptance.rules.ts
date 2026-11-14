@@ -6,10 +6,10 @@ import {
   importsOf,
   pascal,
   throws,
-} from "../../../../toolkit/archunit.ts";
-import type { Layer } from "../../../../toolkit/types.ts";
-import type { Options } from "../../../../toolkit/types.ts";
-import { deltaSpecGlob, productSpecPath } from "../../../../toolkit/paths.ts";
+} from "../../../../toolkit/architecture/archunit.ts";
+import type { Layer } from "../../../../toolkit/core/types.ts";
+import type { Options } from "../../../../toolkit/core/types.ts";
+import { deltaSpecGlob, productSpecPath } from "../../../../toolkit/core/paths.ts";
 
 /**
  * Acceptance: black box against the use cases, generated from the product specs. No layers inside:

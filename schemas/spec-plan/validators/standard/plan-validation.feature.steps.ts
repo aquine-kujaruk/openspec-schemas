@@ -2,8 +2,8 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { expect } from "vitest";
-import { loadSchema } from "../../../../toolkit/schema.ts";
-import { validateChange, type Verdict } from "../../../../toolkit/validate.ts";
+import { loadSchema } from "../../../../toolkit/repository/schema.ts";
+import { validateChange, type Verdict } from "../../../../toolkit/flow/validate.ts";
 
 /**
  * Each scenario validates one change of a temp project. The change starts ready: a plan with one

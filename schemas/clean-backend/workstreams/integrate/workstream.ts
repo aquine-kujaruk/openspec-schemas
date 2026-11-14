@@ -1,4 +1,4 @@
-import type { WorkstreamDeclaration } from "../../../../toolkit/types.ts";
+import type { WorkstreamDeclaration } from "../../../../toolkit/core/types.ts";
 
 const OFF = [
   "unused-exports",

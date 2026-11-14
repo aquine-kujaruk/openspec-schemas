@@ -8,7 +8,12 @@ schemas/
   clean-backend/   extends spec-plan: Clean Architecture for a backend, its workstreams and its rubric
   shared/          what every package carries: the phase skills, setup, the flow instruction, the guards
 packages/          one manifest per package: the schemas it carries, the agents, the pinned tools
-toolkit/           the command, `factory`
+toolkit/           the command, `factory`: its entry and one folder per area of the specs
+  core/            what every area uses: paths, types, configuration
+  repository/      schemas and the build
+  package/         setup, the proof and the two guards
+  flow/            plan, validation, implementation, verification, archive, feedback
+  architecture/    the rules, the generated tests, the checks and the review
 openspec/          this repository's own specs and changes
 ```
 
@@ -43,7 +48,7 @@ The project needs Node 22.18 or later, pnpm, and the agent package manager APM 0
 2. Pin the command the skills call. The tarball came with the `setup` skill; its file name carries the version:
 
    ```bash
-   pnpm add -D ./.claude/skills/setup/assets/factory-0.2.0.tgz
+   pnpm add -D ./.claude/skills/setup/assets/factory-0.2.1.tgz
    ```
 
 3. Let setup repair what the package owns and list what the project must supply:

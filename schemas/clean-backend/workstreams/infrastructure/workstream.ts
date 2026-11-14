@@ -1,4 +1,4 @@
-import type { WorkstreamDeclaration } from "../../../../toolkit/types.ts";
+import type { WorkstreamDeclaration } from "../../../../toolkit/core/types.ts";
 import { infrastructure } from "./infrastructure.rules.ts";
 import { integration } from "./integration.rules.ts";
 

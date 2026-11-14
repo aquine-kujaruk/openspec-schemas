@@ -1,4 +1,4 @@
-import type { SchemaVariant, Vetoed } from "../../toolkit/types.ts";
+import type { SchemaVariant, Vetoed } from "../../toolkit/core/types.ts";
 import { artifacts, defaults, planInstruction } from "../spec-plan/schema.ts";
 
 const delivery: Vetoed = {

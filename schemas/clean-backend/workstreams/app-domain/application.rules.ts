@@ -3,11 +3,11 @@ import {
   has,
   pascal,
   vocabularyRules,
-} from "../../../../toolkit/archunit.ts";
-import { coreRules } from "../../../../toolkit/oxlint.ts";
-import type { Layer } from "../../../../toolkit/types.ts";
-import type { Options } from "../../../../toolkit/types.ts";
-import { schemaPackageVeto } from "../../../../toolkit/oxlint.ts";
+} from "../../../../toolkit/architecture/archunit.ts";
+import { coreRules } from "../../../../toolkit/architecture/oxlint.ts";
+import type { Layer } from "../../../../toolkit/core/types.ts";
+import type { Options } from "../../../../toolkit/core/types.ts";
+import { schemaPackageVeto } from "../../../../toolkit/architecture/oxlint.ts";
 
 /** Folder → file suffix (application-vocabulary). */
 const VOCABULARY = {
