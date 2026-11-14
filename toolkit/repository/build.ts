@@ -107,6 +107,39 @@ const declarations = (path: string): string =>
     })
     .outputText.replace(/(from "\.{1,2}\/[^"]+)\.ts"/g, '$1.js"');
 
+const REPOSITORY = /^(?:git\+)?(?:https?:\/\/|ssh:\/\/git@|git@)?([^/:@]+)[/:](.+?)(?:\.git)?\/?$/;
+
+/**
+ * A skill that ships inside a pinned tool, as the agent package manager installs it: its folder in
+ * the tool's repository, at the tag of the version the manifest pins. The package carries no copy.
+ */
+const skillDependency = (
+  root: string,
+  manifest: PackageManifest,
+  { tool, path }: PackageManifest["skills"][number],
+  used: (path: string) => string,
+): string => {
+  const skill = basename(path);
+  const about = `package ${manifest.name} takes the skill ${skill} from ${tool}`;
+  const version = manifest.tools[tool];
+  if (!version) throw new Error(`${about}, which it does not pin: add ${tool} to its tools`);
+  const described = join(root, "node_modules", tool, "package.json");
+  if (!existsSync(join(root, "node_modules", tool, path, "SKILL.md")))
+    throw new Error(`${about}, and ${tool} ${version} has no ${path}/SKILL.md`);
+  const { repository } = JSON.parse(readFileSync(used(described), "utf8")) as {
+    repository?: string | { url?: string };
+  };
+  const url = typeof repository === "string" ? repository : repository?.url;
+  const [, host, repo] = REPOSITORY.exec(url?.replace(/^github:/, "github.com/") ?? "") ?? [];
+  if (!host || !repo)
+    throw new Error(
+      `${about}, and ${tool} does not say where its repository is: the skill ${skill} cannot be declared`,
+    );
+  // The agent package manager reads `owner/repo` as a repository of its default host.
+  const source = host === "github.com" ? repo : `${host}/${repo}`;
+  return `${source}/${path}#v${version}`;
+};
+
 /**
  * Builds the package `name` of `root` into `<out>/<name>`: the folder the agent package manager
  * installs from. Whatever was built there before is gone first, so a build that fails leaves none.
@@ -195,13 +228,7 @@ export const build = async (
     for (const [id, dir] of workstreamDirs)
       for (const file of files(dir, "{SKILL.md,*.examples.md}"))
         copy(file, join(skills, "implement/references/workstreams", id, basename(file)));
-    for (const { tool, path } of manifest.skills) {
-      const from = join(root, "node_modules", tool, path);
-      if (!existsSync(join(from, "SKILL.md")))
-        throw new Error(`package ${name} names the skill ${path} of ${tool}, which does not exist`);
-      for (const file of files(relative(root, from)))
-        copy(file, join(skills, basename(path), relative(relative(root, from), file)));
-    }
+    const declared = manifest.skills.map((skill) => skillDependency(root, manifest, skill, used));
     for (const file of files(shared("instructions"), "*.md"))
       copy(file, join(pkg, ".apm/instructions", `${basename(file, ".md")}.instructions.md`));
     for (const file of files(shared("hooks"), "*.json"))
@@ -282,8 +309,13 @@ export const build = async (
         version,
         description: manifest.description,
         targets: manifest.agents,
-        ...(manifest.languageServers.length
-          ? { dependencies: { lsp: manifest.languageServers } }
+        ...(declared.length || manifest.languageServers.length
+          ? {
+              dependencies: {
+                ...(declared.length ? { apm: declared } : {}),
+                ...(manifest.languageServers.length ? { lsp: manifest.languageServers } : {}),
+              },
+            }
           : {}),
       }),
     );

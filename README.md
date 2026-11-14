@@ -37,7 +37,7 @@ The package lands in `dist/backend`. `pnpm exec factory build backend --check` s
 
 ## Install it in a project
 
-The project needs Node 22.18 or later, pnpm, and the agent package manager APM 0.35.1 (`apm-cli`).
+The project needs Node 22.18 or later, pnpm, and the agent package manager APM 0.35.1 (`apm-cli`). Installing reaches the repositories of the package's tools: the skills that ship inside a tool are not copied into the package, they are declared in it at the tool's pinned version and the agent package manager fetches them.
 
 1. Install the package for the agents that will work in the project, from the project's root:
 
@@ -48,7 +48,7 @@ The project needs Node 22.18 or later, pnpm, and the agent package manager APM 0
 2. Pin the command the skills call. The tarball came with the `setup` skill; its file name carries the version:
 
    ```bash
-   pnpm add -D ./.claude/skills/setup/assets/factory-0.2.1.tgz
+   pnpm add -D ./.claude/skills/setup/assets/factory-0.2.2.tgz
    ```
 
 3. Let setup repair what the package owns and list what the project must supply:

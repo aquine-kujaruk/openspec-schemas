@@ -310,4 +310,60 @@ describe('Feature: repository/build Specification', () => {
       await steps.failureSaysBelongsIn('shared')
     })
   })
+
+  describe('Rule: A package declares the skills of its tools instead of carrying them', () => {
+    // Line 121
+    test('the skill `spec-writing` of `specification tool` at `2.0.0` is declared as `acme/specification/skills/spec-writing#v2.0.0`', async () => {
+      const steps = createSteps()
+
+      // Given a package manifest `backend` listing the schemas `clean-backend`
+      await steps.manifestListingSchemas('backend', 'clean-backend')
+      // And the manifest pins `specification tool` at `2.0.0`
+      await steps.manifestPinsTool('specification tool', '2.0.0')
+      // And the manifest takes the skill `spec-writing` from `specification tool`, whose repository is `acme/specification`
+      await steps.manifestTakesSkillFromTool('spec-writing', 'specification tool', 'acme/specification')
+      // When the package `backend` is built
+      await steps.buildPackage('backend')
+      // Then the built package declares the dependency `acme/specification/skills/spec-writing#v2.0.0`
+      await steps.builtPackageDeclares('acme/specification/skills/spec-writing#v2.0.0')
+      // And it holds `0` copy(ies) of the skill `spec-writing`
+      await steps.skillCopiesHeld('0', 'spec-writing')
+    })
+
+    // Line 121
+    test('the skill `lint-reading` of `linter` at `1.93.0` is declared as `acme/linter/skills/lint-reading#v1.93.0`', async () => {
+      const steps = createSteps()
+
+      // Given a package manifest `backend` listing the schemas `clean-backend`
+      await steps.manifestListingSchemas('backend', 'clean-backend')
+      // And the manifest pins `linter` at `1.93.0`
+      await steps.manifestPinsTool('linter', '1.93.0')
+      // And the manifest takes the skill `lint-reading` from `linter`, whose repository is `acme/linter`
+      await steps.manifestTakesSkillFromTool('lint-reading', 'linter', 'acme/linter')
+      // When the package `backend` is built
+      await steps.buildPackage('backend')
+      // Then the built package declares the dependency `acme/linter/skills/lint-reading#v1.93.0`
+      await steps.builtPackageDeclares('acme/linter/skills/lint-reading#v1.93.0')
+      // And it holds `0` copy(ies) of the skill `lint-reading`
+      await steps.skillCopiesHeld('0', 'lint-reading')
+    })
+
+    // Line 134
+    test('a skill taken from `linter`, which names no repository, stops the build', async () => {
+      const steps = createSteps()
+
+      // Given a package manifest `backend` listing the schemas `clean-backend`
+      await steps.manifestListingSchemas('backend', 'clean-backend')
+      // And the manifest pins `linter` at `1.93.0`
+      await steps.manifestPinsTool('linter', '1.93.0')
+      // And the manifest takes the skill `lint-reading` from `linter`, whose repository is `none`
+      await steps.manifestTakesSkillFromTool('lint-reading', 'linter', 'none')
+      // When the package `backend` is built
+      await steps.buildPackage('backend')
+      // Then the build fails naming `lint-reading`
+      await steps.buildFailsNaming('lint-reading')
+      // And `0` built package(s) called `backend` exist
+      await steps.builtPackagesCalled('0', 'backend')
+    })
+  })
 })

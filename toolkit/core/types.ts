@@ -190,7 +190,10 @@ export type PackageManifest = {
   agents: string[];
   /** The tools the command runs, each at one exact version. */
   tools: Record<string, string>;
-  /** Skills that ship inside a pinned tool and are copied whole: the tool and the folder inside it. */
+  /**
+   * Skills that ship inside a pinned tool: the tool and the folder inside it. The built package
+   * declares each one at the tool's pinned version and carries no copy.
+   */
   skills: Array<{ tool: string; path: string }>;
   languageServers: LanguageServer[];
   /** The agent package manager the package was built against. */

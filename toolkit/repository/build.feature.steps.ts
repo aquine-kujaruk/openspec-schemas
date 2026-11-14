@@ -6,6 +6,7 @@ import {
   globSync,
   mkdtempSync,
   readdirSync,
+  readFileSync,
   renameSync,
   rmSync,
   symlinkSync,
@@ -14,6 +15,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { expect } from "vitest";
+import { parse } from "yaml";
 import { build, type BuildRecord, freshness as checkFresh, type Freshness } from "./build.ts";
 import { PACKAGE_ROOT } from "../core/paths.ts";
 
@@ -72,7 +74,7 @@ const definition = (name: string, overrides: Record<string, unknown> = {}) => ({
 });
 
 const module = (value: unknown) => `export default ${JSON.stringify(value, null, 2)};\n`;
-const skill = (name: string) => `---\nname: ${name}\ndescription: The ${name} skill.\n---\n\n# ${name}\n`;
+const skillText = (name: string) => `---\nname: ${name}\ndescription: The ${name} skill.\n---\n\n# ${name}\n`;
 
 const repository = (): string => {
   const root = mkdtempSync(join(tmpdir(), "build-"));
@@ -91,7 +93,7 @@ const repository = (): string => {
     }),
     "schemas/clean-backend/workstreams/app-domain/workstream.ts":
       "export default { layers: () => [] };\n",
-    "schemas/clean-backend/workstreams/app-domain/SKILL.md": skill("app-domain"),
+    "schemas/clean-backend/workstreams/app-domain/SKILL.md": skillText("app-domain"),
     "schemas/clean-backend/workstreams/app-domain/domain.examples.md": "# domain\n\n## reference\n",
     "schemas/legacy-to-specs/schema.ts": module({
       name: "legacy-to-specs",
@@ -102,10 +104,10 @@ const repository = (): string => {
     "schemas/clean-backend-strict/validators/strict/validator.ts":
       "export default { ready: () => [] };\n",
     "schemas/clean-backend-quiet/questions/ask-less.md": "Ask less.\n",
-    "schemas/shared/skills/setup/SKILL.md": skill("setup"),
+    "schemas/shared/skills/setup/SKILL.md": skillText("setup"),
     "schemas/shared/instructions/flow.md":
       "---\ndescription: The flow\n---\n\nEnter through plan.\n",
-    ...Object.fromEntries(PHASES.map((p) => [`schemas/shared/phases/${p}/SKILL.md`, skill(p)])),
+    ...Object.fromEntries(PHASES.map((p) => [`schemas/shared/phases/${p}/SKILL.md`, skillText(p)])),
   };
   for (const [path, text] of Object.entries(files)) {
     mkdirSync(dirname(join(root, path)), { recursive: true });
@@ -120,6 +122,7 @@ export function createSteps() {
   const out = join(root, "dist");
   let schemas = ["clean-backend"];
   const tools: Record<string, string> = {};
+  const skills: Array<{ tool: string; path: string }> = [];
   let built: { dir: string; record: BuildRecord } | undefined;
   let failure: Error | undefined;
   let fresh: Freshness | undefined;
@@ -133,7 +136,7 @@ export function createSteps() {
         schemas,
         agents: ["claude", "codex"],
         tools,
-        skills: [],
+        skills,
         languageServers: [],
         packageManager: { name: "apm", version: "0.35.1" },
         project: { testRunner: "vitest", typeChecker: { name: "typescript", version: "7.0.2" } },
@@ -230,6 +233,23 @@ export function createSteps() {
       const [now] = globSync(join(root, "schemas/*", PLACE[kind]!(name)));
       move(now!, place(held, kind, name));
     },
+    async manifestTakesSkillFromTool(skill: string, tool: string, repository: string): Promise<void> {
+      const installed = join(root, "node_modules", TOOLS[tool]!);
+      mkdirSync(join(installed, "skills", skill), { recursive: true });
+      writeFileSync(join(installed, "skills", skill, "SKILL.md"), skillText(skill));
+      writeFileSync(
+        join(installed, "package.json"),
+        JSON.stringify({
+          name: TOOLS[tool],
+          version: tools[TOOLS[tool]!],
+          ...(repository === "none"
+            ? {}
+            : { repository: { type: "git", url: `git+https://github.com/${repository}.git` } }),
+        }),
+      );
+      skills.push({ tool: TOOLS[tool]!, path: `skills/${skill}` });
+      for (const file of readdirSync(join(root, "packages"))) writeManifest(file.slice(0, -3));
+    },
 
     // Action
     async buildPackage(packageStep: string): Promise<void> {
@@ -295,6 +315,19 @@ export function createSteps() {
     },
     async failureSaysBelongsIn(belongs: string): Promise<void> {
       expect(failure?.message).toContain(`belongs in schemas/${belongs}:`);
+    },
+    async builtPackageDeclares(dependency: string): Promise<void> {
+      expect(failure?.message).toBeUndefined();
+      const manifest = parse(readFileSync(join(built!.dir, "apm.yml"), "utf8")) as {
+        dependencies?: { apm?: string[] };
+      };
+      expect(manifest.dependencies?.apm).toContain(dependency);
+    },
+    async skillCopiesHeld(copies: string, skill: string): Promise<void> {
+      const files = readdirSync(built!.dir, { recursive: true }) as string[];
+      expect(files.filter((f) => f.endsWith(join("skills", skill, "SKILL.md")))).toHaveLength(
+        Number(copies),
+      );
     },
   };
 }

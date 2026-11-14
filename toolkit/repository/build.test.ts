@@ -32,16 +32,7 @@ describe("the backend package", () => {
     const files = Object.keys(tree(dir));
     const skills = files.filter((f) => f.endsWith("/SKILL.md") && f.split("/").length === 4);
     expect(skills.map((f) => f.split("/")[2]).sort()).toEqual(
-      [
-        "archive",
-        "feedback",
-        "gherkin-craft",
-        "implement",
-        "opsx-gherkin",
-        "plan",
-        "setup",
-        "verify",
-      ].sort(),
+      ["archive", "feedback", "implement", "plan", "setup", "verify"].sort(),
     );
     expect(files).toContain(`.apm/skills/setup/assets/${record.command}`);
     expect(files).toContain(".apm/instructions/flow.instructions.md");
@@ -51,7 +42,13 @@ describe("the backend package", () => {
       name: "backend",
       version: record.version,
       targets: ["claude", "codex"],
-      dependencies: { lsp: [{ name: "typescript" }] },
+      dependencies: {
+        apm: [
+          `aquine-kujaruk/feat2test/skills/gherkin-craft#v${record.tools.feat2test}`,
+          `aquine-kujaruk/opsx-gherkin/skills/opsx-gherkin#v${record.tools["opsx-gherkin"]}`,
+        ],
+        lsp: [{ name: "typescript" }],
+      },
     });
   });
 
