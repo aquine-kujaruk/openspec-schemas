@@ -340,4 +340,48 @@ describe('Feature: package/write-guard Specification', () => {
       await steps.writeVerdict('allowed')
     })
   })
+
+  describe('Rule: Product code opens only to a change whose schema builds it', () => {
+    // Line 97
+    test('with a `clean-backend` change in implementation, writing `src/orders/domain/order.entity.ts` is `allowed`', async () => {
+      const steps = createSteps()
+
+      // Given the product roots `src/*`
+      await steps.productRoots('src/*')
+      // And a change in implementation made with the schema `clean-backend`
+      await steps.changeInImplementationWithSchema('clean-backend')
+      // When an agent is about to write `src/orders/domain/order.entity.ts`
+      await steps.aboutToWrite('src/orders/domain/order.entity.ts')
+      // Then the write is `allowed`
+      await steps.writeVerdict('allowed')
+    })
+
+    // Line 97
+    test('with a `spec-plan` change in implementation, writing `src/orders/domain/order.entity.ts` is `refused`', async () => {
+      const steps = createSteps()
+
+      // Given the product roots `src/*`
+      await steps.productRoots('src/*')
+      // And a change in implementation made with the schema `spec-plan`
+      await steps.changeInImplementationWithSchema('spec-plan')
+      // When an agent is about to write `src/orders/domain/order.entity.ts`
+      await steps.aboutToWrite('src/orders/domain/order.entity.ts')
+      // Then the write is `refused`
+      await steps.writeVerdict('refused')
+    })
+
+    // Line 97
+    test('with a `spec-plan` change in implementation, writing `docs/outage.md` is `allowed`', async () => {
+      const steps = createSteps()
+
+      // Given the product roots `src/*`
+      await steps.productRoots('src/*')
+      // And a change in implementation made with the schema `spec-plan`
+      await steps.changeInImplementationWithSchema('spec-plan')
+      // When an agent is about to write `docs/outage.md`
+      await steps.aboutToWrite('docs/outage.md')
+      // Then the write is `allowed`
+      await steps.writeVerdict('allowed')
+    })
+  })
 })

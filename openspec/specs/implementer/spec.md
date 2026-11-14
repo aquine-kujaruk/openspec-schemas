@@ -8,7 +8,7 @@ The implementer of a schema: the phase that generates the product's code and che
 
 ### Requirement: The implementer declares its workstreams and their dependencies
 
-Every workstream SHALL declare its layers in `workstreams/<workstream>/workstream.ts`, and the configuration's `workstreams` section SHALL list every workstream with the workstreams it depends on. Loading the implementer SHALL fail, naming the workstreams involved, when the configuration and the folders disagree, when a dependency names no declared workstream, or when the dependencies form a cycle.
+Every workstream SHALL declare its layers in `schemas/<schema>/workstreams/<workstream>/workstream.ts`, and the configuration's `workstreams` section SHALL list every workstream with the workstreams it depends on. Loading the implementer SHALL fail, naming the workstreams involved, when the configuration and the folders disagree, when a dependency names no declared workstream, or when the dependencies form a cycle.
 
 #### Scenario Outline: a dependency on the unknown workstream `<dependency>` is rejected
 
@@ -129,7 +129,7 @@ Every layer of the architecture SHALL be owned by exactly one workstream. Loadin
 
 ### Requirement: A workstream folder holds everything its agent reads
 
-For every layer a workstream owns, the folder `workstreams/<workstream>/` SHALL hold that layer's rules (`<layer>.rules.ts`), examples (`<layer>.examples.md`), step adapter (`<layer>.feature.steps.ts`) and generated tests (`<layer>.feature.test.ts`). Every workstream folder SHALL hold the workstream's declaration (`workstream.ts`) and its skill (`SKILL.md`). This repository's tests SHALL fail naming the path of a missing file.
+For every layer a workstream owns, the folder `schemas/<schema>/workstreams/<workstream>/` SHALL hold that layer's rules (`<layer>.rules.ts`), examples (`<layer>.examples.md`), step adapter (`<layer>.feature.steps.ts`) and generated tests (`<layer>.feature.test.ts`). Every workstream folder SHALL hold the workstream's declaration (`workstream.ts`) and its skill (`SKILL.md`). This repository's tests SHALL fail naming the path of a missing file.
 
 #### Scenario Outline: `<path>` is missing
 
@@ -142,7 +142,7 @@ For every layer a workstream owns, the folder `workstreams/<workstream>/` SHALL 
 
   | workstream  | layer     | file                        | path                                                                     |
   | ----------- | --------- | --------------------------- | ------------------------------------------------------------------------ |
-  | app-domain  | domain    | domain.examples.md          | workstreams/app-domain/domain.examples.md           |
+  | app-domain  | domain    | domain.examples.md          | schemas/clean-backend/workstreams/app-domain/domain.examples.md           |
 
 #### Scenario Outline: workstream `<workstream>` without a skill
 
@@ -154,7 +154,7 @@ For every layer a workstream owns, the folder `workstreams/<workstream>/` SHALL 
 
   | workstream | path                                              |
   | ---------- | ------------------------------------------------- |
-  | integrate  | workstreams/integrate/SKILL.md |
+  | integrate  | schemas/clean-backend/workstreams/integrate/SKILL.md |
 
 ### Requirement: A workstream can be checked alone
 
@@ -216,7 +216,7 @@ For every layer a workstream owns, the folder `workstreams/<workstream>/` SHALL 
 
 ### Requirement: Project configuration overrides the implementer's defaults
 
-The implementer SHALL read its defaults from the definition of the schema (`schemas/<schema>.ts`). When the repository root holds `factory.config.ts`, the implementer SHALL apply that file over the defaults:
+The implementer SHALL read its defaults from the definition of the schema (`schemas/<schema>/schema.ts`). When the repository root holds `factory.config.ts`, the implementer SHALL apply that file over the defaults:
 
 - a value the file sets SHALL replace the default
 - a section the file sets SHALL be merged key by key

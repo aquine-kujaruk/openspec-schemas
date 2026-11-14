@@ -1,9 +1,9 @@
-import { globSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, dirname, join, relative } from "node:path";
+import { readFileSync, writeFileSync } from "node:fs";
+import { basename, dirname, relative } from "node:path";
 import { parseExampleText, type Recorded, recordFindings } from "./example-file.ts";
 import { examples } from "./examples.ts";
-import { DEVELOPING, PACKAGE_ROOT, WORKSTREAMS_DIR } from "./paths.ts";
-import { exampleArchitecture } from "./project.ts";
+import { DEVELOPING, PACKAGE_ROOT } from "./paths.ts";
+import { EXAMPLE_FILES, exampleArchitecture } from "./project.ts";
 
 /**
  * `factory expect [layer…]`: records what the linter says about every case. For each
@@ -21,7 +21,7 @@ export const expect = async (args: string[]): Promise<number> => {
   }
   const only = new Set(args);
   const todos: string[] = [];
-  const all = globSync(join(WORKSTREAMS_DIR, "*/*.examples.md")).sort();
+  const all = EXAMPLE_FILES;
   let status = 0;
 
   for (const path of all) {

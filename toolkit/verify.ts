@@ -1,12 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { loadEnv } from "../review/env.ts";
+import { loadEnv } from "./review/env.ts";
 import { activeChanges, readChange } from "./change.ts";
 import { digestOf, type Evidence, type ScenarioResult, writeEvidence } from "./evidence.ts";
 import { raise } from "./feedback.ts";
 import { cacheDir, PROJECT_ROOT, self } from "./paths.ts";
 import { parsePlan, tagOf } from "./plan.ts";
-import { loadSchema, projectConfig, projectSchemaName } from "./schema.ts";
+import { loadSchema, projectConfig, projectSchemaName, schemaNames } from "./schema.ts";
 
 /** The environments a procedure is executed in while verifying; in any other it is only reviewed. */
 export const SAFE = ["local", "sandbox"];
@@ -55,11 +55,12 @@ const acceptance = async (root: string, specs: string[]): Promise<ScenarioResult
 };
 
 /**
- * Checks each workstream after those it waits for, so a failure is named by the workstream that
- * owns it: one whose upstream fails is not checked. Then the product tests each is proved by.
+ * Checks each workstream of the change's schema after those it waits for, so a failure is named by
+ * the workstream that owns it: one whose upstream fails is not checked. Then the product tests each
+ * is proved by. A schema with no workstreams leaves only the freshness of the generated tests.
  */
-const realChecks = async (root: string): Promise<Failing> => {
-  const [config, schema] = [await projectConfig(root), await loadSchema(projectSchemaName(root))];
+const realChecks = async (root: string, made: string): Promise<Failing> => {
+  const [config, schema] = [await projectConfig(root), await loadSchema(made)];
   const failing: Failing = [];
   const failed = new Set<string>();
   const done = new Set<string>();
@@ -87,7 +88,7 @@ const realChecks = async (root: string): Promise<Failing> => {
   }
   const fresh = self(root, ["generate", "--check"]);
   if (fresh.status !== 0 && !failing.length)
-    failing.push({ workstream: ids[0]!, output: `the generated tests are not fresh:\n${fresh.output}` });
+    failing.push({ workstream: ids[0] ?? "generated tests", output: `the generated tests are not fresh:\n${fresh.output}` });
   return failing;
 };
 
@@ -110,11 +111,16 @@ export const verify = async (
 ): Promise<Evidence> => {
   const change = readChange(root, name);
   if (!change) throw new Error(`no active change is called ${name}`);
+  if (!change.schema || !schemaNames().includes(change.schema))
+    throw new Error(
+      `the change ${name} was made with the schema ${change.schema ?? "(none)"}, which this package does not define; schemas: ${schemaNames().join(", ")}`,
+    );
+  const made = change.schema;
   const plan = parsePlan(change.plan ?? "");
   const specs = change.deltaSpecs.map((f) => f.replace(/^specs\//, "").replace(/\/spec\.md$/, ""));
 
   const scenarios = await (options.scenarios ?? acceptance)(root, specs);
-  const failing = await (options.checks ?? realChecks)(root);
+  const failing = await (options.checks ? options.checks(root) : realChecks(root, made));
 
   const config = await projectConfig(root);
   const key = (options.env ?? loadEnv(root, process.env))[config.review.keyVariable];
@@ -123,7 +129,9 @@ export const verify = async (
     warnings: [],
     note: `the project configures no ${config.review.keyVariable}`,
   };
-  if (key)
+  const { rubric } = await loadSchema(await projectSchemaName(root));
+  if (!rubric) review.note = "the schema this project is checked with has no rubric";
+  else if (key)
     try {
       review = { state: "run", warnings: await (options.review ?? realReview)(root, key) };
     } catch (e) {

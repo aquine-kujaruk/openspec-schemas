@@ -3,8 +3,11 @@ import {
   appendFileSync,
   existsSync,
   mkdirSync,
+  globSync,
   mkdtempSync,
   readdirSync,
+  renameSync,
+  rmSync,
   symlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -16,8 +19,9 @@ import { PACKAGE_ROOT } from "./paths.ts";
 
 /**
  * Each scenario builds from a repository of its own: this repository's command over a handful of
- * resources written for the scenario. Two schemas are defined, `clean-backend` and
- * `legacy-to-specs`; a manifest lists what the scenario says.
+ * resources written for the scenario, laid out as this repository is. Three schemas are defined:
+ * `spec-plan`, and `clean-backend` and `legacy-to-specs` extending it; a manifest lists what the
+ * scenario says.
  */
 const PHASES = ["plan", "implement", "verify", "archive", "feedback"];
 const TOOLS: Record<string, string> = {
@@ -29,10 +33,12 @@ const FIELD: Record<string, "workstreams" | "validator" | "questions"> = {
   validator: "validator",
   "question policy": "questions",
 };
+/** What holds a resource inside the folder of a schema: a folder, or one file. */
 const PLACE: Record<string, (name: string) => string> = {
   workstream: (name) => `workstreams/${name}`,
   validator: (name) => `validators/${name}`,
   "question policy": (name) => `questions/${name}.md`,
+  template: (name) => `templates/${name}`,
 };
 
 const definition = (name: string, overrides: Record<string, unknown> = {}) => ({
@@ -58,7 +64,7 @@ const definition = (name: string, overrides: Record<string, unknown> = {}) => ({
     },
   ],
   apply: { requires: ["plan"], tracks: "plan.md", instruction: "Build it." },
-  workstreams: ["app-domain"],
+  workstreams: [],
   validator: "standard",
   questions: "ask-on-commitment",
   defaults: {},
@@ -72,26 +78,40 @@ const repository = (): string => {
   const root = mkdtempSync(join(tmpdir(), "build-"));
   const files: Record<string, string> = {
     "package.json": JSON.stringify({ name: "fixture", version: "1.2.0" }),
-    "schemas/clean-backend.ts": module(definition("clean-backend")),
-    "schemas/legacy-to-specs.ts": module(definition("legacy-to-specs")),
-    "workstreams/app-domain/workstream.ts": "export default { layers: () => [] };\n",
-    "workstreams/app-domain/SKILL.md": skill("app-domain"),
-    "workstreams/app-domain/domain.examples.md": "# domain\n\n## reference\n",
-    "validators/standard/validator.ts": "export default { ready: () => [] };\n",
-    "validators/strict/validator.ts": "export default { ready: () => [] };\n",
-    "questions/ask-on-commitment.md": "Ask on commitment.\n",
-    "questions/ask-less.md": "Ask less.\n",
-    "templates/plan.md": "# <title>\n",
-    "templates/spec.md": "## ADDED Requirements\n",
-    "skills/setup/SKILL.md": skill("setup"),
-    "instructions/flow.md": "---\ndescription: The flow\n---\n\nEnter through plan.\n",
-    ...Object.fromEntries(PHASES.map((p) => [`phases/${p}/SKILL.md`, skill(p)])),
+    "schemas/spec-plan/schema.ts": module(definition("spec-plan")),
+    "schemas/spec-plan/validators/standard/validator.ts": "export default { ready: () => [] };\n",
+    "schemas/spec-plan/questions/ask-on-commitment.md": "Ask on commitment.\n",
+    "schemas/spec-plan/templates/plan.md": "# <title>\n",
+    "schemas/spec-plan/templates/spec.md": "## ADDED Requirements\n",
+    "schemas/clean-backend/schema.ts": module({
+      name: "clean-backend",
+      extends: "spec-plan",
+      description: "The clean-backend schema",
+      workstreams: ["app-domain"],
+    }),
+    "schemas/clean-backend/workstreams/app-domain/workstream.ts":
+      "export default { layers: () => [] };\n",
+    "schemas/clean-backend/workstreams/app-domain/SKILL.md": skill("app-domain"),
+    "schemas/clean-backend/workstreams/app-domain/domain.examples.md": "# domain\n\n## reference\n",
+    "schemas/legacy-to-specs/schema.ts": module({
+      name: "legacy-to-specs",
+      extends: "spec-plan",
+      description: "The legacy-to-specs schema",
+    }),
+    // Held where the variant that will name each one looks first; no definition names them yet.
+    "schemas/clean-backend-strict/validators/strict/validator.ts":
+      "export default { ready: () => [] };\n",
+    "schemas/clean-backend-quiet/questions/ask-less.md": "Ask less.\n",
+    "schemas/shared/skills/setup/SKILL.md": skill("setup"),
+    "schemas/shared/instructions/flow.md":
+      "---\ndescription: The flow\n---\n\nEnter through plan.\n",
+    ...Object.fromEntries(PHASES.map((p) => [`schemas/shared/phases/${p}/SKILL.md`, skill(p)])),
   };
   for (const [path, text] of Object.entries(files)) {
     mkdirSync(dirname(join(root, path)), { recursive: true });
     writeFileSync(join(root, path), text);
   }
-  for (const code of ["toolkit", "review"]) symlinkSync(join(PACKAGE_ROOT, code), join(root, code));
+  symlinkSync(join(PACKAGE_ROOT, "toolkit"), join(root, "toolkit"));
   return root;
 };
 
@@ -125,6 +145,17 @@ export function createSteps() {
       .stdout;
   const shipped = (path: string): string => tar("-xzOf", `package/${path}`);
   mkdirSync(join(root, "packages"));
+  const place = (schema: string, kind: string, name: string): string =>
+    join(root, "schemas", schema, PLACE[kind]!(name));
+  const move = (from: string, to: string): void => {
+    if (from === to) return;
+    mkdirSync(dirname(to), { recursive: true });
+    renameSync(from, to);
+  };
+  const writeDefinition = (name: string, value: unknown): void => {
+    mkdirSync(join(root, "schemas", name), { recursive: true });
+    writeFileSync(join(root, "schemas", name, "schema.ts"), module(value));
+  };
 
   return {
     // Context
@@ -133,14 +164,16 @@ export function createSteps() {
       writeManifest(packageStep);
     },
     async definitionNamesResource(listed: string, kind: string, name: string): Promise<void> {
-      const value = kind === "workstream" ? [name] : name;
-      writeFileSync(
-        join(root, "schemas", `${listed}.ts`),
-        module(definition(listed, { [FIELD[kind]!]: value })),
-      );
+      writeDefinition(listed, {
+        name: listed,
+        extends: "spec-plan",
+        description: `The ${listed} schema`,
+        workstreams: ["app-domain"],
+        [FIELD[kind]!]: kind === "workstream" ? [name] : name,
+      });
     },
     async resourceDoesNotExist(kind: string, name: string): Promise<void> {
-      expect(existsSync(join(root, PLACE[kind]!(name)))).toBe(false);
+      expect(globSync(join(root, "schemas/*", PLACE[kind]!(name)))).toEqual([]);
     },
     async variantOverrides(
       variant: string,
@@ -148,10 +181,7 @@ export function createSteps() {
       kind: string,
       override: string,
     ): Promise<void> {
-      writeFileSync(
-        join(root, "schemas", `${variant}.ts`),
-        module({ name: variant, extends: base, [FIELD[kind]!]: override }),
-      );
+      writeDefinition(variant, { name: variant, extends: base, [FIELD[kind]!]: override });
     },
     async packageWasBuilt(packageStep: string): Promise<void> {
       writeManifest(packageStep);
@@ -164,6 +194,41 @@ export function createSteps() {
     async manifestPinsTool(tool: string, version: string): Promise<void> {
       tools[TOOLS[tool]!] = version;
       for (const file of readdirSync(join(root, "packages"))) writeManifest(file.slice(0, -3));
+    },
+    async definitionsNameResourceAnd(
+      listed: string,
+      kind: string,
+      name: string,
+      relation: string,
+    ): Promise<void> {
+      for (const file of globSync(join(root, "schemas/*/schema.ts"))) rmSync(file);
+      const naming = { [FIELD[kind]!]: kind === "workstream" ? [name] : name };
+      const [, extending, base] = /^(\S+) extends (\S+)$/.exec(relation) ?? [];
+      for (const schema of listed.split(", "))
+        writeDefinition(
+          schema,
+          schema === extending
+            ? { name: schema, extends: base, description: `The ${schema} schema` }
+            : definition(schema, naming),
+        );
+      // Everything else these definitions name goes where the rule puts it, so only the resource
+      // of the scenario can be out of place.
+      const schemas = listed.split(", ");
+      const belongs = base ?? (schemas.length === 1 ? schemas[0]! : "shared");
+      for (const [otherKind, other] of [
+        ["validator", "standard"],
+        ["question policy", "ask-on-commitment"],
+        ["template", "plan.md"],
+        ["template", "spec.md"],
+      ] as const) {
+        if (otherKind === kind && other === name) continue;
+        const [now] = globSync(join(root, "schemas/*", PLACE[otherKind]!(other)));
+        move(now!, place(belongs, otherKind, other));
+      }
+    },
+    async resourceHeldIn(kind: string, name: string, held: string): Promise<void> {
+      const [now] = globSync(join(root, "schemas/*", PLACE[kind]!(name)));
+      move(now!, place(held, kind, name));
     },
 
     // Action
@@ -184,7 +249,7 @@ export function createSteps() {
       const entries = tar("-tzf").split("\n");
       const present =
         entries.includes(`package/openspec/schemas/${schema}/schema.yaml`) &&
-        entries.includes(`package/schemas/${schema}.js`);
+        entries.includes(`package/schemas/${schema}/schema.js`);
       expect(present ? "present" : "absent").toBe(presence);
       expect(schema in built!.record.schemas).toBe(present);
     },
@@ -200,16 +265,18 @@ export function createSteps() {
       expect(failure?.message).toContain(name);
     },
     async builtPackagesCalled(builtPackages: string, packageStep: string): Promise<void> {
-      expect(existsSync(join(out, packageStep)) ? 1 : 0).toBe(Number(builtPackages));
+      expect(existsSync(join(out, packageStep)) ? 1 : 0, failure?.message).toBe(
+        Number(builtPackages),
+      );
     },
     async builtSchemaUses(variant: string, kind: string, override: string): Promise<void> {
       expect(failure?.message).toBeUndefined();
       expect(built!.record.schemas[variant]![FIELD[kind] as "validator" | "questions"]).toBe(
         override,
       );
-      expect(shipped(`schemas/${variant}.js`)).toContain(`"${FIELD[kind]}": "${override}"`);
+      expect(shipped(`schemas/${variant}/schema.js`)).toContain(`"${FIELD[kind]}": "${override}"`);
       if (kind === "validator")
-        expect(shipped(`validators/${override}/validator.js`)).toContain("ready");
+        expect(shipped(`schemas/${variant}/validators/${override}/validator.js`)).toContain("ready");
       else expect(shipped(`openspec/schemas/${variant}/schema.yaml`)).toContain("Ask less.");
     },
     async builtSchemaKeeps(variant: string, keptKind: string, base: string): Promise<void> {
@@ -225,6 +292,9 @@ export function createSteps() {
         dependencies: Record<string, string>;
       };
       expect(dependencies[TOOLS[tool]!]).toBe(version);
+    },
+    async failureSaysBelongsIn(belongs: string): Promise<void> {
+      expect(failure?.message).toContain(`belongs in schemas/${belongs}:`);
     },
   };
 }

@@ -1,4 +1,4 @@
-import { globSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { basename, join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -6,8 +6,8 @@ import {
   hasLayerSpecs,
   PACKAGE_ROOT,
   SKIPPED_WITHOUT_SPECS,
-  WORKSTREAMS_DIR,
 } from "./paths.ts";
+import { EXAMPLE_FILES } from "./project.ts";
 import { parseExampleFile } from "./example-file.ts";
 
 /** `(rule, case)` pairs of the Examples rows `| <case> | <rule> |` in a layer spec. */
@@ -31,7 +31,7 @@ const rowsOf = (spec: string): string[] => {
 describe.skipIf(!hasLayerSpecs())(
   hasLayerSpecs() ? "case ids" : `case ids (${SKIPPED_WITHOUT_SPECS})`,
   () => {
-    for (const path of globSync(join(WORKSTREAMS_DIR, "*/*.examples.md")).sort()) {
+    for (const path of EXAMPLE_FILES) {
       const examples = relative(PACKAGE_ROOT, path);
       const layer = basename(path, ".examples.md");
       const spec = `${ARCHITECTURE_SPECS}/${layer}/spec.md`;

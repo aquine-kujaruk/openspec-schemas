@@ -83,7 +83,7 @@ For every rule in a layer spec there SHALL be at least one case in the layer's e
 
 ### Requirement: Examples are one Markdown file per layer
 
-The examples of a layer SHALL live in `workstreams/<workstream>/<layer>.examples.md`, in the folder of the workstream that owns it: a `## reference` section, then one `## <rule-slug>` per rule with one `### <case>` per counterexample. Each file of a case SHALL be a fenced block whose info string is its language and repository path, and the tools SHALL see exactly those files. A case SHALL end with one `expect` block holding its findings; `## reference` has none.
+The examples of a layer SHALL live in `schemas/<schema>/workstreams/<workstream>/<layer>.examples.md`, in the folder of the workstream that owns it: a `## reference` section, then one `## <rule-slug>` per rule with one `### <case>` per counterexample. Each file of a case SHALL be a fenced block whose info string is its language and repository path, and the tools SHALL see exactly those files. A case SHALL end with one `expect` block holding its findings; `## reference` has none.
 
 #### Scenario Outline: A case is materialized from its blocks
 

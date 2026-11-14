@@ -6,7 +6,7 @@ Use case and repository interface. The application layer is the entry to the cor
 
 It receives from domain the entities, schemas and exceptions, and from the problem the flows (what the user can do). It delivers to infrastructure `export interface XRepositoryInterface` in `repository-interfaces/x.repository-interface.ts`, with methods named verb plus noun that return schema props or primitives, and to the entry `export class XUseCase { constructor(repository interfaces and use cases...); execute(args) }`, which hydrates props into domain and throws business exceptions.
 
-Every rule is verified against the cases in `workstreams/<workstream>/<layer>.examples.md`: under each rule, one case per way of breaking it, and a `reference` section. What the tools report on each case, file by file with the tools that reported it, is recorded in the case's `expect` block by `factory expect`, and every case is compared with that record. A case prefixed `todo.` is a known gap that the rule does not catch yet. The reference sections of the workstream and of the workstreams it depends on together form a correct module that breaks no rule of that workstream.
+Every rule is verified against the cases in `schemas/<schema>/workstreams/<workstream>/<layer>.examples.md`: under each rule, one case per way of breaking it, and a `reference` section. What the tools report on each case, file by file with the tools that reported it, is recorded in the case's `expect` block by `factory expect`, and every case is compared with that record. A case prefixed `todo.` is a known gap that the rule does not catch yet. The reference sections of the workstream and of the workstreams it depends on together form a correct module that breaks no rule of that workstream.
 
 ## Requirements
 

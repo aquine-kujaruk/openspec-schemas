@@ -46,6 +46,8 @@ export type PlanParts = {
   phases?: boolean[];
   feedback?: string[];
   questions?: string[];
+  /** The tasks name no workstream: the plan of a schema that has none. */
+  bare?: boolean;
 };
 
 export const planText = (name: string, parts: PlanParts = {}): string =>
@@ -60,7 +62,7 @@ export const planText = (name: string, parts: PlanParts = {}): string =>
     ...(parts.phases ?? [false]).map((done, i) =>
       [
         `### Phase ${i + 1}: Step ${i + 1} works`,
-        `- [${done ? "x" : " "}] app-domain: build step ${i + 1}\n- [${done ? "x" : " "}] integrate: verify the phase`,
+        `- [${done ? "x" : " "}] ${parts.bare ? "" : "app-domain: "}build step ${i + 1}\n- [${done ? "x" : " "}] ${parts.bare ? "" : "integrate: "}verify the phase`,
       ].join("\n\n"),
     ),
     ["## Feedback", (parts.feedback ?? []).map((f) => `- ${f}`).join("\n")].join("\n\n"),
@@ -68,8 +70,8 @@ export const planText = (name: string, parts: PlanParts = {}): string =>
   ].join("\n\n");
 
 /**
- * Writes a change of the `clean-backend` schema that validation reports ready unless `parts` say
- * otherwise. Without `deltas` it is marked as changing no behaviour.
+ * Writes a change of `schema` that validation reports ready unless `parts` say otherwise. Without
+ * `deltas` it is marked as changing no behaviour.
  */
 export const change = (
   root: string,
@@ -78,18 +80,23 @@ export const change = (
     parts = {},
     deltas = { "orders/get-order": delta() },
     created = "2026-11-13",
-  }: { parts?: PlanParts; deltas?: Record<string, string>; created?: string } = {},
+    schema = "clean-backend",
+  }: { parts?: PlanParts; deltas?: Record<string, string>; created?: string; schema?: string } = {},
 ): void => {
   const folder = `openspec/changes/${name}`;
   const marked = Object.keys(deltas).length ? "" : "skip_specs: true\n";
-  write(root, `${folder}/.openspec.yaml`, `schema: clean-backend\ncreated: ${created}\n${marked}`);
+  write(root, `${folder}/.openspec.yaml`, `schema: ${schema}\ncreated: ${created}\n${marked}`);
   for (const [spec, text] of Object.entries(deltas)) write(root, `${folder}/specs/${spec}/spec.md`, text);
-  write(root, `${folder}/plan.md`, planText(name, parts));
+  write(root, `${folder}/plan.md`, planText(name, { bare: schema !== "clean-backend", ...parts }));
 };
 
 /** A ready change with one phase, started by the implement phase unless its tasks are `done`: it is in implementation. */
-export const readyChange = (root: string, name: string, { done = false } = {}): void => {
-  change(root, name, { parts: { phases: [done] } });
+export const readyChange = (
+  root: string,
+  name: string,
+  { done = false, schema = "clean-backend" } = {},
+): void => {
+  change(root, name, { parts: { phases: [done] }, schema });
   if (!done)
     write(
       root,

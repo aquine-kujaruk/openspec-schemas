@@ -1,4 +1,4 @@
-import { globSync, mkdirSync } from "node:fs";
+import { existsSync, globSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { ownerOf } from "./graph.ts";
 import { mergedSpecs } from "./merged.ts";
@@ -8,9 +8,10 @@ import {
   PACKAGE_ROOT,
   PROJECT_ROOT,
   runTool,
-  WORKSTREAMS_DIR,
 } from "./paths.ts";
-import { architecture, config } from "./project.ts";
+import { architecture, config, WORKSTREAM_DIRS } from "./project.ts";
+import { loadSchema, schemaNames } from "./schema.ts";
+import { emitSchema, schemaFiles } from "./schema-yaml.ts";
 
 /**
  * `factory generate [--check]`: the tests come from the specs.
@@ -28,6 +29,9 @@ import { architecture, config } from "./project.ts";
  * the folder that holds its adapter, `<capability>.feature.steps.ts` (`review/`, a validator's
  * folder). A capability with neither (`linting`) is verified by running the pipeline, not
  * generated.
+ *
+ * In this repository it also writes each schema under `openspec/schemas/<name>` as the specification
+ * tool reads it, so the repository's own changes use the schemas it builds.
  *
  * `--check` only verifies the tests are fresh; `--product-specs <glob>` overrides the configured glob.
  */
@@ -64,6 +68,24 @@ export const generate = async (args: string[]): Promise<number> => {
   };
 
   if (DEVELOPING) {
+    // The repository plans its own changes with the schemas it builds: the specification tool
+    // reads them here, written from their definitions.
+    for (const name of schemaNames()) {
+      const schema = await loadSchema(name);
+      const dir = join(PROJECT_ROOT, "openspec/schemas", name);
+      if (!check) {
+        rmSync(dir, { recursive: true, force: true });
+        emitSchema(schema, dir);
+      } else if (
+        Object.entries(schemaFiles(schema)).some(
+          ([path, text]) =>
+            !existsSync(join(dir, path)) || readFileSync(join(dir, path), "utf8") !== text,
+        )
+      ) {
+        failed = true;
+        console.error(`out of date: openspec/schemas/${name}: run \`pnpm exec factory generate\``);
+      }
+    }
     const adapters = new Map(
       globSync("**/*.feature.steps.ts", {
         cwd: PACKAGE_ROOT,
@@ -75,7 +97,7 @@ export const generate = async (args: string[]): Promise<number> => {
       const owner = spec.startsWith(`${ARCHITECTURE_SPECS}/`)
         ? ownerOf(architecture.workstreams, capability)
         : undefined;
-      const dir = owner ? join(WORKSTREAMS_DIR, owner.id) : adapters.get(capability);
+      const dir = owner ? WORKSTREAM_DIRS[owner.id] : adapters.get(capability);
       if (dir) write(spec, dir, capability);
     }
   }

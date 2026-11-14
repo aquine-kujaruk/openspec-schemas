@@ -6,7 +6,7 @@ Anti-corruption layer (ACL) and repository implementation. Infrastructure implem
 
 It receives from application `XRepositoryInterface` (the exact signature of each method) and from domain the `XProps` it must return and the exceptions it throws. It delivers to the adapters layer the ACLs they implement, and to the entry, which composes, `XRepositoryImplementation`, built against the ACL so the adapter can be faked; it exports no repository instance.
 
-Every rule is verified against the cases in `workstreams/<workstream>/<layer>.examples.md`: under each rule, one case per way of breaking it, and a `reference` section. What the tools report on each case, file by file with the tools that reported it, is recorded in the case's `expect` block by `factory expect`, and every case is compared with that record. A case prefixed `todo.` is a known gap that the rule does not catch yet. The reference sections of the workstream and of the workstreams it depends on together form a correct module that breaks no rule of that workstream.
+Every rule is verified against the cases in `schemas/<schema>/workstreams/<workstream>/<layer>.examples.md`: under each rule, one case per way of breaking it, and a `reference` section. What the tools report on each case, file by file with the tools that reported it, is recorded in the case's `expect` block by `factory expect`, and every case is compared with that record. A case prefixed `todo.` is a known gap that the rule does not catch yet. The reference sections of the workstream and of the workstreams it depends on together form a correct module that breaks no rule of that workstream.
 
 ## Requirements
 

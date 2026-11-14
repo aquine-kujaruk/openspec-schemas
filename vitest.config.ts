@@ -4,9 +4,7 @@ export default defineConfig({
   test: {
     include: [
       "toolkit/**/*.test.ts",
-      "review/**/*.test.ts",
-      "workstreams/**/*.test.ts",
-      "validators/**/*.test.ts",
+      "schemas/**/*.test.ts",
     ],
     globals: true,
     environment: "node",

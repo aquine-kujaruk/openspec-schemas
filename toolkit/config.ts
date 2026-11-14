@@ -8,7 +8,8 @@ export type DeepPartial<T> = T extends readonly unknown[]
     : T;
 
 /** What `factory.config.ts` exports. */
-export type ProjectConfig = DeepPartial<FactoryConfig>;
+/** What a project sets over its schema's defaults, and which schema that is when it has several that build product code. */
+export type ProjectConfig = DeepPartial<FactoryConfig> & { schema?: string };
 
 /** Types a project configuration without changing it: `export default defineFactory({ ... })`. */
 export const defineFactory = (c: ProjectConfig): ProjectConfig => c;
@@ -29,5 +30,7 @@ const merge = (base: unknown, over: unknown): unknown => {
  * included), a section it sets is merged key by key, and whatever it leaves out keeps its default.
  * Without a project configuration, the defaults as they are.
  */
-export const resolveConfig = (defaults: FactoryConfig, project?: ProjectConfig): FactoryConfig =>
-  merge(defaults, project) as FactoryConfig;
+export const resolveConfig = (defaults: FactoryConfig, project?: ProjectConfig): FactoryConfig => {
+  const { schema: _schema, ...over } = project ?? {};
+  return merge(defaults, project ? over : undefined) as FactoryConfig;
+};

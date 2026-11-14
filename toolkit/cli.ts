@@ -9,6 +9,7 @@ const COMMANDS: Record<string, (args: string[]) => Promise<number>> = {
   expect: async (args) => (await import("./expect.ts")).expect(args),
   test: async (args) => (await import("./test.ts")).test(args),
   validate: async (args) => (await import("./validate.ts")).validate(args),
+  schemas: async (args) => (await import("./schemas.ts")).run(args),
   build: async (args) => (await import("./build.ts")).run(args),
   doctor: async (args) => (await import("./doctor.ts")).run(args),
   guard: async (args) => (await import("./guard.ts")).run(args),
@@ -34,7 +35,7 @@ const COMMANDS: Record<string, (args: string[]) => Promise<number>> = {
     );
     return 0;
   },
-  review: async () => (await import("../review/cli.ts")).run(),
+  review: async () => (await import("./review/cli.ts")).run(),
 };
 
 // archunit extends the matchers of a test runner it finds in the environment; the command is never one.

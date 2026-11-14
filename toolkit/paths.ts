@@ -33,8 +33,6 @@ export const INSTALLED = "manifest.json";
 /** The command runs in the repository that develops it, where the layer specs and the example files are sources. */
 export const DEVELOPING = PROJECT_ROOT === PACKAGE_ROOT;
 
-export const WORKSTREAMS_DIR = join(PACKAGE_ROOT, "workstreams");
-
 /** The layer specs. They exist in the repository that develops the workstreams, not in a project. */
 export const ARCHITECTURE_SPECS = "openspec/specs/architecture";
 

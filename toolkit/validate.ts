@@ -37,16 +37,24 @@ export const validateChange = async (root: string, name: string): Promise<Verdic
   return { change: name, schema: change.schema, ready: findings.length === 0, findings };
 };
 
+/** A change in implementation, with the schema it was made with and whether that schema builds product code. */
+export type Building = { name: string; plan: Plan; schema: string; builds: boolean };
+
 /** The changes in implementation: those the implement phase started and whose plan is still ready. */
-export const changesInImplementation = async (
-  root: string,
-): Promise<Array<{ name: string; plan: Plan }>> => {
-  const found: Array<{ name: string; plan: Plan }> = [];
+export const changesInImplementation = async (root: string): Promise<Building[]> => {
+  const found: Building[] = [];
   for (const name of activeChanges(root)) {
     const text = readChange(root, name)?.plan;
     if (text === undefined || !isStarted(root, name)) continue;
     try {
-      if ((await validateChange(root, name)).ready) found.push({ name, plan: parsePlan(text) });
+      const verdict = await validateChange(root, name);
+      if (verdict.ready)
+        found.push({
+          name,
+          plan: parsePlan(text),
+          schema: verdict.schema,
+          builds: (await loadSchema(verdict.schema)).definition.workstreams.length > 0,
+        });
     } catch (e) {
       if (!(e instanceof NotValidatable)) throw e;
     }

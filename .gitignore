@@ -2,3 +2,4 @@ node_modules/
 dist/
 .env
 .factory-review.json
+openspec/schemas/

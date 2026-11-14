@@ -1,0 +1,341 @@
+Reading additional input from stdin...
+OpenAI Codex v0.166.0
+--------
+workdir: <project>
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a1db2e-8189-7e42-8ad8-f58f62b43619
+--------
+user
+$plan Last night the orders service answered 503 for ten minutes and nobody knew where to look. Record how to diagnose an outage of the orders service in production: the logs live in the log group /prod/orders of the cloud console, read with the on-call role; look first at the error rate, then at the database connections. I decide nothing else: pick the rest yourself and leave no open question.
+warning: `--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.
+warning: `--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.
+codex
+I’ll use the plan skill to define the outage runbook and settle the remaining details.
+
+exec
+/bin/bash -lc 'pnpm exec factory doctor' in <project>
+ succeeded in 240ms:
+nothing is lacking
+note: codex runs the guards only in a project it trusts and after each hook is reviewed with /hooks; review them again after every update that changes them
+
+exec
+/bin/bash -lc 'cat .agents/skills/plan/SKILL.md' in <project>
+ succeeded in 0ms:
+---
+name: plan
+description: Plan a change. Turns an intention that would change the product's behaviour, its code, a standing decision or a procedure into a change whose plan and delta specs validation reports ready. Use when the person states such an intention.
+---
+
+# plan
+
+The artifacts are the handoff: everything decided ends up in the plan or in a delta spec.
+
+1. `pnpm exec factory doctor`. When it prints anything as `missing` or `drift`, follow the `setup` skill first. A `note` is for the person: relay it once and go on.
+2. Decide whether the intention changes anything: behaviour, code, a standing decision or a procedure. A question about the system changes nothing: answer it and stop here. An intention about a change that is already open belongs to the `feedback` skill.
+3. Choose the schema. `pnpm exec factory schemas` lists the schemas this project has, when each one is used and the workstreams it builds through. Pick the one whose use covers the intention. When the intention needs two of them, open one change per schema, and write under Decisions of each plan the name of the other change and what it leaves to it. When no schema covers the intention, open no change: tell the person which schemas the project has and stop.
+4. Open the change: `pnpm exec factory openspec new change <name> --schema <schema>`, the name a short kebab-case phrase of what changes.
+5. Read what stands: the specs under `openspec/specs` the intention touches, and everything under `openspec/adr` and `openspec/runbooks`.
+6. When the schema has workstreams, read the skill of each one the change will touch, under the `implement` skill's `references/workstreams/<workstream>/SKILL.md`. Its Owns line says where that workstream's files live and how they are named: a seam is signed in those folders and with those names.
+7. `pnpm exec factory openspec status --change <name> --json` lists the artifacts of the change's schema. For each one, `pnpm exec factory openspec instructions <artifact> --change <name> --json` gives its instruction and its template: write the artifact as that instruction says. Write the whole first proposal from your own decisions before asking the person anything. The plan's instruction says which decisions are the person's; those go under Open questions, each with the option you picked.
+8. `pnpm exec factory validate <name>` and fix every finding that is yours to fix.
+9. Show the person the open questions. When they answer, record each answered decision in its artifact and remove its question in that same update, then validate again.
+
+The plan is done when `pnpm exec factory validate <name>` prints `ready`. Tell the person and stop: building it is the `implement` skill, in a run the person starts.
+
+exec
+/bin/bash -lc 'git status --short' in <project>
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'rg --files openspec AGENTS.md' in <project>
+ succeeded in 0ms:
+AGENTS.md
+openspec/config.yaml
+
+exec
+/bin/bash -lc 'pnpm exec factory schemas' in <project>
+ succeeded in 130ms:
+clean-backend
+  Clean Architecture for a backend: delta specs per use case and one plan that carries the decisions, the procedures and the tasks. Use it for a change to the behaviour or the code of the product
+  workstreams: app-domain, infrastructure, adapters, clean-architecture, integrate
+spec-plan
+  A plan and delta specs with no architecture. Use it for a change no other schema of the project covers: a procedure, a decision, tooling, documents
+  no workstreams: its tasks name none
+
+codex
+Factory checks pass. Note: guards require a trusted project and hook review via `/hooks` after hook updates.
+
+This fits the procedure schema. I’ll preserve the access details and diagnostic order you specified.
+
+exec
+/bin/bash -lc 'pnpm exec factory openspec new change diagnose-orders-production-outage --schema spec-plan' in <project>
+ succeeded in 334ms:
+- Creating change 'diagnose-orders-production-outage' with schema 'spec-plan'...
+Created change 'diagnose-orders-production-outage' at openspec/changes/diagnose-orders-production-outage/
+Schema: spec-plan
+Next: openspec status --change diagnose-orders-production-outage
+
+exec
+/bin/bash -lc 'pnpm exec factory openspec status --change diagnose-orders-production-outage --json' in <project>
+ succeeded in 268ms:
+{
+  "changeName": "diagnose-orders-production-outage",
+  "schemaName": "spec-plan",
+  "planningHome": {
+    "kind": "repo",
+    "root": "<project>",
+    "changesDir": "<project>/openspec/changes",
+    "defaultSchema": "spec-driven"
+  },
+  "changeRoot": "<project>/openspec/changes/diagnose-orders-production-outage",
+  "artifactPaths": {
+    "plan": {
+      "outputPath": "plan.md",
+      "resolvedOutputPath": "<project>/openspec/changes/diagnose-orders-production-outage/plan.md",
+      "existingOutputPaths": []
+    },
+    "specs": {
+      "outputPath": "specs/**/*.md",
+      "resolvedOutputPath": "<project>/openspec/changes/diagnose-orders-production-outage/specs/**/*.md",
+      "existingOutputPaths": []
+    }
+  },
+  "isPlanningComplete": false,
+  "isComplete": false,
+  "applyRequires": [
+    "plan"
+  ],
+  "nextSteps": [
+    "Run openspec instructions plan --change \"diagnose-orders-production-outage\" --json before writing that artifact."
+  ],
+  "actionContext": {
+    "mode": "repo-local",
+    "sourceOfTruth": "repo",
+    "planningArtifacts": [
+      "plan",
+      "specs"
+    ],
+    "linkedContext": [],
+    "allowedEditRoots": [
+      "<project>"
+    ],
+    "requiresAffectedAreaSelection": false,
+    "constraints": [
+      "Repo-local change artifacts and implementation edits are scoped to this project."
+    ]
+  },
+  "artifacts": [
+    {
+      "id": "plan",
+      "outputPath": "plan.md",
+      "status": "ready",
+      "requires": []
+    },
+    {
+      "id": "specs",
+      "outputPath": "specs/**/*.md",
+      "status": "ready",
+      "requires": []
+    }
+  ],
+  "root": {
+    "path": "<project>",
+    "source": "nearest"
+  }
+}
+
+exec
+/bin/bash -lc 'find openspec -maxdepth 3 -type f -print' in <project>
+ succeeded in 0ms:
+openspec/runbooks/.gitkeep
+openspec/config.yaml
+openspec/adr/.gitkeep
+openspec/changes/diagnose-orders-production-outage/.openspec.yaml
+openspec/specs/.gitkeep
+
+exec
+/bin/bash -lc 'cat openspec/config.yaml' in <project>
+ succeeded in 0ms:
+schema: clean-backend
+
+exec
+/bin/bash -lc 'pnpm exec factory openspec instructions specs --change diagnose-orders-production-outage --json' in <project>
+exec
+/bin/bash -lc 'pnpm exec factory openspec instructions plan --change diagnose-orders-production-outage --json' in <project>
+ succeeded in 337ms:
+{
+  "changeName": "diagnose-orders-production-outage",
+  "artifactId": "plan",
+  "schemaName": "spec-plan",
+  "changeDir": "<project>/openspec/changes/diagnose-orders-production-outage",
+  "planningHome": {
+    "kind": "repo",
+    "root": "<project>",
+    "changesDir": "<project>/openspec/changes",
+    "defaultSchema": "spec-driven"
+  },
+  "outputPath": "plan.md",
+  "resolvedOutputPath": "<project>/openspec/changes/diagnose-orders-production-outage/plan.md",
+  "existingOutputPaths": [],
+  "description": "Goal, decisions, tagged architecture decisions and procedures, and phases with tests and tasks",
+  "instruction": "Write the plan from your own decisions before asking the person anything, then update it once per answer. Keep every section of the template, in order; a section with nothing to say keeps its heading.\n\nWrite each decision where its scope sends it:\n\n- A user of the product notices it: a delta spec.\n- A future change must respect it: an architecture decision.\n- It says how the system is set up, reached, diagnosed or operated: a procedure.\n- It matters only to this change: one line under Decisions, naming the alternative you discarded.\n- It would hold in any project: leave it out of the change and report it as a proposal for the schema's repository.\n\nArchitecture decisions and procedures are durable: archiving copies them to `openspec/adr` and `openspec/runbooks`. Read both trees before writing one, and tag each block, on the line under its heading, with what this change does to them:\n\n- `@adds` for a block no tree has.\n- `@modifies:<slug>`, `@replaces:<slug>`, `@renames:<slug>` or `@removes:<slug>` for a block a tree has, with `@base:<origin>` copied from the `@origin` of that block.\n- A decision also carries `@area:product` or `@area:production`, `@topic`, `@applies` (the layers it binds) and `@enforced` (the rule, check or review that holds it).\n- A procedure also carries `@purpose` (`setup`, `access`, `diagnose` or `operate`), `@topic` and `@env` (the environments it runs in). It names where each secret is kept; the secret itself stays out of the plan.\n\nA phase is a part of the change worth having on its own. It declares its tests and its tasks. Only tasks are checkboxes, and the last task of a phase verifies it. A change that builds nothing has no phase.\n\nA change that changes no behaviour a user notices has no delta spec and says so with `skip_specs: true` in its `.openspec.yaml`.\n\nThe plan is done when `pnpm exec factory validate <change>` reports the change ready.\n\nWorkstreams a task may name: .\n\n# Which decisions reach the person: ask on commitment\n\nA decision is a commitment when undoing it later costs the person something: behaviour users will meet, a rule future changes inherit, a standing rule withdrawn. Commitments reach the person; everything else is yours to decide.\n\nAsk, as an item under Open questions, when the decision is:\n\n- **Behaviour the consolidated specs leave open.** What a user will notice and no spec under `openspec/specs` settles.\n- **A decision that binds future changes.** Every architecture decision the plan writes.\n- **The end of a standing decision.** Every `@replaces` and every `@removes` on an architecture decision.\n\nDecide alone, in the artifact its scope picks, naming the alternative you discarded, when the decision is:\n\n- **Change-local.** It matters only while this change is built.\n- **Behaviour the consolidated specs settle.** Follow the spec; quote the requirement if the choice could surprise.\n\nAn open question states the decision in one line, the options, and the option you would pick with its reason. Write the rest of the change as if that option had been chosen, so one answer confirms the change or redirects it. When the person answers, record the decision in its artifact and remove the question in the same update.\n",
+  "template": "---\nname: <change name>\ndescription: <one sentence>\ncreated_at: <YYYY-MM-DD>\ncreated_by: <who stated the intention>\nschema: <schema of the change>\n---\n\n# <title>\n\n## Goal\n\n<!-- What is true once this change is archived, in two or three sentences. -->\n\n## Decisions\n\n<!-- One line per decision that matters only to this change: what was chosen, and the alternative discarded. -->\n\n## Open questions\n\n<!-- One item per decision only the person can take: the question, the options, and the one you would pick. Empty once the change is ready. -->\n\n## Architecture decisions\n\n<!--\nOne block per decision a future change must respect:\n\n### Decision: <slug> · <title>\n\n@adds @area:product @topic:<topic> @applies:<layers> @enforced:<rule, check or review>\n\n<The statement, with SHALL.>\n\n**Why** <the reason, in a sentence or two>\n\n**Alternatives** <what was discarded and why>\n\n**Consequences** <what this now costs or forbids>\n-->\n\n## Procedures\n\n<!--\nOne block per way of setting the system up, reaching it, diagnosing it or operating it:\n\n### Procedure: <slug> · <title>\n\n@adds @purpose:diagnose @topic:<topic> @env:<environments>\n\n**When** <the situation that calls for it>\n\n**Requires** <access and tools; where each secret is kept>\n\n**Steps**\n\n1. <step>\n\n**Verification** <how to tell it worked>\n-->\n\n## Phases\n\n### Phase 1: <what this phase leaves working>\n\n**Seams**\n\n```ts\n// the public signatures the workstreams of this phase build against\n```\n\n**Tests**\n\n<!-- The suites this phase adds or changes, and what each covers. -->\n\n- [ ] <workstream>: <task>\n- [ ] <workstream>: verify the phase\n\n## Feedback\n\n<!-- One entry per feedback taken in: where it came from, what it said, what changed. -->\n\n## Next step\n",
+  "dependencies": [],
+  "unlocks": [],
+  "root": {
+    "path": "<project>",
+    "source": "nearest"
+  }
+}
+
+ succeeded in 337ms:
+{
+  "changeName": "diagnose-orders-production-outage",
+  "artifactId": "specs",
+  "schemaName": "spec-plan",
+  "changeDir": "<project>/openspec/changes/diagnose-orders-production-outage",
+  "planningHome": {
+    "kind": "repo",
+    "root": "<project>",
+    "changesDir": "<project>/openspec/changes",
+    "defaultSchema": "spec-driven"
+  },
+  "outputPath": "specs/**/*.md",
+  "resolvedOutputPath": "<project>/openspec/changes/diagnose-orders-production-outage/specs/**/*.md",
+  "existingOutputPaths": [],
+  "description": "The behaviour a user notices, one delta spec per use case",
+  "instruction": "Write one delta spec per use case the change touches, at `specs/<module>/<use-case>/spec.md`: what the software does for whoever uses it, in the vocabulary of that use case. Libraries, frameworks and language constructs belong to the plan.\n\nEvery requirement states its rule with SHALL or MUST and proves it with Scenario Outlines: bold GIVEN, WHEN and THEN steps over the placeholders of an Examples table of concrete rows. Each step ends with one HTML comment naming its step adapter method; within a spec, one name keeps one role and one set of placeholders. The tests are generated from these specs, so a behaviour with no row has no test.\n",
+  "template": "## Purpose\n\n<!-- A new capability only: what it does for whoever uses it, in one or two sentences. -->\n\n## ADDED Requirements\n\n<!-- Changing an existing spec: `## MODIFIED Requirements` with the whole requirement as it becomes, `## REMOVED Requirements`, or `## RENAMED Requirements`. -->\n\n### Requirement: <what the software guarantees>\n\n<The rule, with SHALL or MUST.>\n\n#### Scenario Outline: <title carrying its `<placeholders>`>\n\n- **GIVEN** <the state> `<placeholder>` <!-- stepName -->\n- **WHEN** <the action> <!-- stepName -->\n- **THEN** <the outcome> `<placeholder>` <!-- stepName -->\n\n##### Examples:\n\n  | placeholder | placeholder |\n  | ----------- | ----------- |\n  | value       | value       |\n",
+  "dependencies": [],
+  "unlocks": [],
+  "root": {
+    "path": "<project>",
+    "source": "nearest"
+  }
+}
+
+exec
+/bin/bash -lc 'cat openspec/changes/diagnose-orders-production-outage/.openspec.yaml' in <project>
+ succeeded in 0ms:
+schema: spec-plan
+created: 2026-11-14
+
+exec
+/bin/bash -lc 'ls -la openspec/specs openspec/adr openspec/runbooks' in <project>
+ succeeded in 0ms:
+openspec/adr:
+total 8
+drwxrwxr-x 2 user user 4096 Nov 14 18:49 .
+drwxrwxr-x 7 user user 4096 Nov 14 18:50 ..
+-rw-rw-r-- 1 user user    0 Nov 14 18:49 .gitkeep
+
+openspec/runbooks:
+total 8
+drwxrwxr-x 2 user user 4096 Nov 14 18:49 .
+drwxrwxr-x 7 user user 4096 Nov 14 18:50 ..
+-rw-rw-r-- 1 user user    0 Nov 14 18:49 .gitkeep
+
+openspec/specs:
+total 8
+drwxrwxr-x 2 user user 4096 Nov 14 18:49 .
+drwxrwxr-x 7 user user 4096 Nov 14 18:50 ..
+-rw-rw-r-- 1 user user    0 Nov 14 18:49 .gitkeep
+
+hook: PreToolUse
+hook: PreToolUse Completed
+apply patch
+patch: completed
+<project>/openspec/changes/diagnose-orders-production-outage/.openspec.yaml
+<project>/openspec/changes/diagnose-orders-production-outage/plan.md
+diff --git a/openspec/changes/diagnose-orders-production-outage/.openspec.yaml b/openspec/changes/diagnose-orders-production-outage/.openspec.yaml
+index 569275d9ae7504e8f66a3be2164874fca14f4b88..16f353e8bf417631136e1ae6fb6920bed97979a9
+--- a/openspec/changes/diagnose-orders-production-outage/.openspec.yaml
++++ b/openspec/changes/diagnose-orders-production-outage/.openspec.yaml
+@@ -1,2 +1,3 @@
+ schema: spec-plan
+ created: 2026-11-14
++skip_specs: true
+diff --git a/openspec/changes/diagnose-orders-production-outage/plan.md b/openspec/changes/diagnose-orders-production-outage/plan.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..ed92a435f8b2944c12a7ce5307eab724e7bb6f35
+--- /dev/null
++++ b/openspec/changes/diagnose-orders-production-outage/plan.md
+@@ -0,0 +1,56 @@
++---
++name: diagnose-orders-production-outage
++description: Record a production orders outage diagnostic procedure with a known log location and ordered checks.
++created_at: 2026-11-14
++created_by: user
++schema: spec-plan
++---
++
++# Diagnose an orders production outage
++
++## Goal
++
++An on-call responder can find production orders logs and diagnose a 503 incident without first searching for access instructions. The runbook checks error rate before database connections and records evidence sufficient for a handoff.
++
++## Decisions
++
++- Deliver a procedure using spec-plan; discard product changes and delta specs because software behaviour is unchanged (`skip_specs: true`).
++- Record the complete procedure in this plan for consolidation on archive; discard a separate implementation phase because this change builds nothing.
++- The user supplied the log group, role and diagnostic order and delegated all remaining choices; no decision remains open.
++
++## Open questions
++
++None.
++
++## Architecture decisions
++
++## Procedures
++
++### Procedure: orders-production-outage · Diagnose orders service 503s in production
++
++@adds @purpose:diagnose @topic:orders-outage @env:production
++
++**When** Orders returns 503s, its error rate rises, or a responder investigates a past outage. A reported ten-minute 503 incident prompted this procedure; its exact timestamps and cause are not established here.
++
++**Requires** Access to the cloud console with the on-call role, production orders request/error telemetry, and connection telemetry for the database used by orders. Use an existing authenticated console session and select the on-call role. No additional secret is required by this procedure; temporary session credentials remain in the authenticated console session and must not be copied into this document or incident notes. If the session is unavailable, use the organization's existing console sign-in process. Missing access or telemetry follows step 6; do not guess an account, region, database, credential store, or dashboard URL.
++
++**Steps**
++
++1. Establish the UTC incident start and end from the report or alert. For an ongoing incident use the current time as the provisional end. Record the source and uncertainty. Inspect the incident interval plus ten minutes on each side, and use the preceding thirty minutes as a baseline. Confirm the production account/environment and orders service using console resource context before interpreting any telemetry.
++2. Check **error rate first**. In the available production orders request telemetry, compare failed requests divided by total requests with the baseline over matching one-minute intervals. Record total request count, failure count/rate, 503 count, onset, peak and latest interval. Use an existing documented error definition if present; otherwise use HTTP 5xx and label that choice in the incident notes. If only logs are available, calculate a rate only when they contain all requests with known coverage; otherwise record observed errors and mark the rate unavailable. Zero requests gives an undefined rate, not evidence of health. Missing telemetry does not prevent the next check, but must be recorded.
++3. Check **database connections second**, using the same incident and baseline windows. Identify the database from the orders resource configuration or dependency view. Inspect active/open connections relative to its configured maximum and, where exposed, orders pool usage, waiting requests, connection timeouts and refused connections. Record timestamps and available counts/limits. A rise in errors alongside connections near their limit, waiters or connection failures suggests connection pressure; correlation alone does not establish the cause. Normal connection counts leave other causes open; unavailable limits or metrics remain explicitly unverified.
++4. In the cloud console, with the **on-call role**, open log group **`/prod/orders`** in the confirmed production resource context. Select the same UTC window. Inspect 503 and error entries first, then surrounding entries across relevant log streams. Look for database connection, pool, timeout or refusal messages and compare their timing with steps 2 and 3. Capture timestamps, log links, error signatures and request/correlation IDs where present, redacting credentials and customer data. If the group is absent or empty, confirm resource context, time range and filters once, then record the gap and follow step 6.
++5. Write a diagnostic handoff: service/environment, UTC window, customer impact known so far, error-rate findings, database-connection findings, log evidence, a working hypothesis, competing explanations and missing evidence. Label facts separately from hypotheses. For an ongoing incident, refresh the latest error and connection observations every five minutes. This procedure authorizes observation only; remediation follows the incident owner's existing process.
++6. If access is denied, telemetry is missing, or the cause remains unclear after these checks, hand the evidence and exact blocker to the existing production incident owner through the established incident process. Include the failed console action and resource context for access gaps, without credentials. Request the database responder through that process when connection pressure is suspected. If no owner can be identified, use the organization's existing on-call escalation route; do not invent a contact or delay handoff while searching for a root cause.
++
++**Verification** The handoff contains the selected resource context and UTC window, an error-rate result or explicit evidence gap recorded before a database-connection result or gap, and evidence from `/prod/orders` or the precise access/data blocker. Diagnosis is complete when the findings and unresolved evidence have a named incident owner; an unknown root cause is explicitly recorded. Mark observed service recovery only when request traffic is present and the error rate has returned to the pre-incident baseline for ten consecutive one-minute intervals. Record database-connection status separately; recovered traffic does not prove the cause or close the incident. If these observations are unavailable, leave recovery unverified and hand off.
++
++## Phases
++
++None. This change records a procedure and builds nothing.
++
++## Feedback
++
++## Next step
++
++Validate the plan. Once ready, stop planning; the user starts any subsequent workflow phase. Archive consolidation will place this procedure under `openspec/runbooks`.
+
+exec
+/bin/bash -lc 'pnpm exec factory validate diagnose-orders-production-outage' in <project>
+ succeeded in 121ms:
+ready: diagnose-orders-production-outage (spec-plan)
+
+codex
+[Plan ready](openspec/changes/diagnose-orders-production-outage/plan.md). Validation passed; no open questions.
+
+Records on-call access to `/prod/orders`, error rate → database connections, log investigation, escalation and recovery checks.
+hook: Stop
+hook: Stop Completed
+tokens used
+29,958
+[Plan ready](openspec/changes/diagnose-orders-production-outage/plan.md). Validation passed; no open questions.
+
+Records on-call access to `/prod/orders`, error rate → database connections, log investigation, escalation and recovery checks.
+codex exit=0

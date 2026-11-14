@@ -1,8 +1,7 @@
-import { globSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parseExampleText, type Recorded, recordFindings } from "./example-file.ts";
-import { WORKSTREAMS_DIR } from "./paths.ts";
+import { EXAMPLE_FILES } from "./project.ts";
 
 /** The text without its `expect` blocks and the blank lines right before each. */
 const strip = (text: string): string => {
@@ -57,7 +56,7 @@ describe("recording findings in an example file", () => {
     );
   });
 
-  for (const path of globSync(join(WORKSTREAMS_DIR, "*/*.examples.md")).sort()) {
+  for (const path of EXAMPLE_FILES) {
     it(`${path}: only the expect blocks change, appended or replaced`, () => {
       const text = readFileSync(path, "utf8");
       const bare = strip(text);

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Building a package: the repository holds resources by kind, a schema definition picks the resources one schema uses, a package manifest lists the schemas one package carries, and the build turns a manifest into what a project installs.
+Building a package: the repository holds each schema in a folder of its own with the resources only it uses, and in a shared folder what unrelated schemas use and the flow every package carries. A schema definition names the resources one schema uses, a package manifest lists the schemas one package carries, and the build turns a manifest into what a project installs.
 
 ## Requirements
 
@@ -27,7 +27,7 @@ The build SHALL emit, for the package it is asked for, one schema for each schem
 
 ### Requirement: A schema definition names resources that exist
 
-A schema definition SHALL name its workstreams, its validator and its question policy. When a definition names a resource that does not exist, the build SHALL fail naming that resource and SHALL leave no built package.
+A schema definition SHALL name its validator and its question policy and MAY name workstreams. The build SHALL look for each resource a definition names in the definition's own folder, then in the folder of each definition it extends, then in the shared folder. When a definition names a resource that is in none of them, the build SHALL fail naming that resource and SHALL leave no built package.
 
 #### Scenario Outline: a definition naming the missing `<kind>` `<name>` stops the build
 
@@ -78,11 +78,12 @@ Building a package twice from the same resources SHALL give the same content. A 
 
 ##### Examples:
 
-  | package | resource                        | state     | freshness |
-  | ------- | ------------------------------- | --------- | --------- |
-  | backend | workstreams/app-domain/SKILL.md | unchanged | fresh     |
-  | backend | workstreams/app-domain/SKILL.md | edited    | stale     |
-  | backend | questions/ask-on-commitment.md  | edited    | stale     |
+  | package | resource                                                | state     | freshness |
+  | ------- | ------------------------------------------------------- | --------- | --------- |
+  | backend | schemas/clean-backend/workstreams/app-domain/SKILL.md   | unchanged | fresh     |
+  | backend | schemas/clean-backend/workstreams/app-domain/SKILL.md   | edited    | stale     |
+  | backend | schemas/spec-plan/questions/ask-on-commitment.md        | edited    | stale     |
+  | backend | schemas/shared/phases/plan/SKILL.md                     | edited    | stale     |
 
 ### Requirement: A built package pins every tool it runs
 
@@ -101,3 +102,39 @@ A built package SHALL run each tool at the one exact version its manifest pins, 
   | ------- | ------------- | ------------------ | ------- |
   | backend | clean-backend | specification tool | 2.0.0   |
   | backend | clean-backend | linter             | 1.93.0  |
+
+### Requirement: A resource is held where the definitions naming it put it
+
+A resource SHALL be held in the folder of the definition that names it. A resource named by a definition and by the definitions that extend it SHALL be held in the folder of the one they extend. A resource named by two definitions neither of which extends the other SHALL be held in the shared folder. The build SHALL fail, naming the resource and the folder it belongs in, when a resource is held anywhere else.
+
+#### Scenario Outline: the `<kind>` `<name>` held in `<held>` is accepted when `<relation>`
+
+- **GIVEN** a package manifest `<package>` listing the schemas `<listed>` <!-- manifestListingSchemas -->
+- **AND** the definitions `<listed>` name the `<kind>` `<name>`, and `<relation>` <!-- definitionsNameResourceAnd -->
+- **AND** the `<kind>` `<name>` is held in the folder `<held>` <!-- resourceHeldIn -->
+- **WHEN** the package `<package>` is built <!-- buildPackage -->
+- **THEN** `<builtPackages>` built package(s) called `<package>` exist <!-- builtPackagesCalled -->
+
+##### Examples:
+
+  | package | listed                        | kind       | name       | relation                        | held          | builtPackages |
+  | ------- | ----------------------------- | ---------- | ---------- | ------------------------------- | ------------- | ------------- |
+  | backend | spec-plan, clean-backend      | validator  | standard   | clean-backend extends spec-plan | spec-plan     | 1             |
+  | backend | clean-backend                 | workstream | app-domain | no other definition names it    | clean-backend | 1             |
+  | both    | clean-backend, clean-frontend | workstream | app-domain | neither extends the other       | shared        | 1             |
+
+#### Scenario Outline: the `<kind>` `<name>` held in `<held>` is refused when `<relation>`
+
+- **GIVEN** a package manifest `<package>` listing the schemas `<listed>` <!-- manifestListingSchemas -->
+- **AND** the definitions `<listed>` name the `<kind>` `<name>`, and `<relation>` <!-- definitionsNameResourceAnd -->
+- **AND** the `<kind>` `<name>` is held in the folder `<held>` <!-- resourceHeldIn -->
+- **WHEN** the package `<package>` is built <!-- buildPackage -->
+- **THEN** the build fails naming `<name>` <!-- buildFailsNaming -->
+- **AND** the failure says it belongs in the folder `<belongs>` <!-- failureSaysBelongsIn -->
+
+##### Examples:
+
+  | package | listed                        | kind       | name       | relation                        | held          | belongs   |
+  | ------- | ----------------------------- | ---------- | ---------- | ------------------------------- | ------------- | --------- |
+  | backend | spec-plan, clean-backend      | validator  | standard   | clean-backend extends spec-plan | shared        | spec-plan |
+  | both    | clean-backend, clean-frontend | workstream | app-domain | neither extends the other       | clean-backend | shared    |

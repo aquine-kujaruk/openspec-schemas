@@ -6,7 +6,7 @@ Resource adapters, in `infrastructure/adapters`. An adapter talks to one backend
 
 It receives from infrastructure the ACLs it implements, fixed before it starts, and from domain the exceptions it throws. It delivers to the entry, which composes, one ACL-typed adapter instance per resource.
 
-Every rule is verified against the cases in `workstreams/<workstream>/<layer>.examples.md`: under each rule, one case per way of breaking it, and a `reference` section. What the tools report on each case, file by file with the tools that reported it, is recorded in the case's `expect` block by `factory expect`, and every case is compared with that record. A case prefixed `todo.` is a known gap that the rule does not catch yet. The reference sections of the workstream and of the workstreams it depends on together form a correct module that breaks no rule of that workstream.
+Every rule is verified against the cases in `schemas/<schema>/workstreams/<workstream>/<layer>.examples.md`: under each rule, one case per way of breaking it, and a `reference` section. What the tools report on each case, file by file with the tools that reported it, is recorded in the case's `expect` block by `factory expect`, and every case is compared with that record. A case prefixed `todo.` is a known gap that the rule does not catch yet. The reference sections of the workstream and of the workstreams it depends on together form a correct module that breaks no rule of that workstream.
 
 ## Requirements
 

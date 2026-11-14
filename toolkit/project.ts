@@ -1,7 +1,7 @@
-import { readdirSync } from "node:fs";
+import { globSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { type Folders, loadWorkstreams } from "./graph.ts";
-import { PROJECT_ROOT, SOURCE_EXT, WORKSTREAMS_DIR } from "./paths.ts";
+import { PROJECT_ROOT, SOURCE_EXT } from "./paths.ts";
 import { loadSchema, projectConfig, projectSchemaName } from "./schema.ts";
 import type { Architecture, FactoryConfig } from "./types.ts";
 
@@ -10,7 +10,16 @@ import type { Architecture, FactoryConfig } from "./types.ts";
  * workstreams it declares joined with the configured topology. Every tool (fallow, oxlint, archunit,
  * the tests, the checks) is composed from here.
  */
-export const schema = await loadSchema(projectSchemaName(PROJECT_ROOT));
+export const schema = await loadSchema(await projectSchemaName(PROJECT_ROOT));
+
+/** The folder of each workstream of the schema, and its rubric. */
+export const WORKSTREAM_DIRS = schema.workstreamDirs;
+export const RUBRIC = schema.rubric;
+
+/** The example files of every layer, each in the folder of the workstream that owns it. */
+export const EXAMPLE_FILES = Object.values(WORKSTREAM_DIRS)
+  .flatMap((dir) => globSync(join(dir, "*.examples.md")))
+  .sort();
 
 export const DEFAULTS: FactoryConfig = schema.definition.defaults;
 
@@ -21,7 +30,7 @@ const folders: Folders = Object.fromEntries(
   Object.keys(schema.workstreams).map((id) => [
     id,
     {
-      layerFiles: readdirSync(join(WORKSTREAMS_DIR, id))
+      layerFiles: readdirSync(schema.workstreamDirs[id]!)
         .filter((f) => f.endsWith(RULES))
         .map((f) => f.slice(0, -RULES.length)),
     },

@@ -6,7 +6,7 @@ Acceptance tests: a black box against the use cases, with fake in-memory reposit
 
 It receives from the product spec the expected behavior of the use case, and from application `XUseCase.execute(args)`, its exceptions and the `XRepositoryInterface` contract it fakes. It never imports infrastructure. It delivers `test/acceptance/<module>/<use-case>.feature.steps.ts` for every use case; the generated `<use-case>.feature.test.ts` comes from `factory generate`.
 
-Every rule is verified against the cases in `workstreams/<workstream>/<layer>.examples.md`: under each rule, one case per way of breaking it, and a `reference` section. What the tools report on each case, file by file with the tools that reported it, is recorded in the case's `expect` block by `factory expect`, and every case is compared with that record. A case prefixed `todo.` is a known gap that the rule does not catch yet. The reference sections of the workstream and of the workstreams it depends on together form a correct module that breaks no rule of that workstream.
+Every rule is verified against the cases in `schemas/<schema>/workstreams/<workstream>/<layer>.examples.md`: under each rule, one case per way of breaking it, and a `reference` section. What the tools report on each case, file by file with the tools that reported it, is recorded in the case's `expect` block by `factory expect`, and every case is compared with that record. A case prefixed `todo.` is a known gap that the rule does not catch yet. The reference sections of the workstream and of the workstreams it depends on together form a correct module that breaks no rule of that workstream.
 
 ## Requirements
 

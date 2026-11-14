@@ -6,8 +6,12 @@ import { isStarted } from "./change.ts";
 import { gate } from "./gate.ts";
 import { guard } from "./guard.ts";
 import { start } from "./implement.ts";
-import { change } from "./testing.ts";
+import { archive } from "./archive.ts";
+import { loadSchema, projectSchemaName } from "./schema.ts";
+import { emitSchema } from "./schema-yaml.ts";
+import { change, write } from "./testing.ts";
 import { changesInImplementation } from "./validate.ts";
+import { verify } from "./verify.ts";
 
 /** Spec: `flow/implement`, "Only a ready change is implemented"; `package/write-guard`, what in implementation means. */
 const project = () => mkdtempSync(join(tmpdir(), "implement-"));
@@ -71,5 +75,64 @@ describe("the implement phase starts a change", () => {
     expect(isStarted(root, "add-orders")).toBe(true);
     expect((await gate(root, { checks: async () => [] })).allowed).toBe(true);
     expect(isStarted(root, "add-orders")).toBe(false);
+  });
+});
+
+/** Spec: `package/write-guard` and `package/completion-gate`, a change is judged by its own schema; design D7 to D9. */
+describe("a change made with a schema that has no workstreams", () => {
+  const bare = (root: string, name = "record-outage") =>
+    change(root, name, { schema: "spec-plan", deltas: {} });
+
+  it("starts without laying the product's roots and opens no product path", async () => {
+    const root = project();
+    bare(root);
+    expect(await start(root, "record-outage")).toMatchObject({ state: "started" });
+    expect(existsSync(join(root, "src"))).toBe(false);
+    expect(await changesInImplementation(root)).toMatchObject([
+      { name: "record-outage", schema: "spec-plan", builds: false },
+    ]);
+    const [refusal] = await guard(root, [PRODUCT]);
+    expect(refusal!.reason).toContain("spec-plan");
+    expect(await guard(root, ["docs/outage.md"])).toEqual([]);
+  });
+
+  it("is held by nothing but the harness, whatever the product's checks say", async () => {
+    const root = project();
+    bare(root);
+    await start(root, "record-outage");
+    const asked: string[][] = [];
+    const verdict = await gate(root, {
+      run: (_, args) => (asked.push(args), { status: 1, output: "a rule is broken" }),
+    });
+    expect(verdict.allowed).toBe(true);
+    expect(asked).toEqual([]);
+  });
+
+  it("is verified with no review when the project has no schema with a rubric to answer for", async () => {
+    const root = project();
+    bare(root);
+    const evidence = await verify(root, "record-outage", {
+      env: {},
+      scenarios: async () => [],
+      checks: async () => [],
+    });
+    expect(evidence).toMatchObject({ verdict: "verified", review: { state: "skipped" } });
+  });
+
+  it("is archived by the same command", async () => {
+    const root = project();
+    write(root, "openspec/config.yaml", "schema: spec-plan\n");
+    emitSchema(await loadSchema("spec-plan"), join(root, "openspec/schemas/spec-plan"));
+    change(root, "record-outage", { schema: "spec-plan", deltas: {}, parts: { phases: [true] } });
+    await verify(root, "record-outage", { env: {}, scenarios: async () => [], checks: async () => [] });
+    const [archived] = await archive(root, "record-outage", { date: "2026-11-14" });
+    expect(archived).toMatchObject({ change: "record-outage" });
+    expect(existsSync(join(root, "openspec/changes/archive/2026-11-14-record-outage/plan.md"))).toBe(true);
+  });
+
+  it("the project's tools stay composed from the schema that builds, whatever the default schema is", async () => {
+    const root = project();
+    write(root, "openspec/config.yaml", "schema: spec-plan\n");
+    expect(await projectSchemaName(root)).toBe("clean-backend");
   });
 });

@@ -224,4 +224,48 @@ describe('Feature: package/completion-gate Specification', () => {
       await steps.finishVerdict('allowed')
     })
   })
+
+  describe('Rule: A change is judged by the checks of its own schema', () => {
+    // Line 90
+    test('a `clean-backend` change finishing while the product\'s checks `fail` is `refused`', async () => {
+      const steps = createSteps()
+
+      // Given a change in implementation made with the schema `clean-backend`
+      await steps.changeInImplementationWithSchema('clean-backend')
+      // And the checks of the product's workstreams `fail`
+      await steps.productChecks('fail')
+      // When the `main` agent is about to finish
+      await steps.aboutToFinish('main')
+      // Then finishing is `refused`
+      await steps.finishVerdict('refused')
+    })
+
+    // Line 90
+    test('a `spec-plan` change finishing while the product\'s checks `fail` is `allowed`', async () => {
+      const steps = createSteps()
+
+      // Given a change in implementation made with the schema `spec-plan`
+      await steps.changeInImplementationWithSchema('spec-plan')
+      // And the checks of the product's workstreams `fail`
+      await steps.productChecks('fail')
+      // When the `main` agent is about to finish
+      await steps.aboutToFinish('main')
+      // Then finishing is `allowed`
+      await steps.finishVerdict('allowed')
+    })
+
+    // Line 90
+    test('a `spec-plan` change finishing while the product\'s checks `pass` is `allowed`', async () => {
+      const steps = createSteps()
+
+      // Given a change in implementation made with the schema `spec-plan`
+      await steps.changeInImplementationWithSchema('spec-plan')
+      // And the checks of the product's workstreams `pass`
+      await steps.productChecks('pass')
+      // When the `main` agent is about to finish
+      await steps.aboutToFinish('main')
+      // Then finishing is `allowed`
+      await steps.finishVerdict('allowed')
+    })
+  })
 })

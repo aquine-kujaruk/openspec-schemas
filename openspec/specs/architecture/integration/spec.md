@@ -6,7 +6,7 @@ Integration tests: the repository implementation between the repository interfac
 
 It receives from infrastructure `XRepositoryImplementation` and `XAcl` with its record schemas, from application the `XRepositoryInterface` it must honor, and from domain the `XProps` it returns and the exceptions it throws. The design of the change fixes those seams and the record → props mapping; the test invents its records inside the schema, guided by the Examples of the use cases where they overlap.
 
-Every rule is verified against the cases in `workstreams/<workstream>/<layer>.examples.md`: under each rule, one case per way of breaking it, and a `reference` section. What the tools report on each case, file by file with the tools that reported it, is recorded in the case's `expect` block by `factory expect`, and every case is compared with that record. A case prefixed `todo.` is a known gap that the rule does not catch yet. The reference sections of the workstream and of the workstreams it depends on together form a correct module that breaks no rule of that workstream.
+Every rule is verified against the cases in `schemas/<schema>/workstreams/<workstream>/<layer>.examples.md`: under each rule, one case per way of breaking it, and a `reference` section. What the tools report on each case, file by file with the tools that reported it, is recorded in the case's `expect` block by `factory expect`, and every case is compared with that record. A case prefixed `todo.` is a known gap that the rule does not catch yet. The reference sections of the workstream and of the workstreams it depends on together form a correct module that breaks no rule of that workstream.
 
 ## Requirements
 

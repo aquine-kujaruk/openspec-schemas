@@ -3,8 +3,8 @@ import type { PackageManifest } from "../toolkit/types.ts";
 /** Clean Architecture for a backend, for Claude and Codex. */
 export default {
   name: "backend",
-  description: "The factory's phases over the clean-backend schema",
-  schemas: ["clean-backend"],
+  description: "The factory's phases over the clean-backend and spec-plan schemas",
+  schemas: ["clean-backend", "spec-plan"],
   agents: ["claude", "codex"],
   tools: {
     "@fission-ai/openspec": "2.0.0",

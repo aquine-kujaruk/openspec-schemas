@@ -4,7 +4,7 @@ import { CHANGES } from "./change.ts";
 import { DECISIONS, PROCEDURES } from "./consolidated.ts";
 import { projectConfig } from "./schema.ts";
 import type { FactoryConfig } from "./types.ts";
-import { changesInImplementation } from "./validate.ts";
+import { type Building, changesInImplementation } from "./validate.ts";
 
 /** A write the guard refuses: the path, why, and the part of the harness it belongs to when it is harness. */
 export type Refusal = { path: string; part?: string; reason: string };
@@ -88,7 +88,7 @@ export const guard = async (root: string, paths: string[], cwd = root): Promise<
   const config = await projectConfig(root);
   const parts = harness(config);
   const product = under(...productRoots(config));
-  let building: boolean | undefined;
+  let started: Building[] | undefined;
   const refusals: Refusal[] = [];
   for (const given of paths) {
     const path = relative(root, resolve(cwd, given)).split("\\").join("/");
@@ -101,11 +101,13 @@ export const guard = async (root: string, paths: string[], cwd = root): Promise<
         reason: `${path} belongs to the harness (${part.part}) and an agent never writes it: ${part.changes}`,
       });
     else if (product(path)) {
-      building ??= (await changesInImplementation(root)).length > 0;
-      if (!building)
+      started ??= await changesInImplementation(root);
+      if (!started.some((change) => change.builds))
         refusals.push({
           path,
-          reason: `${path} is product code and no change is in implementation: start with the \`plan\` phase, and write product code through the \`implement\` phase once validation reports the change ready`,
+          reason: started.length
+            ? `${path} is product code and the change in implementation (${started.map((c) => `${c.name}, ${c.schema}`).join("; ")}) was made with a schema that builds none: product code is written through a change of a schema that has workstreams, opened by the \`plan\` phase`
+            : `${path} is product code and no change is in implementation: start with the \`plan\` phase, and write product code through the \`implement\` phase once validation reports the change ready`,
         });
     }
   }

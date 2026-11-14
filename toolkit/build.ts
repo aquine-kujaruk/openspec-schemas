@@ -26,7 +26,7 @@ import {
   SETUP_ASSETS,
   SOURCE_EXT,
 } from "./paths.ts";
-import { definitionFiles, loadSchema, type Schema } from "./schema.ts";
+import { definitionFiles, loadSchema, misplaced, type Schema, SCHEMAS, SHARED } from "./schema.ts";
 import { schemaFiles } from "./schema-yaml.ts";
 import type { Installed, PackageManifest } from "./types.ts";
 
@@ -132,13 +132,32 @@ export const build = async (
     engines?: Record<string, string>;
   };
 
+  const wrong = await misplaced(root);
+  if (wrong.length)
+    throw new Error(
+      wrong
+        .map(
+          (w) =>
+            `the ${w.kind} ${w.id} is held in ${w.held.map((h) => `${SCHEMAS}/${h}`).join(" and ")} and belongs in ${SCHEMAS}/${w.belongs}: a resource lives with the one definition that names it, with the one the others extend, or in ${SCHEMAS}/${SHARED} when unrelated definitions name it`,
+        )
+        .join("\n"),
+    );
   const schemas: Schema[] = [];
   for (const schema of manifest.schemas) schemas.push(await loadSchema(schema, root));
-  const workstreams = [...new Set(schemas.flatMap((s) => s.definition.workstreams))];
-  const validators = [...new Set(schemas.map((s) => s.definition.validator))];
-  const policies = [...new Set(schemas.map((s) => s.definition.questions))];
-  const templates = [
-    ...new Set(schemas.flatMap((s) => s.definition.artifacts.map((a) => a.template))),
+  const shared = (folder: string): string => join(SCHEMAS, SHARED, folder);
+  const found = (kinds: string[]): string[] => [
+    ...new Set(
+      schemas.flatMap((s) =>
+        s.resources.filter((r) => kinds.includes(r.kind)).map((r) => relative(root, r.file)),
+      ),
+    ),
+  ];
+  const workstreamDirs = [
+    ...new Map(
+      schemas.flatMap((s) =>
+        Object.entries(s.workstreamDirs).map(([id, dir]) => [id, relative(root, dir)] as const),
+      ),
+    ),
   ];
 
   const resources: Record<string, string> = {};
@@ -157,21 +176,25 @@ export const build = async (
 
   used(manifestPath);
   used(join(root, "package.json"));
+  const definitions: string[] = [];
   for (const schema of manifest.schemas)
-    for (const file of await definitionFiles(schema, root)) used(file);
+    for (const file of await definitionFiles(schema, root))
+      if (!definitions.includes(file)) definitions.push(used(file));
 
   const building = mkdtempSync(join(tmpdir(), `${COMMAND}-build-`));
   try {
     const pkg = join(building, "package");
     const skills = join(pkg, ".apm/skills");
 
-    for (const file of files("phases")) copy(file, join(skills, relative("phases", file)));
-    for (const file of files("skills")) copy(file, join(skills, relative("skills", file)));
+    for (const folder of [shared("phases"), shared("skills")])
+      for (const file of files(folder)) copy(file, join(skills, relative(folder, file)));
     if (!existsSync(join(skills, "setup/SKILL.md")))
-      throw new Error("the package needs skills/setup/SKILL.md: the setup skill carries the command");
-    for (const id of workstreams)
-      for (const file of files(`workstreams/${id}`, "{SKILL.md,*.examples.md}"))
-        copy(file, join(skills, "implement/references", file));
+      throw new Error(
+        `the package needs ${shared("skills")}/setup/SKILL.md: the setup skill carries the command`,
+      );
+    for (const [id, dir] of workstreamDirs)
+      for (const file of files(dir, "{SKILL.md,*.examples.md}"))
+        copy(file, join(skills, "implement/references/workstreams", id, basename(file)));
     for (const { tool, path } of manifest.skills) {
       const from = join(root, "node_modules", tool, path);
       if (!existsSync(join(from, "SKILL.md")))
@@ -179,33 +202,31 @@ export const build = async (
       for (const file of files(relative(root, from)))
         copy(file, join(skills, basename(path), relative(relative(root, from), file)));
     }
-    for (const file of files("instructions", "*.md"))
+    for (const file of files(shared("instructions"), "*.md"))
       copy(file, join(pkg, ".apm/instructions", `${basename(file, ".md")}.instructions.md`));
-    for (const file of files("hooks", "*.json")) copy(file, join(pkg, ".apm/hooks", basename(file)));
+    for (const file of files(shared("hooks"), "*.json"))
+      copy(file, join(pkg, ".apm/hooks", basename(file)));
 
     const command = join(building, "command");
     const compiled = reached(root, [
       "toolkit/cli.ts",
       "toolkit/config.ts",
-      ...workstreams.map((id) => `workstreams/${id}/workstream.ts`),
-      ...validators.map((id) => `validators/${id}/validator.ts`),
+      ...definitions.map((file) => relative(root, file)),
+      ...found(["workstream", "validator"]),
     ]);
     for (const file of compiled)
       write(join(command, file.replace(/\.ts$/, ".js")), javascript(used(join(root, file))));
     for (const file of ["toolkit/config.ts", "toolkit/types.ts"])
       write(join(command, file.replace(/\.ts$/, ".d.ts")), declarations(join(root, file)));
     chmodSync(join(command, "toolkit/cli.js"), 0o755);
-    for (const file of files("review", "*.md")) copy(file, join(command, file));
-    for (const policy of policies)
-      copy(`questions/${policy}.md`, join(command, `questions/${policy}.md`));
-    for (const template of templates)
-      copy(`templates/${template}`, join(command, `templates/${template}`));
-    for (const schema of schemas) {
-      const d = schema.definition;
-      write(join(command, `schemas/${d.name}.js`), `export default ${JSON.stringify(d, null, 2)};\n`);
+    for (const file of [
+      ...found(["question policy", "template"]),
+      ...new Set(schemas.flatMap((s) => (s.rubric ? [relative(root, s.rubric)] : []))),
+    ])
+      copy(file, join(command, file));
+    for (const schema of schemas)
       for (const [path, text] of Object.entries(schemaFiles(schema)))
-        write(join(command, "openspec/schemas", d.name, path), text);
-    }
+        write(join(command, "openspec/schemas", schema.definition.name, path), text);
     write(
       join(command, "package.json"),
       `${JSON.stringify(
@@ -241,14 +262,14 @@ export const build = async (
       command: tarball,
       agents: manifest.agents,
       schemas: manifest.schemas,
-      phases: files("phases", "*/SKILL.md").map((f) => basename(dirname(f))),
+      phases: files(shared("phases"), "*/SKILL.md").map((f) => basename(dirname(f))),
       instructions: Object.fromEntries(
-        files("instructions", "*.md").map((f) => [
+        files(shared("instructions"), "*.md").map((f) => [
           basename(f, ".md"),
           body(readFileSync(join(root, f), "utf8")),
         ]),
       ),
-      guards: files("hooks", "*.json").map((f) => basename(f)),
+      guards: files(shared("hooks"), "*.json").map((f) => basename(f)),
       packageManager: manifest.packageManager,
       project: manifest.project,
     };

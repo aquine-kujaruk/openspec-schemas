@@ -13,6 +13,7 @@ import { readyChange } from "./testing.ts";
 export function createSteps() {
   const root = mkdtempSync(join(tmpdir(), "write-guard-"));
   let building = 0;
+  let made = "clean-backend";
   let active: string | undefined;
   let refusals: Refusal[] = [];
 
@@ -20,7 +21,7 @@ export function createSteps() {
     const names = Array.from({ length: building }, (_, i) =>
       i === 0 && active ? active : `change-${i + 1}`,
     );
-    for (const name of names) readyChange(root, name);
+    for (const name of names) readyChange(root, name, { schema: made });
     if (active && !names.includes(active)) readyChange(root, active, { done: true });
   };
 
@@ -36,6 +37,10 @@ export function createSteps() {
     },
     async activeChange(change: string): Promise<void> {
       active = change;
+    },
+    async changeInImplementationWithSchema(schema: string): Promise<void> {
+      building = 1;
+      made = schema;
     },
 
     // Action

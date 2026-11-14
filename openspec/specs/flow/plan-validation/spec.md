@@ -156,7 +156,7 @@ A procedure SHALL name where a credential is kept and SHALL NOT contain a creden
 
 ### Requirement: Every task belongs to one workstream of the schema
 
-Every checkbox in a plan is a task, and every task SHALL sit inside a phase and name one workstream of the change's schema. Validation SHALL report the change as not ready when a task names a workstream the schema does not have or sits outside a phase.
+Every checkbox in a plan is a task, and every task SHALL sit inside a phase. When the change's schema has workstreams, every task SHALL name one of them. When it has none, no task SHALL name a workstream. Validation SHALL report the change as not ready when a task sits outside a phase, names a workstream the schema does not have, or names none in a schema that has some.
 
 #### Scenario Outline: a task naming `<workstream>` placed `<placement>` makes the change `<readiness>`
 
@@ -172,6 +172,10 @@ Every checkbox in a plan is a task, and every task SHALL sit inside a phase and 
   | app-domain, infrastructure, adapters, clean-architecture, integrate | app-domain | inside a phase  | ready     |
   | app-domain, infrastructure, adapters, clean-architecture, integrate | react-ui   | inside a phase  | not ready |
   | app-domain, infrastructure, adapters, clean-architecture, integrate | app-domain | outside a phase | not ready |
+  | app-domain, infrastructure, adapters, clean-architecture, integrate | none       | inside a phase  | not ready |
+  | none                                                                | none       | inside a phase  | ready     |
+  | none                                                                | app-domain | inside a phase  | not ready |
+  | none                                                                | none       | outside a phase | not ready |
 
 ### Requirement: A change without delta specs says so
 

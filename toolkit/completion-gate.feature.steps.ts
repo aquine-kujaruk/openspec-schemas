@@ -62,6 +62,8 @@ export function createSteps() {
   };
   let findings: string[] = [];
   let building = 1;
+  let made = "clean-backend";
+  let productFails: boolean | undefined;
   let failed = 0;
   let altered: string | undefined;
   let outcome: Verdict | undefined;
@@ -74,7 +76,7 @@ export function createSteps() {
     symlinkSync(join("../..", SCHEMA), join(root, "openspec/schemas/clean-backend"));
     write(root, "openspec/specs/orders/list-orders/spec.md", SPEC);
     write(root, "openspec/config.yaml", "schema: clean-backend\n");
-    if (building) readyChange(root, CHANGE);
+    if (building) readyChange(root, CHANGE, { schema: made });
     run(process.execPath, CLI, "generate");
     write(root, ".gitignore", "node_modules\n");
     run("git", "init", "-q");
@@ -110,12 +112,23 @@ export function createSteps() {
     async changesInImplementation(changes: string): Promise<void> {
       building = Number(changes);
     },
+    async changeInImplementationWithSchema(schema: string): Promise<void> {
+      made = schema;
+    },
+    async productChecks(checks: string): Promise<void> {
+      productFails = checks === "fail";
+    },
 
     // Action
     async aboutToFinish(agentKind: string): Promise<void> {
       expect(["main", "helper"]).toContain(agentKind);
       project();
-      outcome = await gate(root, { checks: async () => findings });
+      outcome = await gate(
+        root,
+        productFails === undefined
+          ? { checks: async () => findings }
+          : { run: () => ({ status: productFails ? 1 : 0, output: "a rule is broken" }) },
+      );
     },
 
     // Outcome

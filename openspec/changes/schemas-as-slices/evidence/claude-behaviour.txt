@@ -1,0 +1,147 @@
+agent: Claude Code (claude-work -p, project settings only)
+prompt: Use the plan skill for this intention: a caller can list the orders of a customer, newest first; each order keeps its id, its customer id, its total in integer cents and the date it was placed. Money is integer cents everywhere, that is decided. Pick everything else yourself.
+
+tool_use Skill: {"skill":"plan","args":"A caller can list the orders of a customer, newest first; each order keeps its id, its customer id, its total in integer cents and the date it was placed. Money is integer cents everywhere (decided). Everything else is the agent's choice."}
+tool_result error=false: Launching skill: plan
+user: Base directory for this skill: <project>/.claude/skills/plan
+
+# plan
+
+The artifacts are the handoff: everything decided ends up in the plan or in a delta spec.
+
+1. `pnpm exec factory doctor`. When it prints anything as `missing` or `drift`, follow the `setup` skill first. A `note` is for the person: relay it once and go on.
+2. Decide whether the intention changes anything: behaviour, code, a standing decision or a procedure. A question about the system changes nothing: answer it and stop here. An intention about a change that is already open belongs to the `feedback` skill.
+3.…
+tool_use Bash: {"command":"pnpm exec factory doctor; echo \"---\"; pnpm exec factory schemas; echo \"---\"; ls -R openspec | head -80; git status --short","description":"Run factory doctor, list schemas, and show the openspec tree"}
+tool_result error=false: nothing is lacking
+note: codex runs the guards only in a project it trusts and after each hook is reviewed with /hooks; review them again after every update that changes them
+---
+clean-backend
+  Clean Architecture for a backend: delta specs per use case and one plan that carries the decisions, the procedures and the tasks. Use it for a change to the behaviour or the code of the product
+  workstreams: app-domain, infrastructure, adapters, clean-architecture, integrate
+spec-plan
+  A plan and delta specs with no architecture. Use it for a change no other schema of the project covers: a procedure, a decision, tooling, documents
+  no workstreams: its tasks name none
+---
+openspec:
+adr
+changes
+conf…
+tool_use Bash: {"command":"cat openspec/changes/diagnose-orders-production-outage/plan.md; echo ---; cat openspec/config.yaml; ls -la . src 2>/dev/null; cat package.json; pnpm exec factory openspec new change list-customer-orders --schema clean-backend; ls .claude/skills/implement/references/workstreams/","descrip…
+tool_result error=false: ---
+name: diagnose-orders-production-outage
+description: Record a production orders outage diagnostic procedure with a known log location and ordered checks.
+created_at: 2026-11-14
+created_by: user
+schema: spec-plan
+---
+
+# Diagnose an orders production outage
+
+## Goal
+
+An on-call responder can find production orders logs and diagnose a 503 incident without first searching for access instructions. The runbook checks error rate before database connections and records evidence sufficient for a handoff.
+
+## Decisions
+
+- Deliver a procedure using spec-plan; discard product changes and delta specs because software behaviour is unchanged (`skip_specs: true`).
+- Record the complete procedure in this…
+tool_use Bash: {"command":"cd .claude/skills/implement/references/workstreams && for w in *; do echo \"=== $w\"; cat $w/SKILL.md; ls $w; done; cd - >/dev/null; pnpm exec factory openspec status --change list-customer-orders --json","description":"Read every workstream skill and the change's artifact status"}
+tool_result error=true: A variable in this command can't be checked before it runs
+tool_use Bash: {"command":"cat .claude/skills/implement/references/workstreams/*/SKILL.md; ls -R .claude/skills/implement/references/workstreams; pnpm exec factory openspec status --change list-customer-orders --json","description":"Read every workstream skill and the change's artifact status"}
+tool_result error=false: ---
+name: adapters
+description: Build the adapters workstream of the implementer: the resource adapters behind each anti-corruption layer, the only place where the environment lives. Read from the implement skill.
+---
+
+# adapters
+
+**Owns:** `src/<module>/infrastructure/adapters/` and `src/shared/infrastructure/adapters/` (the base adapters every module composes, such as `http-api.adapter.ts`).
+
+**Receives:** the ACLs of `infrastructure` (`acl/<name>.acl.ts`: `interface <Name>Acl` and the schemas of its records), fixed before this workstream starts, and the domain exceptions an adapter throws. The ACL is the seam: a repository implementation receives an adapter typed by it and never imports o…
+tool_use Bash: {"command":"pnpm exec factory openspec instructions plan --change list-customer-orders --json | jq -r '.instruction, \"=====TEMPLATE\", .template, \"=====\", (del(.instruction,.template)|tostring)'; pnpm exec factory openspec instructions specs --change list-customer-orders --json | jq -r '.instruct…
+tool_result error=false: Write the plan from your own decisions before asking the person anything, then update it once per answer. Keep every section of the template, in order; a section with nothing to say keeps its heading.
+
+Write each decision where its scope sends it:
+
+- A user of the product notices it: a delta spec.
+- A future change must respect it: an architecture decision.
+- It says how the system is set up, reached, diagnosed or operated: a procedure.
+- It matters only to this change: one line under Decisions, naming the alternative you discarded.
+- It would hold in any project: leave it out of the change and report it as a proposal for the schema's repository.
+
+Architecture decisions and procedures are du…
+tool_use Bash: {"command":"cd .claude/skills/implement/references/workstreams; wc -l */*.examples.md; awk '/^## reference/{p=1} /^## /&&!/^## reference/{p=0} p' app-domain/application.examples.md app-domain/domain.examples.md app-domain/acceptance.examples.md infrastructure/infrastructure.examples.md adapters/adap…
+tool_result error=true: This Bash command contains multiple operations. The following part requires approval: awk '/^## reference/{p=1} /^## /&&!/^## reference/{p=0} p' app-domain/application.examples.md app-domain/domain.examples.md app-domain/acceptance.examples.md infrastructure/infrastructure.examples.md adapters/adapters.examples.md clean-architecture/modules.examples.md
+tool_use Bash: {"command":"wc -l .claude/skills/implement/references/workstreams/*/*.examples.md; grep -n '^## ' .claude/skills/implement/references/workstreams/*/*.examples.md","description":"Show sizes and section headings of the example files"}
+tool_result error=false:   342 .claude/skills/implement/references/workstreams/adapters/adapters.examples.md
+  246 .claude/skills/implement/references/workstreams/app-domain/acceptance.examples.md
+  267 .claude/skills/implement/references/workstreams/app-domain/application.examples.md
+  511 .claude/skills/implement/references/workstreams/app-domain/domain.examples.md
+  270 .claude/skills/implement/references/workstreams/clean-architecture/modules.examples.md
+  423 .claude/skills/implement/references/workstreams/infrastructure/infrastructure.examples.md
+   50 .claude/skills/implement/references/workstreams/infrastructure/integration.examples.md
+ 2109 total
+.claude/skills/implement/references/workstreams/clean-archite…
+tool_use Bash: {"command":"cd .claude/skills/implement/references/workstreams; sed -n 1,165p app-domain/application.examples.md; sed -n 1,162p app-domain/domain.examples.md; sed -n 297,350p app-domain/domain.examples.md; sed -n 1,90p app-domain/acceptance.examples.md; sed -n 1,103p infrastructure/infrastructure.ex…
+tool_result error=false: # application
+
+## reference
+
+```ts src/module/application/repository-interfaces/invoice.repository-interface.ts
+import type { InvoiceProps } from "../../domain/schemas/invoice.schema";
+export interface InvoiceRepositoryInterface {
+  listInvoices(): Promise<InvoiceProps[]>;
+  findInvoice(invoiceId: string): Promise<InvoiceProps | null>;
+}
+```
+
+```ts src/module/application/use-cases/list-invoices.use-case.ts
+import { InvoiceEntity } from "../../domain/entities/invoice.entity";
+import type { InvoiceRepositoryInterface } from "../repository-interfaces/invoice.repository-interface";
+export class ListInvoicesUseCase {
+  constructor(private readonly invoices: InvoiceRepositoryInterface) {}
+  async …
+tool_use Bash: {"command":"cd <project> && ls -a openspec/changes/list-customer-orders && cat openspec/changes/list-customer-orders/.openspec.yaml; ls openspec/schemas/clean-backend; ls .claude/skil…
+tool_result error=true: This command changes directory before running a version-control command, which can pick up untrusted hooks or repository configuration from the target directory. Approve only if you trust it.
+tool_use Bash: {"command":"P=<project>; ls -a $P/openspec/changes/list-customer-orders; cat $P/openspec/changes/list-customer-orders/.openspec.yaml; ls $P/openspec/schemas/clean-backend","descriptio…
+tool_result error=true: A variable set in this command can't be checked before it runs
+tool_use Bash: {"command":"ls -a ../../../../../openspec/changes/list-customer-orders; cat ../../../../../openspec/changes/list-customer-orders/.openspec.yaml; ls ../../../../../openspec/schemas/clean-backend","description":"Inspect the new change folder and schema files"}
+tool_result error=false: .
+..
+.openspec.yaml
+schema: clean-backend
+created: 2026-11-14
+schema.yaml
+templates
+assistant: Context is gathered (schema, workstream rules, artifact templates); now writing the plan and the delta spec for `list-customer-orders`, then validating.
+tool_use Write: {"file_path":"<project>/openspec/changes/list-customer-orders/specs/orders/list-customer-orders/spec.md","content":"## Purpose\n\nListing the orders a customer has placed, newest firs…
+[hook_started] PreToolUse exit= {}
+[hook_response] PreToolUse exit=1 {"outcome":"error","stdout":"undefined\n<project>/.claude/skills/implement/references/workstreams:\n[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command \"factory\" not found\n\nDid you mean \"pnpm exec factory\"?\n","stderr":"","output":"undefined\n<project>/.claude/skills/implement/references/workstreams:\n[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command \"factory\" not found\n\nDid you mean \"pnpm exec factory\"?\n"}
+tool_result error=false: File created successfully at: <project>/openspec/changes/list-customer-orders/specs/orders/list-customer-orders/spec.md (file state is current in your context — no need to Read it back)
+tool_use Write: {"file_path":"<project>/openspec/changes/list-customer-orders/plan.md","content":"---\nname: list-customer-orders\ndescription: A caller can list the orders of a customer, newest firs…
+[hook_started] PreToolUse exit= {}
+[hook_response] PreToolUse exit=1 {"outcome":"error","stdout":"undefined\n<project>/.claude/skills/implement/references/workstreams:\n[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command \"factory\" not found\n\nDid you mean \"pnpm exec factory\"?\n","stderr":"","output":"undefined\n<project>/.claude/skills/implement/references/workstreams:\n[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command \"factory\" not found\n\nDid you mean \"pnpm exec factory\"?\n"}
+tool_result error=false: File created successfully at: <project>/openspec/changes/list-customer-orders/plan.md (file state is current in your context — no need to Read it back)
+tool_use Bash: {"command":"cd ../../../../.. && pnpm exec factory validate list-customer-orders","description":"Validate the change"}
+tool_result error=false: ready: list-customer-orders (clean-backend)
+assistant: The change `list-customer-orders` is planned and `pnpm exec factory validate list-customer-orders` reports it `ready`. Nothing is built yet; building it is the `implement` skill, in a run you start.
+
+It uses the `clean-backend` schema and creates the project's first module, `orders`. No open questions are left, because you delegated everything except integer cents.
+
+Your decision is recorded as a standing architecture decision, `money-integer-cents`: every amount is a whole number of cents in every layer, its name ends in `Cents`, and its schema rejects non-integers. I tagged it as enforced by review, since no automated rule checks it.
+
+What I picked for the rest:
+
+- **Sorting:** newest firs…
+[hook_started] Stop exit= {}
+[hook_response] Stop exit=0 {"outcome":"success","stdout":"","stderr":"","output":""}
+result: turns=17 error=false reason=completed :: The change `list-customer-orders` is planned and `pnpm exec factory validate list-customer-orders` reports it `ready`. Nothing is built yet; building it is the `implement` skill, in a run you start.
+
+It uses the `clean-backend` schema and creates the project's first module, `orders`. No open questions are left, because you delegated everything except integer cents.
+
+Your decision is recorded as a standing architecture decision, `money-integer-cents`: every amount is a whole number of cents in every layer, its name ends in `Cents`, and its schema rejects non-integers. I tagged it as enforced by review, since no automated rule checks it.
+
+What I picked for the rest:
+
+- **Sorting:** newest firs…

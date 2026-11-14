@@ -1,4 +1,4 @@
-schema: spec-driven
+schema: spec-plan
 
 context: |
   This repository holds OpenSpec schemas, the resources they are built from and the packages

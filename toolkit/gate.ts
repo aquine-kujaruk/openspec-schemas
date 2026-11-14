@@ -6,9 +6,8 @@ import { CHANGES, GATE } from "./change.ts";
 import { PLACES, readInstalled, schemaLinkHolds, unwiredGuards } from "./doctor.ts";
 import { hookInput, projectOf } from "./guard.ts";
 import { capture, self } from "./paths.ts";
-import type { Plan } from "./plan.ts";
-import { loadSchema, projectConfig, projectSchemaName } from "./schema.ts";
-import { changesInImplementation } from "./validate.ts";
+import { loadSchema, projectConfig } from "./schema.ts";
+import { type Building, changesInImplementation } from "./validate.ts";
 
 /** How many failed attempts in a row hand a change to the person. */
 export const ATTEMPTS = 3;
@@ -24,14 +23,17 @@ export type GateRecord = {
 };
 
 export type Verdict = { allowed: boolean; findings: string[] };
-type Building = { name: string; plan: Plan };
 
 export type GateOptions = {
   /** The agent finishing is a helper of the one that builds: its passing ends nothing. */
   helper?: boolean;
   /** The findings of the checks of the phase `change` is building; the real checks by default. */
   checks?: (root: string, change: Building) => Promise<string[]>;
+  /** Runs one of the command's own checks; the real command by default. */
+  run?: Runner;
 };
+
+type Runner = (root: string, args: string[]) => { status: number | null; output: string };
 
 const recordPath = (root: string, change: string) => join(root, CHANGES, change, GATE);
 
@@ -100,9 +102,14 @@ export const alteredHarness = (root: string): string[] => {
 /**
  * The checks of the phase a change is building, which is the one the implement phase started: the
  * rules of the workstreams its tasks name, with those upstream of them, and the product tests those
- * workstreams are proved by.
+ * workstreams are proved by. The workstreams are those of the change's own schema, so a change
+ * whose schema has none is checked by nothing here.
  */
-export const phaseChecks = async (root: string, change: Building): Promise<string[]> => {
+export const phaseChecks = async (
+  root: string,
+  change: Building,
+  run: Runner = (at, args) => self(at, args),
+): Promise<string[]> => {
   const started = readGate(root, change.name).phase;
   const phase =
     change.plan.phases.find((p) => p.title === started) ??
@@ -110,7 +117,7 @@ export const phaseChecks = async (root: string, change: Building): Promise<strin
   if (!phase) return [];
   const [config, schema] = [
     await projectConfig(root),
-    await loadSchema(projectSchemaName(root)),
+    await loadSchema(change.schema),
   ];
   const upstream = (id: string, seen = new Set<string>()): Set<string> => {
     for (const d of config.workstreams[id]?.dependsOn ?? [])
@@ -123,14 +130,14 @@ export const phaseChecks = async (root: string, change: Building): Promise<strin
   const covered = new Set(named.flatMap((id) => [...upstream(id)]));
   const found: string[] = [];
   for (const id of named.filter((id) => !covered.has(id))) {
-    const r = command(root, "check", "--workstream", id);
+    const r = run(root, ["check", "--workstream", id]);
     if (r.status !== 0) found.push(`the check of ${id} fails:\n${r.output}`);
   }
   const kinds = new Set(
     [...new Set([...named, ...covered])].flatMap((id) => schema.workstreams[id]?.tests ?? []),
   );
   for (const kind of kinds) {
-    const r = command(root, "test", kind);
+    const r = run(root, ["test", kind]);
     if (r.status !== 0) found.push(`the ${kind} tests fail:\n${r.output}`);
   }
   return found;
@@ -144,7 +151,7 @@ export const phaseChecks = async (root: string, change: Building): Promise<strin
  */
 export const gate = async (
   root: string,
-  { checks = phaseChecks, helper = false }: GateOptions = {},
+  { run, checks = (at, change) => phaseChecks(at, change, run), helper = false }: GateOptions = {},
 ): Promise<Verdict> => {
   const building = await changesInImplementation(root);
   if (!building.length) return { allowed: true, findings: [] };

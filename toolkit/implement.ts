@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { activeChanges, CHANGES, GATE, readChange } from "./change.ts";
 import { PROJECT_ROOT, self } from "./paths.ts";
 import { parsePlan } from "./plan.ts";
+import { loadSchema } from "./schema.ts";
 import { NotValidatable, validateChange } from "./validate.ts";
 
 export type Started =
@@ -23,7 +24,9 @@ export const start = async (root: string, name: string): Promise<Started> => {
     p.tasks.some((t) => !t.done),
   );
   if (!phase) return { state: "nothing to build" };
-  for (const step of ["prepare", "generate"]) {
+  // The product's roots are laid only for a schema that builds product code.
+  const builds = (await loadSchema(verdict.schema)).definition.workstreams.length > 0;
+  for (const step of builds ? ["prepare", "generate"] : ["generate"]) {
     const r = self(root, [step]);
     if (r.status !== 0) return { state: "cannot start", findings: [r.output] };
   }

@@ -5,7 +5,7 @@ import { DECISIONS, PROCEDURES, readConsolidated } from "./consolidated.ts";
 import { digestOf, readEvidence } from "./evidence.ts";
 import { raise } from "./feedback.ts";
 import { openspec } from "./merged.ts";
-import { PROJECT_ROOT, self } from "./paths.ts";
+import { DEVELOPING, PROJECT_ROOT, self } from "./paths.ts";
 import { type Block, operationsOf, parsePlan, tagOf } from "./plan.ts";
 import { NotValidatable, validateChange } from "./validate.ts";
 
@@ -199,7 +199,8 @@ export const run = async (args: string[]): Promise<number> => {
     );
   if (!report.length) console.log("no active change");
   if (report.some((r) => r.place === "archived")) {
-    const checks = self(PROJECT_ROOT, ["check"]);
+    // The repository that develops the command is no product: there, only what is generated is checked.
+    const checks = self(PROJECT_ROOT, DEVELOPING ? ["generate", "--check"] : ["check"]);
     console.log(checks.status === 0 ? "every check passes" : `the checks fail:\n${checks.output}`);
     if (checks.status !== 0) return 1;
   }
