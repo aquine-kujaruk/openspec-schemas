@@ -14,6 +14,8 @@ export type ScenarioResult = {
   requirement: string;
   scenario: string;
   result: "passed" | "failed" | "missing";
+  /** Who says so, when no test does: a spec no test is generated from, proved by the person's word. */
+  by?: "the person";
 };
 
 /** What verifying a change found, and the state of the project it was found in. */
@@ -70,7 +72,12 @@ export const writeEvidence = (root: string, evidence: Evidence): void => {
     `# Evidence of ${change}`,
     `## Scenarios\n\n${table(
       ["Use case", "Requirement", "Scenario", "Result"],
-      scenarios.map((s) => [s.spec, s.requirement, s.scenario.replaceAll("|", "\\|"), s.result]),
+      scenarios.map((s) => [
+        s.spec,
+        s.requirement,
+        s.scenario.replaceAll("|", "\\|"),
+        s.by ? `${s.result}, by the person's word` : s.result,
+      ]),
     )}`,
     `## Checks\n\n${
       failing.length

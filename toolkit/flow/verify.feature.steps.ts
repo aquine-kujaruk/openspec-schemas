@@ -32,6 +32,12 @@ export function createSteps() {
   let tagged: string | undefined;
   let evidence: Evidence | undefined;
   let changed = -1;
+  // The scenarios on where a spec's test is written: the layout is the scenario's, the tests stood in for.
+  let delivered: { repository: boolean; spec: string } | undefined;
+  const adapters = new Map<string, string>();
+  let written = true;
+  const vouched: string[] = [];
+  let asked: string[] = [];
 
   return {
     // Context
@@ -60,9 +66,50 @@ export function createSteps() {
     async planProcedureTaggedFor(env: string): Promise<void> {
       tagged = env;
     },
+    async changeOfWithDeltaSpec(where: string, spec: string): Promise<void> {
+      expect(["a project", "the command's repository"]).toContain(where);
+      delivered = { repository: where === "the command's repository", spec };
+    },
+    async stepAdapterHeldIn(spec: string, adapterFolder: string): Promise<void> {
+      adapters.set(spec, adapterFolder);
+    },
+    async generationWritesTests(tests: string, spec: string): Promise<void> {
+      written = Number(tests) > 0;
+      if (!written) adapters.delete(spec);
+    },
+    async personsWordOn(spec: string, word: string): Promise<void> {
+      if (word === "proved") vouched.push(spec);
+      else expect(word).toBe("none");
+    },
 
     // Action
     async verifyChange(): Promise<void> {
+      if (delivered) {
+        const { repository, spec } = delivered;
+        writeChange(root, CHANGE, { deltas: { [spec]: delta() }, parts: { phases: [true] } });
+        evidence = await verify(root, CHANGE, {
+          env: {},
+          checks: async () => [],
+          proved: vouched,
+          layout: {
+            repository,
+            acceptance: "test/acceptance",
+            adapterFolder: (of) => adapters.get(of),
+          },
+          tests: async (_, files) => {
+            asked = files;
+            return written
+              ? files.map((name) => ({
+                  name: join(root, name),
+                  assertionResults: [
+                    { ancestorTitles: ["Rule: An order is found"], title: "scenario 1", status: "passed" },
+                  ],
+                }))
+              : [];
+          },
+        });
+        return;
+      }
       writeChange(root, CHANGE, {
         deltas: total ? { "orders/get-order": delta() } : {},
         parts: {
@@ -116,6 +163,22 @@ export function createSteps() {
     },
     async evidenceRecordsProcedureAs(env: string, treatment: string): Promise<void> {
       expect(evidence!.procedures).toMatchObject([{ slug: PROCEDURE, env, treatment }]);
+    },
+    async scenariosReadFromTest(test: string): Promise<void> {
+      expect(asked).toEqual([test]);
+      expect(evidence!.scenarios).toMatchObject([{ scenario: "scenario 1", result: "passed" }]);
+    },
+    async evidenceRecordsSpecAs(spec: string, proof: string): Promise<void> {
+      const [recorded] = evidence!.scenarios.filter((s) => s.spec === spec);
+      const text = readFileSync(join(root, "openspec/changes", CHANGE, "evidence.md"), "utf8");
+      if (proof === "proved by the person's word") {
+        expect(recorded).toMatchObject({ result: "passed", by: "the person" });
+        expect(text).toContain("passed, by the person's word");
+      } else {
+        expect(proof).toBe("unproved");
+        expect(recorded).toMatchObject({ result: "missing" });
+        expect(text).not.toContain("by the person's word");
+      }
     },
   };
 }

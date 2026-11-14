@@ -1,15 +1,9 @@
 import { existsSync, globSync, mkdirSync, readFileSync, rmSync } from "node:fs";
-import { basename, dirname, join } from "node:path";
-import { ownerOf } from "./graph.ts";
+import { basename, dirname, join, relative } from "node:path";
+import { layoutOf, testOf } from "./generated.ts";
 import { mergedSpecs } from "../flow/merged.ts";
-import {
-  ARCHITECTURE_SPECS,
-  DEVELOPING,
-  PACKAGE_ROOT,
-  PROJECT_ROOT,
-  runTool,
-} from "../core/paths.ts";
-import { architecture, config, WORKSTREAM_DIRS } from "./project.ts";
+import { DEVELOPING, PROJECT_ROOT, runTool } from "../core/paths.ts";
+import { config } from "./project.ts";
 import { loadSchema, schemaNames } from "../repository/schema.ts";
 import { emitSchema, schemaFiles } from "../repository/schema-yaml.ts";
 
@@ -86,20 +80,6 @@ export const generate = async (args: string[]): Promise<number> => {
         console.error(`out of date: openspec/schemas/${name}: run \`pnpm exec factory generate\``);
       }
     }
-    const adapters = new Map(
-      globSync("**/*.feature.steps.ts", {
-        cwd: PACKAGE_ROOT,
-        exclude: (f) => ["node_modules", "dist", "workstreams"].includes(f),
-      }).map((f) => [basename(f, ".feature.steps.ts"), join(PACKAGE_ROOT, dirname(f))]),
-    );
-    for (const spec of globSync("openspec/specs/**/spec.md").sort()) {
-      const capability = basename(dirname(spec));
-      const owner = spec.startsWith(`${ARCHITECTURE_SPECS}/`)
-        ? ownerOf(architecture.workstreams, capability)
-        : undefined;
-      const dir = owner ? WORKSTREAM_DIRS[owner.id] : adapters.get(capability);
-      if (dir) write(spec, dir, capability);
-    }
   }
 
   let merged: Awaited<ReturnType<typeof mergedSpecs>>;
@@ -111,6 +91,15 @@ export const generate = async (args: string[]): Promise<number> => {
   }
   try {
     const from = merged?.root ?? PROJECT_ROOT;
+    if (DEVELOPING) {
+      // The command's own specs, each generated where its step adapter is, as ready changes leave them.
+      const layout = await layoutOf(PROJECT_ROOT);
+      for (const file of globSync("openspec/specs/**/spec.md", { cwd: from }).sort()) {
+        const spec = relative("openspec/specs", dirname(file));
+        const test = testOf(spec, layout);
+        if (test) write(join(from, file), dirname(test), basename(spec));
+      }
+    }
     for (const spec of globSync(productSpecs, { cwd: from }).sort()) {
       const useCase = basename(dirname(spec));
       const module = basename(dirname(dirname(spec)));

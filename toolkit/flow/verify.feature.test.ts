@@ -228,4 +228,90 @@ describe('Feature: flow/verify Specification', () => {
       await steps.evidenceRecordsProcedureAs('prod', 'reviewed only')
     })
   })
+
+  describe('Rule: A scenario is matched to the test generated from its spec, where generation writes it', () => {
+    // Line 97
+    test('verifying in `a project`, the scenarios of `orders/get-order` are read from `test/acceptance/orders/get-order.feature.test.ts`', async () => {
+      const steps = createSteps()
+
+      // Given a change of `a project` with a delta spec `orders/get-order`
+      await steps.changeOfWithDeltaSpec('a project', 'orders/get-order')
+      // And the step adapter of `orders/get-order` is held in `test/acceptance/orders`
+      await steps.stepAdapterHeldIn('orders/get-order', 'test/acceptance/orders')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then its scenarios are read from the test `test/acceptance/orders/get-order.feature.test.ts`
+      await steps.scenariosReadFromTest('test/acceptance/orders/get-order.feature.test.ts')
+    })
+
+    // Line 97
+    test('verifying in `the command\'s repository`, the scenarios of `flow/verify` are read from `toolkit/flow/verify.feature.test.ts`', async () => {
+      const steps = createSteps()
+
+      // Given a change of `the command's repository` with a delta spec `flow/verify`
+      await steps.changeOfWithDeltaSpec('the command\'s repository', 'flow/verify')
+      // And the step adapter of `flow/verify` is held in `toolkit/flow`
+      await steps.stepAdapterHeldIn('flow/verify', 'toolkit/flow')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then its scenarios are read from the test `toolkit/flow/verify.feature.test.ts`
+      await steps.scenariosReadFromTest('toolkit/flow/verify.feature.test.ts')
+    })
+  })
+
+  describe('Rule: A spec no test is generated from is proved by the person\'s word', () => {
+    // Line 112
+    test('in `the command\'s repository`, `flow/plan` with `0` generated test(s) and the person\'s word `none` is `unproved`', async () => {
+      const steps = createSteps()
+
+      // Given a change of `the command's repository` with a delta spec `flow/plan`
+      await steps.changeOfWithDeltaSpec('the command\'s repository', 'flow/plan')
+      // And generation writes `0` test(s) for `flow/plan`
+      await steps.generationWritesTests('0', 'flow/plan')
+      // And the person's word on `flow/plan` is `none`
+      await steps.personsWordOn('flow/plan', 'none')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the evidence records `flow/plan` as `unproved`
+      await steps.evidenceRecordsSpecAs('flow/plan', 'unproved')
+      // And the change is reported `not verified`
+      await steps.changeReportedAs('not verified')
+    })
+
+    // Line 112
+    test('in `the command\'s repository`, `flow/plan` with `0` generated test(s) and the person\'s word `proved` is `proved by the person\'s word`', async () => {
+      const steps = createSteps()
+
+      // Given a change of `the command's repository` with a delta spec `flow/plan`
+      await steps.changeOfWithDeltaSpec('the command\'s repository', 'flow/plan')
+      // And generation writes `0` test(s) for `flow/plan`
+      await steps.generationWritesTests('0', 'flow/plan')
+      // And the person's word on `flow/plan` is `proved`
+      await steps.personsWordOn('flow/plan', 'proved')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the evidence records `flow/plan` as `proved by the person's word`
+      await steps.evidenceRecordsSpecAs('flow/plan', 'proved by the person\'s word')
+      // And the change is reported `verified`
+      await steps.changeReportedAs('verified')
+    })
+
+    // Line 112
+    test('in `a project`, `orders/get-order` with `0` generated test(s) and the person\'s word `proved` is `unproved`', async () => {
+      const steps = createSteps()
+
+      // Given a change of `a project` with a delta spec `orders/get-order`
+      await steps.changeOfWithDeltaSpec('a project', 'orders/get-order')
+      // And generation writes `0` test(s) for `orders/get-order`
+      await steps.generationWritesTests('0', 'orders/get-order')
+      // And the person's word on `orders/get-order` is `proved`
+      await steps.personsWordOn('orders/get-order', 'proved')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the evidence records `orders/get-order` as `unproved`
+      await steps.evidenceRecordsSpecAs('orders/get-order', 'unproved')
+      // And the change is reported `not verified`
+      await steps.changeReportedAs('not verified')
+    })
+  })
 })

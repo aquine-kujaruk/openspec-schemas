@@ -1,9 +1,18 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { change, delta } from "../core/testing.ts";
 
 /** Spec: `implementer`, "Acceptance tests are generated from the product specs". */
 const CLI = fileURLToPath(new URL("../cli.ts", import.meta.url));
@@ -70,4 +79,48 @@ describe("acceptance tests are generated from the product specs", () => {
     writeFileSync(join(cwd, SPEC), spec(["2     | 4      ", "3     | 6      "]));
     expect(generate(cwd, "--check").status).not.toBe(0);
   }, 60_000);
+});
+
+/** Spec: `implementer`, "The command's own tests are generated from its specs as ready changes leave them". */
+describe("in the command's repository, a ready change's delta has its tests before it is archived", () => {
+  const REPOSITORY = fileURLToPath(new URL("../..", import.meta.url));
+  const GENERATED = "toolkit/flow/verify.feature.test.ts";
+
+  const copy = (): string => {
+    const cwd = mkdtempSync(join(tmpdir(), "repository-"));
+    const files = spawnSync("git", ["ls-files", "-co", "--exclude-standard"], {
+      cwd: REPOSITORY,
+      encoding: "utf8",
+    })
+      .stdout.split("\n")
+      .filter((f) => f && !f.startsWith("openspec/changes/") && existsSync(join(REPOSITORY, f)));
+    for (const file of files) {
+      mkdirSync(join(cwd, dirname(file)), { recursive: true });
+      cpSync(join(REPOSITORY, file), join(cwd, file));
+    }
+    symlinkSync(join(REPOSITORY, "node_modules"), join(cwd, "node_modules"));
+    return cwd;
+  };
+  const scenarios = (cwd: string): number => {
+    const r = spawnSync(process.execPath, [join(cwd, "toolkit/cli.ts"), "generate"], {
+      cwd,
+      encoding: "utf8",
+    });
+    expect(r.status, `${r.stdout}\n${r.stderr}`).toBe(0);
+    return readFileSync(join(cwd, GENERATED), "utf8").split("\n").filter((l) => /^\s*test\(/.test(l))
+      .length;
+  };
+
+  it("generates the scenario a ready change adds, and none for a change that is not ready", () => {
+    const cwd = copy();
+    const standing = scenarios(cwd);
+    change(cwd, "probe", {
+      schema: "spec-plan",
+      deltas: { "flow/verify": delta() },
+      parts: { questions: ["Which one?"] },
+    });
+    expect(scenarios(cwd)).toBe(standing);
+    change(cwd, "probe", { schema: "spec-plan", deltas: { "flow/verify": delta() } });
+    expect(scenarios(cwd)).toBe(standing + 1);
+  });
 });

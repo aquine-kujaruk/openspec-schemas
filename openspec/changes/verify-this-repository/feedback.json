@@ -1,0 +1,9 @@
+[
+  {
+    "source": "the verify phase",
+    "names": "app-domain",
+    "findings": [
+      "implementer: no generated test ran missing"
+    ]
+  }
+]

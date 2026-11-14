@@ -1,10 +1,11 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { type Layout, layoutOf, testOf } from "../architecture/generated.ts";
 import { loadEnv } from "../architecture/review/env.ts";
 import { activeChanges, readChange } from "./change.ts";
 import { digestOf, type Evidence, type ScenarioResult, writeEvidence } from "./evidence.ts";
 import { raise } from "./feedback.ts";
-import { cacheDir, PROJECT_ROOT, self } from "../core/paths.ts";
+import { cacheDir, capture, PROJECT_ROOT, self } from "../core/paths.ts";
 import { parsePlan, tagOf } from "./plan.ts";
 import { loadSchema, projectConfig, projectSchemaName, schemaNames } from "../repository/schema.ts";
 
@@ -23,6 +24,12 @@ export type VerifyOptions = {
   review?: (root: string, key: string) => Promise<string[]>;
   /** How each procedure went where it was executed, by `<slug>@<environment>`. */
   procedures?: Record<string, "passed" | "failed">;
+  /** The specs the person states are proved. It counts only for a spec no test is generated from. */
+  proved?: string[];
+  /** Where generated tests are written; the layout of the project at `root` by default. */
+  layout?: Layout;
+  /** Runs the generated tests `files` and reports each; the project's own test runner by default. */
+  tests?: (root: string, files: string[]) => Promise<TestReport["testResults"]>;
 };
 
 type TestReport = {
@@ -32,20 +39,43 @@ type TestReport = {
   }>;
 };
 
-/** Runs the generated acceptance tests of the use cases `specs` name and reads each scenario's result. */
-const acceptance = async (root: string, specs: string[]): Promise<ScenarioResult[]> => {
+/** Runs the generated tests `files`: all the acceptance tests of a project, those files alone in the command's repository. */
+const runTests =
+  (layout: Layout) =>
+  async (root: string, files: string[]): Promise<TestReport["testResults"]> => {
+    const report = join(cacheDir(root), "evidence.json");
+    rmSync(report, { force: true });
+    if (layout.repository)
+      capture("pnpm", ["exec", "vitest", "run", ...files, "--reporter=json", `--outputFile=${report}`], {
+        cwd: root,
+      });
+    else self(root, ["test", "acceptance", "--report", report]);
+    return existsSync(report)
+      ? (JSON.parse(readFileSync(report, "utf8")) as TestReport).testResults
+      : [];
+  };
+
+/**
+ * Reads each scenario of the delta specs `specs` from the test generation writes for its spec. A
+ * spec no test is generated from is proved only by the person's word, and only where that can be.
+ */
+const acceptance = async (
+  root: string,
+  specs: string[],
+  options: VerifyOptions,
+): Promise<ScenarioResult[]> => {
   if (!specs.length) return [];
-  const { acceptance: folder } = await projectConfig(root);
-  const report = join(cacheDir(root), "evidence.json");
-  self(root, ["test", "acceptance", "--report", report]);
-  const files = existsSync(report)
-    ? (JSON.parse(readFileSync(report, "utf8")) as TestReport).testResults
-    : [];
-  return specs.flatMap((spec): ScenarioResult[] => {
-    const file = files.find((f) => f.name.endsWith(join(folder, `${spec}.feature.test.ts`)));
-    if (!file?.assertionResults.length)
-      return [{ spec, requirement: "", scenario: "", result: "missing" }];
-    return file.assertionResults.map((t) => ({
+  const layout = options.layout ?? (await layoutOf(root));
+  const wanted = specs.map((spec) => ({ spec, file: testOf(spec, layout) }));
+  const files = wanted.flatMap((w) => (w.file ? [w.file] : []));
+  const ran = files.length ? await (options.tests ?? runTests(layout))(root, files) : [];
+  return wanted.flatMap(({ spec, file }): ScenarioResult[] => {
+    const tests = file ? ran.find((f) => f.name.endsWith(file))?.assertionResults : undefined;
+    if (!tests?.length)
+      return layout.repository && !file && options.proved?.includes(spec)
+        ? [{ spec, requirement: "", scenario: "", result: "passed", by: "the person" }]
+        : [{ spec, requirement: "", scenario: "", result: "missing" }];
+    return tests.map((t) => ({
       spec,
       requirement: (t.ancestorTitles.at(-1) ?? "").replace(/^Rule: /, ""),
       scenario: t.title,
@@ -119,7 +149,9 @@ export const verify = async (
   const plan = parsePlan(change.plan ?? "");
   const specs = change.deltaSpecs.map((f) => f.replace(/^specs\//, "").replace(/\/spec\.md$/, ""));
 
-  const scenarios = await (options.scenarios ?? acceptance)(root, specs);
+  const scenarios = await (options.scenarios
+    ? options.scenarios(root, specs)
+    : acceptance(root, specs, options));
   const failing = await (options.checks ? options.checks(root) : realChecks(root, made));
 
   const config = await projectConfig(root);
@@ -187,8 +219,9 @@ export const verify = async (
 };
 
 /**
- * `factory verify <change> [--procedure <slug>@<environment>=<passed|failed>]…`: verifies the
- * change and writes its evidence. Exit status 0 when it is verified, 1 when it is not, 2 when the
+ * `factory verify <change> [--procedure <slug>@<environment>=<passed|failed>]… [--proved <spec>]…`:
+ * verifies the change and writes its evidence. `--proved` is the person's word for a spec no test
+ * is generated from, which only the repository the command is developed in has. Exit status 0 when it is verified, 1 when it is not, 2 when the
  * change does not exist.
  */
 export const run = async (args: string[]): Promise<number> => {
@@ -199,6 +232,7 @@ export const run = async (args: string[]): Promise<number> => {
     return 2;
   }
   const procedures: Record<string, "passed" | "failed"> = {};
+  const proved = args.flatMap((arg, i) => (arg === "--proved" && args[i + 1] ? [args[i + 1]!] : []));
   for (const [i, arg] of args.entries())
     if (arg === "--procedure") {
       const m = /^(.+)=(passed|failed)$/.exec(args[i + 1] ?? "");
@@ -208,10 +242,12 @@ export const run = async (args: string[]): Promise<number> => {
       }
       procedures[m[1]!] = m[2] as "passed" | "failed";
     }
-  const e = await verify(PROJECT_ROOT, name, { procedures });
+  const e = await verify(PROJECT_ROOT, name, { procedures, proved });
   console.log(`${e.verdict}: ${name}`);
   const passed = e.scenarios.filter((s) => s.result === "passed").length;
   console.log(`- scenarios: ${passed} of ${e.scenarios.length} matched to a passing test`);
+  for (const s of e.scenarios.filter((s) => s.by))
+    console.log(`  by the person's word: ${s.spec}`);
   for (const s of e.scenarios.filter((s) => s.result !== "passed"))
     console.log(`  ${s.result}: ${s.spec} · ${s.scenario || "no generated test ran"}`);
   console.log(

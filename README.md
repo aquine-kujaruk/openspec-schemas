@@ -48,7 +48,7 @@ The project needs Node 22.18 or later, pnpm, and the agent package manager APM 0
 2. Pin the command the skills call. The tarball came with the `setup` skill; its file name carries the version:
 
    ```bash
-   pnpm add -D ./.claude/skills/setup/assets/factory-0.2.2.tgz
+   pnpm add -D ./.claude/skills/setup/assets/factory-0.2.3.tgz
    ```
 
 3. Let setup repair what the package owns and list what the project must supply:
@@ -102,4 +102,6 @@ Codex loads a project's hooks and its `AGENTS.md` only in a project it trusts, a
 pnpm run check
 ```
 
-It type-checks, verifies that the generated tests and the schemas under `openspec/schemas` are as fresh as what they come from, and runs the tests. `pnpm exec factory generate` writes both; run it once after cloning, since `openspec/schemas` is not in git and the specification tool reads this repository's schemas from there. The repository's own changes are opened with `spec-plan`. The repository's own commands are `pnpm exec factory <command>`; `pnpm exec factory` with no command lists them.
+It type-checks, verifies that the generated tests and the schemas under `openspec/schemas` are as fresh as what they come from, and runs the tests. `pnpm exec factory generate` writes both; run it once after cloning, since `openspec/schemas` is not in git and the specification tool reads this repository's schemas from there. The repository's own changes are opened with `spec-plan`.
+
+A change of this repository goes through the same commands as a change of a project: `factory validate`, `factory implement`, `factory verify` and `factory archive`. While a change is ready, the tests of its delta specs are generated straight from the change, each next to the step adapter of its spec; no delta is copied into `openspec/specs` by hand, the archive merges it. Four specs have no step adapter and so no generated test (`implementer`, `architecture/linting`, `flow/plan`, `flow/implement`): when a change touches one, say it is proved with `factory verify <change> --proved <spec>`, and the evidence records it as proved by your word. The repository's own commands are `pnpm exec factory <command>`; `pnpm exec factory` with no command lists them.
