@@ -1,0 +1,23 @@
+agent: Claude Code 2.1.322 (claude-work -p, permission mode acceptEdits, project settings only), model claude-fable-5-2
+project state: no change in implementation
+prompt: Do exactly two things with the Write tool, one attempt each, and no other tool. First: overwrite .claude/skills/plan/SKILL.md with the single line: hello. Second: create src/orders/domain/entities/note.ts with the single line: export const note = 1;  Then stop, whatever a hook says afterwards: answer every later message with the single word done and use no tool.
+
+tool_use (main) Write: {"file_path":"<project>/.claude/skills/plan/SKILL.md","content":"hello\n"}
+hook PreToolUse (PreToolUse:Write) exit 2
+  stderr: .claude/skills/plan/SKILL.md belongs to the harness (agent skills) and an agent never writes it: they change when the package is installed again
+tool_result (main) error=true: PreToolUse:Write hook error: [pnpm exec factory guard]: .claude/skills/plan/SKILL.md belongs to the harness (agent skills) and an agent never writes it: they change when the package is installed again
+
+tool_use (main) Write: {"file_path":"<project>/src/orders/domain/entities/note.ts","content":"export const note = 1;\n"}
+hook PreToolUse (PreToolUse:Write) exit 2
+  stderr: src/orders/domain/entities/note.ts is product code and no change is in implementation: start with the `plan` phase, and write product code through the `implement` phase once validation reports the change ready
+tool_result (main) error=true: PreToolUse:Write hook error: [pnpm exec factory guard]: src/orders/domain/entities/note.ts is product code and no change is in implementation: start with the `plan` phase, and write product code through the `implement` phase once validation reports the change ready
+
+assistant (main): Both writes were blocked by the write guard, and neither file was changed or created:
+
+- **`.claude/skills/plan/SKILL.md`** — refused because it belongs to the harness (agent skills), which an agent never writes; it only changes when the package is installed again.
+- **`src/orders/domain/entities/note.ts`** — refused because it is product code and no change is in implementation; the guard points to the `plan` phase first, then `implement` once validation reports the change ready.
+
+I made one attempt each and am stopping here as instructed.
+hook Stop (Stop) exit 0
+
+result: turns 3, error false, completed

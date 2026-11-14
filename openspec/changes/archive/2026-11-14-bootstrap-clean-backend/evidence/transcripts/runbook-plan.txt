@@ -1,0 +1,395 @@
+Reading additional input from stdin...
+OpenAI Codex v0.166.0
+--------
+workdir: <scratch>/g8/shop
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a1d9a0-c15a-7b31-adda-972666606668
+--------
+user
+$plan We had an incident last night: for twenty minutes customers got errors when listing their orders, because the orders service was down. Nothing in the code has to change. I want it recorded how to diagnose this the next time: the logs of the service are in the log group /shop/orders-api of the prod account, read with the AWS CLI profile shop-readonly, whose credentials are kept in the team vault under shop/aws-readonly; look for 5xx responses around the time of the reports, and for OrdersUnavailableException in our own logs.
+warning: `--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.
+warning: `--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.
+codex
+I’ll use the plan skill to record the diagnostic procedure, with no code changes.
+
+exec
+/bin/bash -lc 'pnpm exec factory doctor' in <scratch>/g8/shop
+ succeeded in 218ms:
+nothing is lacking
+note: codex runs the guards only in a project it trusts and after each hook is reviewed with /hooks; review them again after every update that changes them
+
+exec
+/bin/bash -lc "rg -n 'shop|runbook|factory' ~/.codex/memories/MEMORY.md" in <scratch>/g8/shop
+ exited 1 in 0ms:
+exec
+/bin/bash -lc 'pnpm exec factory openspec new change diagnose-orders-outage' in <scratch>/g8/shop
+ succeeded in 291ms:
+- Creating change 'diagnose-orders-outage' with schema 'clean-backend'...
+Created change 'diagnose-orders-outage' at openspec/changes/diagnose-orders-outage/
+Schema: clean-backend
+Next: openspec status --change diagnose-orders-outage
+
+exec
+/bin/bash -lc 'rg --files openspec .agents/skills/implement/references/workstreams; cat AGENTS.md' in <scratch>/g8/shop
+ succeeded in 0ms:
+.agents/skills/implement/references/workstreams/adapters/SKILL.md
+.agents/skills/implement/references/workstreams/adapters/adapters.examples.md
+.agents/skills/implement/references/workstreams/integrate/SKILL.md
+.agents/skills/implement/references/workstreams/app-domain/SKILL.md
+.agents/skills/implement/references/workstreams/app-domain/domain.examples.md
+.agents/skills/implement/references/workstreams/app-domain/application.examples.md
+.agents/skills/implement/references/workstreams/app-domain/acceptance.examples.md
+openspec/specs/orders/list-customer-orders/spec.md
+.agents/skills/implement/references/workstreams/clean-architecture/SKILL.md
+.agents/skills/implement/references/workstreams/clean-architecture/modules.examples.md
+.agents/skills/implement/references/workstreams/infrastructure/SKILL.md
+.agents/skills/implement/references/workstreams/infrastructure/integration.examples.md
+.agents/skills/implement/references/workstreams/infrastructure/infrastructure.examples.md
+openspec/config.yaml
+openspec/runbooks/operate/local-validation.md
+openspec/adr/product/money.md
+openspec/changes/archive/2026-11-14-list-customer-orders/plan.md
+openspec/changes/archive/2026-11-14-list-customer-orders/evidence.md
+openspec/changes/archive/2026-11-14-list-customer-orders/specs/orders/list-customer-orders/spec.md
+<!-- apm:start -->
+This project changes through five skills:
+
+- `plan` when the person wants something to change: behaviour, code, a standing decision or a procedure. A small change starts there too.
+- `implement` to build a change that validation reports ready. Product code is written by this skill.
+- `verify` when a change has no task left, and `archive` when it is verified.
+- `feedback` when the person corrects a change that is open, or when a guard, `verify` or `archive` sends one back.
+
+A question that changes nothing needs no skill. A write guard lets product code through only for a change the `implement` skill has started and keeps the harness as it was installed; a completion gate holds a turn that would leave a change in implementation failing its checks. When either sends you back, do what it says: the way forward is one of the five skills.
+<!-- apm:end -->
+
+codex
+Factory check passed. It notes that Codex guards require a trusted project and hooks reviewed via `/hooks`, including after hook updates.
+
+exec
+/bin/bash -lc 'cat openspec/specs/orders/list-customer-orders/spec.md openspec/adr/product/money.md openspec/runbooks/operate/local-validation.md openspec/config.yaml; pnpm exec factory openspec status --change diagnose-orders-outage --json' in <scratch>/g8/shop
+ succeeded in 261ms:
+# orders/list-customer-orders Specification
+
+## Purpose
+Let a caller list the orders belonging to a customer, newest first, retaining each order's identity, customer identity, total in cents and placement date.
+
+## Requirements
+
+### Requirement: List only the requested customer's orders newest first
+
+The system SHALL return all orders belonging to the requested customer, ordered by placement date from newest to oldest. Each returned order SHALL retain its id, customer id, integer total in cents and placement date.
+
+#### Scenario Outline: List orders newest first for `<customerId>`
+
+- **GIVEN** these orders exist <!-- ordersExist -->
+  | id | customerId | totalCents | placedAt |
+  | order-old | customer-a | 1234 | 2026-01-01T10:00:00Z |
+  | order-other | customer-b | 5678 | 2026-01-04T10:00:00Z |
+  | order-new | customer-a | 9099 | 2026-01-03T10:00:00Z |
+  | order-middle | customer-a | 2501 | 2026-01-02T10:00:00Z |
+- **WHEN** orders are listed for customer `<customerId>` <!-- listCustomerOrders -->
+- **THEN** the returned orders are exactly these rows in this order <!-- listedOrdersAre -->
+  | id | customerId | totalCents | placedAt |
+  | <firstId> | <customerId> | <firstTotalCents> | <firstPlacedAt> |
+  | <secondId> | <customerId> | <secondTotalCents> | <secondPlacedAt> |
+  | <thirdId> | <customerId> | <thirdTotalCents> | <thirdPlacedAt> |
+
+##### Examples:
+
+  | customerId | firstId | firstTotalCents | firstPlacedAt | secondId | secondTotalCents | secondPlacedAt | thirdId | thirdTotalCents | thirdPlacedAt |
+  | ---------- | ------- | --------------- | ------------- | -------- | ---------------- | -------------- | ------- | --------------- | ------------- |
+  | customer-a | order-new | 9099 | 2026-01-03T10:00:00Z | order-middle | 2501 | 2026-01-02T10:00:00Z | order-old | 1234 | 2026-01-01T10:00:00Z |
+
+#### Scenario Outline: Return a single order for `<customerId>`
+
+- **GIVEN** these orders exist <!-- ordersExist -->
+  | id | customerId | totalCents | placedAt |
+  | order-old | customer-a | 1234 | 2026-01-01T10:00:00Z |
+  | order-other | customer-b | 5678 | 2026-01-04T10:00:00Z |
+- **WHEN** orders are listed for customer `<customerId>` <!-- listCustomerOrders -->
+- **THEN** the returned orders are exactly these rows in this order <!-- listedOrdersAre -->
+  | id | customerId | totalCents | placedAt |
+  | <orderId> | <customerId> | <totalCents> | <placedAt> |
+
+##### Examples:
+
+  | customerId | orderId | totalCents | placedAt |
+  | ---------- | ------- | ---------- | -------- |
+  | customer-b | order-other | 5678 | 2026-01-04T10:00:00Z |
+
+### Requirement: An empty customer order history is an empty list
+
+The system SHALL return an empty list when the requested customer has no orders.
+
+#### Scenario Outline: No orders returned for `<customerId>`
+
+- **GIVEN** these orders exist <!-- ordersExist -->
+  | id | customerId | totalCents | placedAt |
+  | order-other | customer-b | 5678 | 2026-01-04T10:00:00Z |
+- **WHEN** orders are listed for customer `<customerId>` <!-- listCustomerOrders -->
+- **THEN** the returned order count is `<count>` <!-- listedOrderCountIs -->
+
+##### Examples:
+
+  | customerId | count |
+  | ---------- | ----- |
+  | customer-without-orders | 0 |
+# money
+
+### Decision: money-in-integer-cents · Money amounts use integer cents
+
+@origin:2026-11-14-list-customer-orders @applies:domain,application,infrastructure,adapters @enforced:domain-and-acl-schemas,integration-tests,review
+
+Money amounts SHALL be represented as integers in cents across the product. `OrderProps.totalCents` and service `total_cents` SHALL carry the same cents value without division, rounding or conversion into floating-point major currency units. JavaScript number values SHALL pass safe-integer validation so the representation preserves exact cents.
+
+**Why** The user explicitly requires integer cents; retaining that unit avoids rounding and unit ambiguity at boundaries.
+# local-validation
+
+### Procedure: local-checks-and-tests · Run checks and tests locally
+
+@origin:2026-11-14-list-customer-orders @env:local,development
+
+**When** Before handing off a phase or verifying this change.
+
+**Requires** A local checkout, a Node.js version satisfying the installed dependencies' engine requirements, and pnpm. Run commands at the repository root. Acceptance and integration tests need no network, credentials or environment secrets. Development uses `NODE_ENV=development`; an HTTP run instead needs the non-secret service base URL in the local process environment as `ORDERS_API_URL`. No service credentials were specified; none are embedded in code or committed files.
+
+**Steps**
+
+1. Install the locked dependencies: `pnpm install --frozen-lockfile`.
+2. Run `pnpm exec factory doctor`; resolve any missing setup through `setup`. Its hook note requires Codex project trust and `/hooks` review, repeated after hook updates.
+3. Check planning readiness: `pnpm exec factory validate list-customer-orders` while the change is active.
+4. Regenerate acceptance tests from the active change's specs: `pnpm exec factory generate`. Fill generated step adapters during implementation; never edit generated test bodies.
+5. For phase 1, run `pnpm exec factory check --workstream app-domain --module orders`, `pnpm exec factory test acceptance`, `pnpm exec vitest run test/order.schema.test.ts`, and `pnpm exec tsc --noEmit`.
+6. For phase 2, run `pnpm exec factory check --workstream infrastructure --module orders`, `pnpm exec factory check --workstream adapters --module orders`, `pnpm exec factory test integration`, and `pnpm exec factory test acceptance`.
+7. Finish with `pnpm exec factory check` and `pnpm exec tsc --noEmit`. Review the test counts: a successful command with zero tests does not verify an implemented phase.
+
+**Verification** All phase commands exit zero; acceptance scenarios execute, phase 2 integration tests execute, and full checks confirm architecture and generated-test freshness. Planning readiness alone does not establish implementation correctness.
+schema: clean-backend
+{
+  "changeName": "diagnose-orders-outage",
+  "schemaName": "clean-backend",
+  "planningHome": {
+    "kind": "repo",
+    "root": "<scratch>/g8/shop",
+    "changesDir": "<scratch>/g8/shop/openspec/changes",
+    "defaultSchema": "spec-driven"
+  },
+  "changeRoot": "<scratch>/g8/shop/openspec/changes/diagnose-orders-outage",
+  "artifactPaths": {
+    "plan": {
+      "outputPath": "plan.md",
+      "resolvedOutputPath": "<scratch>/g8/shop/openspec/changes/diagnose-orders-outage/plan.md",
+      "existingOutputPaths": []
+    },
+    "specs": {
+      "outputPath": "specs/**/*.md",
+      "resolvedOutputPath": "<scratch>/g8/shop/openspec/changes/diagnose-orders-outage/specs/**/*.md",
+      "existingOutputPaths": []
+    }
+  },
+  "isPlanningComplete": false,
+  "isComplete": false,
+  "applyRequires": [
+    "plan"
+  ],
+  "nextSteps": [
+    "Run openspec instructions plan --change \"diagnose-orders-outage\" --json before writing that artifact."
+  ],
+  "actionContext": {
+    "mode": "repo-local",
+    "sourceOfTruth": "repo",
+    "planningArtifacts": [
+      "plan",
+      "specs"
+    ],
+    "linkedContext": [],
+    "allowedEditRoots": [
+      "<scratch>/g8/shop"
+    ],
+    "requiresAffectedAreaSelection": false,
+    "constraints": [
+      "Repo-local change artifacts and implementation edits are scoped to this project."
+    ]
+  },
+  "artifacts": [
+    {
+      "id": "plan",
+      "outputPath": "plan.md",
+      "status": "ready",
+      "requires": []
+    },
+    {
+      "id": "specs",
+      "outputPath": "specs/**/*.md",
+      "status": "ready",
+      "requires": []
+    }
+  ],
+  "root": {
+    "path": "<scratch>/g8/shop",
+    "source": "nearest"
+  }
+}
+
+exec
+/bin/bash -lc 'pnpm exec factory openspec instructions plan --change diagnose-orders-outage --json' in <scratch>/g8/shop
+exec
+/bin/bash -lc 'pnpm exec factory openspec instructions specs --change diagnose-orders-outage --json' in <scratch>/g8/shop
+ succeeded in 304ms:
+{
+  "changeName": "diagnose-orders-outage",
+  "artifactId": "specs",
+  "schemaName": "clean-backend",
+  "changeDir": "<scratch>/g8/shop/openspec/changes/diagnose-orders-outage",
+  "planningHome": {
+    "kind": "repo",
+    "root": "<scratch>/g8/shop",
+    "changesDir": "<scratch>/g8/shop/openspec/changes",
+    "defaultSchema": "spec-driven"
+  },
+  "outputPath": "specs/**/*.md",
+  "resolvedOutputPath": "<scratch>/g8/shop/openspec/changes/diagnose-orders-outage/specs/**/*.md",
+  "existingOutputPaths": [],
+  "description": "The behaviour a user notices, one delta spec per use case",
+  "instruction": "Write one delta spec per use case the change touches, at `specs/<module>/<use-case>/spec.md`: what the software does for whoever uses it, in the vocabulary of that use case. Libraries, frameworks and language constructs belong to the plan.\n\nEvery requirement states its rule with SHALL or MUST and proves it with Scenario Outlines: bold GIVEN, WHEN and THEN steps over the placeholders of an Examples table of concrete rows. Each step ends with one HTML comment naming its step adapter method; within a spec, one name keeps one role and one set of placeholders. The tests are generated from these specs, so a behaviour with no row has no test.\n",
+  "template": "## Purpose\n\n<!-- A new capability only: what it does for whoever uses it, in one or two sentences. -->\n\n## ADDED Requirements\n\n<!-- Changing an existing spec: `## MODIFIED Requirements` with the whole requirement as it becomes, `## REMOVED Requirements`, or `## RENAMED Requirements`. -->\n\n### Requirement: <what the software guarantees>\n\n<The rule, with SHALL or MUST.>\n\n#### Scenario Outline: <title carrying its `<placeholders>`>\n\n- **GIVEN** <the state> `<placeholder>` <!-- stepName -->\n- **WHEN** <the action> <!-- stepName -->\n- **THEN** <the outcome> `<placeholder>` <!-- stepName -->\n\n##### Examples:\n\n  | placeholder | placeholder |\n  | ----------- | ----------- |\n  | value       | value       |\n",
+  "dependencies": [],
+  "unlocks": [],
+  "root": {
+    "path": "<scratch>/g8/shop",
+    "source": "nearest"
+  }
+}
+
+ succeeded in 305ms:
+{
+  "changeName": "diagnose-orders-outage",
+  "artifactId": "plan",
+  "schemaName": "clean-backend",
+  "changeDir": "<scratch>/g8/shop/openspec/changes/diagnose-orders-outage",
+  "planningHome": {
+    "kind": "repo",
+    "root": "<scratch>/g8/shop",
+    "changesDir": "<scratch>/g8/shop/openspec/changes",
+    "defaultSchema": "spec-driven"
+  },
+  "outputPath": "plan.md",
+  "resolvedOutputPath": "<scratch>/g8/shop/openspec/changes/diagnose-orders-outage/plan.md",
+  "existingOutputPaths": [],
+  "description": "Goal, decisions, tagged architecture decisions and procedures, and phases with seams, tests and tasks",
+  "instruction": "Write the plan from your own decisions before asking the person anything, then update it once per answer. Keep every section of the template, in order; a section with nothing to say keeps its heading.\n\nWrite each decision where its scope sends it:\n\n- A user of the product notices it: a delta spec.\n- A future change must respect it: an architecture decision.\n- It says how the system is set up, reached, diagnosed or operated: a procedure.\n- It matters only to this change: one line under Decisions, naming the alternative you discarded.\n- It would hold in any project: leave it out of the change and report it as a proposal for the schema's repository.\n\nArchitecture decisions and procedures are durable: archiving copies them to `openspec/adr` and `openspec/runbooks`. Read both trees before writing one, and tag each block, on the line under its heading, with what this change does to them:\n\n- `@adds` for a block no tree has.\n- `@modifies:<slug>`, `@replaces:<slug>`, `@renames:<slug>` or `@removes:<slug>` for a block a tree has, with `@base:<origin>` copied from the `@origin` of that block.\n- A decision also carries `@area:product` or `@area:production`, `@topic`, `@applies` (the layers it binds) and `@enforced` (the rule, check or review that holds it).\n- A procedure also carries `@purpose` (`setup`, `access`, `diagnose` or `operate`), `@topic` and `@env` (the environments it runs in). It names where each secret is kept; the secret itself stays out of the plan.\n\nA phase is a part of the change worth having on its own. It declares its seams (the public signatures its workstreams build against, as code), its tests, and its tasks. Only tasks are checkboxes, each one `<workstream>: <task>`, and the last task of a phase verifies it. A change that builds nothing has no phase.\n\nA change that changes no behaviour a user notices has no delta spec and says so with `skip_specs: true` in its `.openspec.yaml`.\n\nThe plan is done when `pnpm exec factory validate <change>` reports the change ready.\n\nWorkstreams a task may name: `app-domain`, `infrastructure`, `adapters`, `clean-architecture`, `integrate`.\n\n# Which decisions reach the person: ask on commitment\n\nA decision is a commitment when undoing it later costs the person something: behaviour users will meet, a rule future changes inherit, a standing rule withdrawn. Commitments reach the person; everything else is yours to decide.\n\nAsk, as an item under Open questions, when the decision is:\n\n- **Behaviour the consolidated specs leave open.** What a user will notice and no spec under `openspec/specs` settles.\n- **A decision that binds future changes.** Every architecture decision the plan writes.\n- **The end of a standing decision.** Every `@replaces` and every `@removes` on an architecture decision.\n\nDecide alone, in the artifact its scope picks, naming the alternative you discarded, when the decision is:\n\n- **Change-local.** It matters only while this change is built.\n- **Behaviour the consolidated specs settle.** Follow the spec; quote the requirement if the choice could surprise.\n\nAn open question states the decision in one line, the options, and the option you would pick with its reason. Write the rest of the change as if that option had been chosen, so one answer confirms the change or redirects it. When the person answers, record the decision in its artifact and remove the question in the same update.\n",
+  "template": "---\nname: <change name>\ndescription: <one sentence>\ncreated_at: <YYYY-MM-DD>\ncreated_by: <who stated the intention>\nschema: <schema of the change>\n---\n\n# <title>\n\n## Goal\n\n<!-- What is true once this change is archived, in two or three sentences. -->\n\n## Decisions\n\n<!-- One line per decision that matters only to this change: what was chosen, and the alternative discarded. -->\n\n## Open questions\n\n<!-- One item per decision only the person can take: the question, the options, and the one you would pick. Empty once the change is ready. -->\n\n## Architecture decisions\n\n<!--\nOne block per decision a future change must respect:\n\n### Decision: <slug> · <title>\n\n@adds @area:product @topic:<topic> @applies:<layers> @enforced:<rule, check or review>\n\n<The statement, with SHALL.>\n\n**Why** <the reason, in a sentence or two>\n\n**Alternatives** <what was discarded and why>\n\n**Consequences** <what this now costs or forbids>\n-->\n\n## Procedures\n\n<!--\nOne block per way of setting the system up, reaching it, diagnosing it or operating it:\n\n### Procedure: <slug> · <title>\n\n@adds @purpose:diagnose @topic:<topic> @env:<environments>\n\n**When** <the situation that calls for it>\n\n**Requires** <access and tools; where each secret is kept>\n\n**Steps**\n\n1. <step>\n\n**Verification** <how to tell it worked>\n-->\n\n## Phases\n\n### Phase 1: <what this phase leaves working>\n\n**Seams**\n\n```ts\n// the public signatures the workstreams of this phase build against\n```\n\n**Tests**\n\n<!-- The suites this phase adds or changes, and what each covers. -->\n\n- [ ] <workstream>: <task>\n- [ ] <workstream>: verify the phase\n\n## Feedback\n\n<!-- One entry per feedback taken in: where it came from, what it said, what changed. -->\n\n## Next step\n",
+  "dependencies": [],
+  "unlocks": [],
+  "root": {
+    "path": "<scratch>/g8/shop",
+    "source": "nearest"
+  }
+}
+
+exec
+/bin/bash -lc 'cat openspec/changes/diagnose-orders-outage/.openspec.yaml; git status --short' in <scratch>/g8/shop
+ succeeded in 0ms:
+schema: clean-backend
+created: 2026-11-14
+?? openspec/changes/diagnose-orders-outage/
+
+hook: PreToolUse
+hook: PreToolUse Completed
+apply patch
+patch: completed
+<scratch>/g8/shop/openspec/changes/diagnose-orders-outage/.openspec.yaml
+<scratch>/g8/shop/openspec/changes/diagnose-orders-outage/plan.md
+diff --git a/openspec/changes/diagnose-orders-outage/.openspec.yaml b/openspec/changes/diagnose-orders-outage/.openspec.yaml
+index 487b5bab6eca7e1df389cb94a98b59475774f562..e6f7e048eeb5570df78692c57aefb42db043eabf
+--- a/openspec/changes/diagnose-orders-outage/.openspec.yaml
++++ b/openspec/changes/diagnose-orders-outage/.openspec.yaml
+@@ -1,2 +1,3 @@
+ schema: clean-backend
+ created: 2026-11-14
++skip_specs: true
+diff --git a/openspec/changes/diagnose-orders-outage/plan.md b/openspec/changes/diagnose-orders-outage/plan.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..0e7fa13d7378b3b38b92988a6471a8306e5bad25
+--- /dev/null
++++ b/openspec/changes/diagnose-orders-outage/plan.md
+@@ -0,0 +1,52 @@
++---
++name: diagnose-orders-outage
++description: Record the production diagnostic procedure for customer order listing failures.
++created_at: 2026-11-14
++created_by: user
++schema: clean-backend
++---
++
++# Diagnose an orders service outage
++
++## Goal
++
++Preserve a repeatable procedure for diagnosing customer order listing errors during an orders service outage. The user reports that last night's outage caused twenty minutes of errors; this is incident context, not a newly verified finding. On archive, the procedure is available under `openspec/runbooks/diagnose`.
++
++## Decisions
++
++- Record a diagnostic procedure only; discard code changes and behavioural delta specs because the requested change affects operational documentation alone.
++- Use the reported incident as context; discard reconstructing exact incident timestamps or performing a live production investigation in this change.
++
++## Open questions
++
++## Architecture decisions
++
++## Procedures
++
++### Procedure: orders-service-outage · Diagnose customer order listing errors
++
++@adds @purpose:diagnose @topic:orders @env:prod
++
++**When** Customers report errors listing their orders, particularly when the orders service may be unavailable.
++
++**Requires** AWS CLI and authorized read access to the prod account through profile `shop-readonly`. Credentials are kept in the team vault at `shop/aws-readonly`; obtain them through the team's vault access process and configure the local profile without putting secret values in repository files or incident notes. The orders service log group is `/shop/orders-api`. Access to our application's logs is also required. Confirm the prod region and our application's log location from the existing environment configuration; neither is specified here.
++
++**Steps**
++
++1. Establish the time window from customer reports, recording timezone and converting the interval to UTC. Include a margin before and after the reports; do not assume every recurrence lasts twenty minutes.
++2. Confirm that AWS CLI profile `shop-readonly` targets the prod account and the configured region contains `/shop/orders-api`. If access or configuration is missing, resolve it through the team vault and existing environment configuration before interpreting missing results.
++3. Use the AWS CLI with `--profile shop-readonly` to read `/shop/orders-api` over the report window. Look for HTTP 5xx responses; record timestamps, response status and any available request or correlation identifiers.
++4. Search our application's logs over the same interval for `OrdersUnavailableException`. Record timestamps and any available request or correlation identifiers.
++5. Correlate both sets of evidence with the customer reports. Record the observed failure interval, matching requests where identifiers exist, and gaps or conflicting evidence. No matching entries alone does not establish service health; check account, region, log source and time window before drawing a conclusion.
++
++**Verification** The incident notes identify the inspected time window and timezone, prod account/profile, service log group and application log source, and the presence or absence of 5xx responses and `OrdersUnavailableException`. Any conclusion is supported by timestamped evidence; unresolved access or evidence gaps remain explicit. No live production diagnosis was performed while planning this procedure.
++
++## Phases
++
++No implementation phases: this change builds nothing and changes no product behaviour.
++
++## Feedback
++
++## Next step
++
++Validate planning readiness. Subsequent verification and archive publish this procedure to the durable runbooks; no code implementation is required.
+
+exec
+/bin/bash -lc 'pnpm exec factory validate diagnose-orders-outage' in <scratch>/g8/shop
+ succeeded in 125ms:
+ready: diagnose-orders-outage (clean-backend)
+
+codex
+Plan recorded in [plan.md](openspec/changes/diagnose-orders-outage/plan.md). Validation: `ready`.
+
+Includes prod log group, AWS profile, vault reference, and correlation of 5xx responses with `OrdersUnavailableException`.
+
+No code changes. No open questions. Durable runbook publication awaits verification/archive.
+hook: Stop
+hook: Stop Completed
+tokens used
+38,438
+Plan recorded in [plan.md](openspec/changes/diagnose-orders-outage/plan.md). Validation: `ready`.
+
+Includes prod log group, AWS profile, vault reference, and correlation of 5xx responses with `OrdersUnavailableException`.
+
+No code changes. No open questions. Durable runbook publication awaits verification/archive.
+codex exit=0

@@ -1,0 +1,1787 @@
+Reading additional input from stdin...
+OpenAI Codex v0.166.0
+--------
+workdir: <scratch>/g8/shop
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a1d98a-55ec-7a62-b0ea-c3d8453b2a55
+--------
+user
+$plan I want to be able to list the orders of a customer. An order has an id, the id of its customer, a total in cents and the date it was placed; the list comes newest first. Orders come from an HTTP service whose base URL is in the ORDERS_API_URL environment variable: GET /customers/{customerId}/orders answers a JSON array of {id, customer_id, total_cents, placed_at}. In development use an in-memory backend. Plan it in two phases: first the use case with its acceptance test and its domain; then the repository, its anti-corruption layer, the adapters and the entry. Record as an architecture decision that money amounts are integers in cents, and as a procedure how to run the checks and the tests on a local machine.
+warning: `--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.
+warning: `--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.
+codex
+I’ll use `plan` to create the two-phase change, architecture decision, and local-check procedure.
+
+exec
+/bin/bash -lc 'pnpm exec factory doctor' in <scratch>/g8/shop
+ succeeded in 198ms:
+nothing is lacking
+note: codex runs the guards only in a project it trusts and after each hook is reviewed with /hooks; review them again after every update that changes them
+
+exec
+/bin/bash -lc 'cat .agents/skills/plan/SKILL.md' in <scratch>/g8/shop
+ succeeded in 0ms:
+---
+name: plan
+description: Plan a change. Turns an intention that would change the product's behaviour, its code, a standing decision or a procedure into a change whose plan and delta specs validation reports ready. Use when the person states such an intention.
+---
+
+# plan
+
+The artifacts are the handoff: everything decided ends up in the plan or in a delta spec.
+
+1. `pnpm exec factory doctor`. When it fails or reports anything, follow the `setup` skill first.
+2. Decide whether the intention changes anything: behaviour, code, a standing decision or a procedure. A question about the system changes nothing: answer it and stop here. An intention about a change that is already open belongs to the `feedback` skill.
+3. Open the change: `pnpm exec factory openspec new change <name>`, the name a short kebab-case phrase of what changes.
+4. Read what stands: the specs under `openspec/specs` the intention touches, and everything under `openspec/adr` and `openspec/runbooks`.
+5. `pnpm exec factory openspec status --change <name> --json` lists the artifacts of the change's schema. For each one, `pnpm exec factory openspec instructions <artifact> --change <name> --json` gives its instruction and its template: write the artifact as that instruction says. Write the whole first proposal from your own decisions before asking the person anything. The plan's instruction says which decisions are the person's; those go under Open questions, each with the option you picked.
+6. `pnpm exec factory validate <name>` and fix every finding that is yours to fix.
+7. Show the person the open questions. When they answer, record each answered decision in its artifact and remove its question in that same update, then validate again.
+
+The plan is done when `pnpm exec factory validate <name>` prints `ready`. Tell the person, and that the `implement` skill builds it.
+
+exec
+/bin/bash -lc "rg -n 'shop|factory|arch-linter' ~/.codex/memories/MEMORY.md" in <scratch>/g8/shop
+ exited 1 in 0ms:
+exec
+/bin/bash -lc 'cat .agents/skills/setup/SKILL.md' in <scratch>/g8/shop
+ succeeded in 0ms:
+---
+name: setup
+description: Set the project up for the factory's phases. Pins the `factory` command every phase skill calls and repairs what the package owns in the project. Use before the first phase runs in a project, and whenever `pnpm exec factory doctor` fails or reports anything.
+---
+
+# setup
+
+Every phase skill calls one command, `pnpm exec factory`. It ships with this skill as `assets/factory-<version>.tgz`.
+
+1. Pin the command when `pnpm exec factory --version` does not print the version in that file name: `pnpm add -D <this skill's folder>/assets/factory-<version>.tgz`.
+2. `pnpm exec factory doctor --fix`. It repairs what the package owns: the pinned command, the links to its schemas, the default schema, the consolidated roots, and the flow instruction in an instruction file the project wrote.
+3. Tell the person every line it still prints as `missing` and every `note`: those are theirs to settle. Setup is done when `pnpm exec factory doctor` prints `nothing is lacking`.
+
+exec
+/bin/bash -lc "rg --files -g '"'!node_modules'"' -g '"'!pnpm-lock.yaml'"' -g '"'!'"\\.git'" in <scratch>/g8/shop
+ succeeded in 0ms:
+apm.yml
+openspec/config.yaml
+package.json
+apm.lock.yaml
+AGENTS.md
+tsconfig.json
+
+exec
+/bin/bash -lc 'ls .agents/skills/setup/assets' in <scratch>/g8/shop
+ succeeded in 0ms:
+factory-0.1.0.tgz
+manifest.json
+
+exec
+/bin/bash -lc 'pnpm exec factory --version' in <scratch>/g8/shop
+ succeeded in 78ms:
+0.1.0
+
+exec
+/bin/bash -lc 'cat package.json apm.yml tsconfig.json openspec/config.yaml' in <scratch>/g8/shop
+ succeeded in 0ms:
+{"name":"shop","private":true,"type":"module","devDependencies":{"factory":"file:.agents/skills/setup/assets/factory-0.1.0.tgz","typescript":"7.0.2","vitest":"5.0.5","zod":"^4.6.7"}}
+name: shop
+version: 1.0.0
+description: APM project for shop
+author: Developer
+# Which agent platforms to deploy to.
+# Resolution order: --target flag > this field > auto-detect from filesystem.
+# Accepted values: agent-skills, antigravity, claude, codex, copilot, cursor, gemini, grok-bot, grok-build, hermes, kiro, opencode, vscode, windsurf
+targets:
+  - claude
+  - codex
+dependencies:
+  apm:
+    - ~/Documents/dev/personal/openspec-schemas/dist/backend
+  mcp: []
+includes: auto
+scripts: {}
+compilation:
+  agents_md:
+    mode: managed_section
+    start_marker: <!-- apm:start -->
+    end_marker: <!-- apm:end -->
+{ "compilerOptions": { "target": "es2023", "module": "esnext", "moduleResolution": "bundler", "strict": true, "noEmit": true, "skipLibCheck": true }, "include": ["src", "test"] }
+schema: clean-backend
+
+exec
+/bin/bash -lc 'ls -la openspec/changes openspec/specs openspec/adr openspec/runbooks' in <scratch>/g8/shop
+ exited 2 in 0ms:
+ls: cannot access 'openspec/changes': No such file or directory
+openspec/adr:
+total 8
+drwxrwxr-x 2 user user 4096 Nov 14 11:11 .
+drwxrwxr-x 6 user user 4096 Nov 14 11:11 ..
+-rw-rw-r-- 1 user user    0 Nov 14 11:11 .gitkeep
+
+openspec/runbooks:
+total 8
+drwxrwxr-x 2 user user 4096 Nov 14 11:11 .
+drwxrwxr-x 6 user user 4096 Nov 14 11:11 ..
+-rw-rw-r-- 1 user user    0 Nov 14 11:11 .gitkeep
+
+openspec/specs:
+total 8
+drwxrwxr-x 2 user user 4096 Nov 14 11:11 .
+drwxrwxr-x 6 user user 4096 Nov 14 11:11 ..
+-rw-rw-r-- 1 user user    0 Nov 14 11:11 .gitkeep
+
+codex
+Factory reports no missing setup. Its note: Codex guards require project trust and `/hooks` review, repeated after hook updates. I’ll apply `setup` as instructed, then write the plan.
+
+exec
+/bin/bash -lc 'pnpm exec factory doctor --fix' in <scratch>/g8/shop
+ succeeded in 239ms:
+nothing is lacking
+note: codex runs the guards only in a project it trusts and after each hook is reviewed with /hooks; review them again after every update that changes them
+
+exec
+/bin/bash -lc 'pnpm exec factory doctor' in <scratch>/g8/shop
+ succeeded in 207ms:
+nothing is lacking
+note: codex runs the guards only in a project it trusts and after each hook is reviewed with /hooks; review them again after every update that changes them
+
+exec
+/bin/bash -lc 'pnpm exec factory openspec new change list-customer-orders' in <scratch>/g8/shop
+ succeeded in 272ms:
+- Creating change 'list-customer-orders' with schema 'clean-backend'...
+Created change 'list-customer-orders' at openspec/changes/list-customer-orders/
+Schema: clean-backend
+Next: openspec status --change list-customer-orders
+
+exec
+/bin/bash -lc 'pnpm exec factory openspec status --change list-customer-orders --json' in <scratch>/g8/shop
+ succeeded in 240ms:
+{
+  "changeName": "list-customer-orders",
+  "schemaName": "clean-backend",
+  "planningHome": {
+    "kind": "repo",
+    "root": "<scratch>/g8/shop",
+    "changesDir": "<scratch>/g8/shop/openspec/changes",
+    "defaultSchema": "spec-driven"
+  },
+  "changeRoot": "<scratch>/g8/shop/openspec/changes/list-customer-orders",
+  "artifactPaths": {
+    "plan": {
+      "outputPath": "plan.md",
+      "resolvedOutputPath": "<scratch>/g8/shop/openspec/changes/list-customer-orders/plan.md",
+      "existingOutputPaths": []
+    },
+    "specs": {
+      "outputPath": "specs/**/*.md",
+      "resolvedOutputPath": "<scratch>/g8/shop/openspec/changes/list-customer-orders/specs/**/*.md",
+      "existingOutputPaths": []
+    }
+  },
+  "isPlanningComplete": false,
+  "isComplete": false,
+  "applyRequires": [
+    "plan"
+  ],
+  "nextSteps": [
+    "Run openspec instructions plan --change \"list-customer-orders\" --json before writing that artifact."
+  ],
+  "actionContext": {
+    "mode": "repo-local",
+    "sourceOfTruth": "repo",
+    "planningArtifacts": [
+      "plan",
+      "specs"
+    ],
+    "linkedContext": [],
+    "allowedEditRoots": [
+      "<scratch>/g8/shop"
+    ],
+    "requiresAffectedAreaSelection": false,
+    "constraints": [
+      "Repo-local change artifacts and implementation edits are scoped to this project."
+    ]
+  },
+  "artifacts": [
+    {
+      "id": "plan",
+      "outputPath": "plan.md",
+      "status": "ready",
+      "requires": []
+    },
+    {
+      "id": "specs",
+      "outputPath": "specs/**/*.md",
+      "status": "ready",
+      "requires": []
+    }
+  ],
+  "root": {
+    "path": "<scratch>/g8/shop",
+    "source": "nearest"
+  }
+}
+
+exec
+/bin/bash -lc 'pnpm exec factory openspec instructions specs --change list-customer-orders --json' in <scratch>/g8/shop
+exec
+/bin/bash -lc 'pnpm exec factory openspec instructions plan --change list-customer-orders --json' in <scratch>/g8/shop
+ succeeded in 298ms:
+{
+  "changeName": "list-customer-orders",
+  "artifactId": "specs",
+  "schemaName": "clean-backend",
+  "changeDir": "<scratch>/g8/shop/openspec/changes/list-customer-orders",
+  "planningHome": {
+    "kind": "repo",
+    "root": "<scratch>/g8/shop",
+    "changesDir": "<scratch>/g8/shop/openspec/changes",
+    "defaultSchema": "spec-driven"
+  },
+  "outputPath": "specs/**/*.md",
+  "resolvedOutputPath": "<scratch>/g8/shop/openspec/changes/list-customer-orders/specs/**/*.md",
+  "existingOutputPaths": [],
+  "description": "The behaviour a user notices, one delta spec per use case",
+  "instruction": "Write one delta spec per use case the change touches, at `specs/<module>/<use-case>/spec.md`: what the software does for whoever uses it, in the vocabulary of that use case. Libraries, frameworks and language constructs belong to the plan.\n\nEvery requirement states its rule with SHALL or MUST and proves it with Scenario Outlines: bold GIVEN, WHEN and THEN steps over the placeholders of an Examples table of concrete rows. Each step ends with one HTML comment naming its step adapter method; within a spec, one name keeps one role and one set of placeholders. The tests are generated from these specs, so a behaviour with no row has no test.\n",
+  "template": "## Purpose\n\n<!-- A new capability only: what it does for whoever uses it, in one or two sentences. -->\n\n## ADDED Requirements\n\n<!-- Changing an existing spec: `## MODIFIED Requirements` with the whole requirement as it becomes, `## REMOVED Requirements`, or `## RENAMED Requirements`. -->\n\n### Requirement: <what the software guarantees>\n\n<The rule, with SHALL or MUST.>\n\n#### Scenario Outline: <title carrying its `<placeholders>`>\n\n- **GIVEN** <the state> `<placeholder>` <!-- stepName -->\n- **WHEN** <the action> <!-- stepName -->\n- **THEN** <the outcome> `<placeholder>` <!-- stepName -->\n\n##### Examples:\n\n  | placeholder | placeholder |\n  | ----------- | ----------- |\n  | value       | value       |\n",
+  "dependencies": [],
+  "unlocks": [],
+  "root": {
+    "path": "<scratch>/g8/shop",
+    "source": "nearest"
+  }
+}
+
+ succeeded in 299ms:
+{
+  "changeName": "list-customer-orders",
+  "artifactId": "plan",
+  "schemaName": "clean-backend",
+  "changeDir": "<scratch>/g8/shop/openspec/changes/list-customer-orders",
+  "planningHome": {
+    "kind": "repo",
+    "root": "<scratch>/g8/shop",
+    "changesDir": "<scratch>/g8/shop/openspec/changes",
+    "defaultSchema": "spec-driven"
+  },
+  "outputPath": "plan.md",
+  "resolvedOutputPath": "<scratch>/g8/shop/openspec/changes/list-customer-orders/plan.md",
+  "existingOutputPaths": [],
+  "description": "Goal, decisions, tagged architecture decisions and procedures, and phases with seams, tests and tasks",
+  "instruction": "Write the plan from your own decisions before asking the person anything, then update it once per answer. Keep every section of the template, in order; a section with nothing to say keeps its heading.\n\nWrite each decision where its scope sends it:\n\n- A user of the product notices it: a delta spec.\n- A future change must respect it: an architecture decision.\n- It says how the system is set up, reached, diagnosed or operated: a procedure.\n- It matters only to this change: one line under Decisions, naming the alternative you discarded.\n- It would hold in any project: leave it out of the change and report it as a proposal for the schema's repository.\n\nArchitecture decisions and procedures are durable: archiving copies them to `openspec/adr` and `openspec/runbooks`. Read both trees before writing one, and tag each block, on the line under its heading, with what this change does to them:\n\n- `@adds` for a block no tree has.\n- `@modifies:<slug>`, `@replaces:<slug>`, `@renames:<slug>` or `@removes:<slug>` for a block a tree has, with `@base:<origin>` copied from the `@origin` of that block.\n- A decision also carries `@area:product` or `@area:production`, `@topic`, `@applies` (the layers it binds) and `@enforced` (the rule, check or review that holds it).\n- A procedure also carries `@purpose` (`setup`, `access`, `diagnose` or `operate`), `@topic` and `@env` (the environments it runs in). It names where each secret is kept; the secret itself stays out of the plan.\n\nA phase is a part of the change worth having on its own. It declares its seams (the public signatures its workstreams build against, as code), its tests, and its tasks. Only tasks are checkboxes, each one `<workstream>: <task>`, and the last task of a phase verifies it. A change that builds nothing has no phase.\n\nA change that changes no behaviour a user notices has no delta spec and says so with `skip_specs: true` in its `.openspec.yaml`.\n\nThe plan is done when `pnpm exec factory validate <change>` reports the change ready.\n\nWorkstreams a task may name: `app-domain`, `infrastructure`, `adapters`, `clean-architecture`, `integrate`.\n\n# Which decisions reach the person: ask on commitment\n\nA decision is a commitment when undoing it later costs the person something: behaviour users will meet, a rule future changes inherit, a standing rule withdrawn. Commitments reach the person; everything else is yours to decide.\n\nAsk, as an item under Open questions, when the decision is:\n\n- **Behaviour the consolidated specs leave open.** What a user will notice and no spec under `openspec/specs` settles.\n- **A decision that binds future changes.** Every architecture decision the plan writes.\n- **The end of a standing decision.** Every `@replaces` and every `@removes` on an architecture decision.\n\nDecide alone, in the artifact its scope picks, naming the alternative you discarded, when the decision is:\n\n- **Change-local.** It matters only while this change is built.\n- **Behaviour the consolidated specs settle.** Follow the spec; quote the requirement if the choice could surprise.\n\nAn open question states the decision in one line, the options, and the option you would pick with its reason. Write the rest of the change as if that option had been chosen, so one answer confirms the change or redirects it. When the person answers, record the decision in its artifact and remove the question in the same update.\n",
+  "template": "---\nname: <change name>\ndescription: <one sentence>\ncreated_at: <YYYY-MM-DD>\ncreated_by: <who stated the intention>\nschema: <schema of the change>\n---\n\n# <title>\n\n## Goal\n\n<!-- What is true once this change is archived, in two or three sentences. -->\n\n## Decisions\n\n<!-- One line per decision that matters only to this change: what was chosen, and the alternative discarded. -->\n\n## Open questions\n\n<!-- One item per decision only the person can take: the question, the options, and the one you would pick. Empty once the change is ready. -->\n\n## Architecture decisions\n\n<!--\nOne block per decision a future change must respect:\n\n### Decision: <slug> · <title>\n\n@adds @area:product @topic:<topic> @applies:<layers> @enforced:<rule, check or review>\n\n<The statement, with SHALL.>\n\n**Why** <the reason, in a sentence or two>\n\n**Alternatives** <what was discarded and why>\n\n**Consequences** <what this now costs or forbids>\n-->\n\n## Procedures\n\n<!--\nOne block per way of setting the system up, reaching it, diagnosing it or operating it:\n\n### Procedure: <slug> · <title>\n\n@adds @purpose:diagnose @topic:<topic> @env:<environments>\n\n**When** <the situation that calls for it>\n\n**Requires** <access and tools; where each secret is kept>\n\n**Steps**\n\n1. <step>\n\n**Verification** <how to tell it worked>\n-->\n\n## Phases\n\n### Phase 1: <what this phase leaves working>\n\n**Seams**\n\n```ts\n// the public signatures the workstreams of this phase build against\n```\n\n**Tests**\n\n<!-- The suites this phase adds or changes, and what each covers. -->\n\n- [ ] <workstream>: <task>\n- [ ] <workstream>: verify the phase\n\n## Feedback\n\n<!-- One entry per feedback taken in: where it came from, what it said, what changed. -->\n\n## Next step\n",
+  "dependencies": [],
+  "unlocks": [],
+  "root": {
+    "path": "<scratch>/g8/shop",
+    "source": "nearest"
+  }
+}
+
+exec
+/bin/bash -lc 'cat .agents/skills/gherkin-craft/SKILL.md' in <scratch>/g8/shop
+ succeeded in 0ms:
+---
+name: gherkin-craft
+description: "Write, review, or revise native .feature and Markdown .feature.md Gherkin that specifies software behavior and generates good tests with feat2test. Use when turning software requirements into Gherkin, reviewing existing Features, or fixing Features that feat2test rejects. Ordinary summaries, prose editing, and implementation alone do not need this skill."
+---
+
+# Gherkin Craft
+
+Input: requirements for programmed software. Output: Gherkin whose named steps
+map to Step Adapter methods and whose examples drive the tests feat2test
+generates. Read [the generator contract](references/generator-contract.md) and
+[format and language](references/gherkin-format.md) before writing or
+reviewing. Use [the authoring guide](references/authoring-guide.md) for worked
+examples when choosing a formulation.
+
+## Every step is named
+
+End every step with one HTML comment naming its Step Adapter method:
+`When <quantity> units are added <!-- addUnits -->`. The name is the step's
+identity and the words are documentation; feat2test rejects a step without one
+(`MISSING_STEP_NAME`) or with a malformed one (`INVALID_STEP_NAME`). Names are
+camelCase, English by default, representative and semantically loaded: they
+state the action or fact (`<!-- confirmOrder -->`), never a position or filler
+(`<!-- step1 -->`, `<!-- doIt -->`). Give one fact one name across the Feature,
+even where its wording differs, and keep each name to one keyword role and one
+input shape. Markdown preview hides the names; they stay visible in the source
+and in `.feature` files, and no other marker syntax replaces them.
+
+Put every value that varies between examples in a placeholder, never in the
+words. Bind every placeholder in every row, including those in titles and
+DataTables, which the generator does not catch. The generated test only calls
+steps, so each Then step carries the value it checks
+(`the order total is <total> <!-- orderTotal -->`), not a verdict
+(`the total is correct <!-- totalIsCorrect -->`).
+
+## One Feature per use case
+
+Each Feature is one complete use case at the software's boundary: relevant prior
+facts, one whole action or query, and the observable answer or changed or
+preserved state. Rules and outcome variants of that use case, acceptance and
+rejection included, stay together in distinct scenarios. Distinct purposes get
+separate Features even when they share data; shared quantities keep one meaning.
+No human actor is required when the domain has none.
+
+Specify what the software answers, changes or preserves, not how. Replace a step
+that describes implementation
+(`the repository save method is called <!-- repositorySaveCalled -->`) with its
+observable result. Internal call order, algorithms, runners, languages and
+output layout are not acceptance criteria and never become steps or Examples
+columns.
+
+## Meaningful arguments
+
+- Expose identities, quantities, units, categories, relative positions,
+  negative facts and expected results as named arguments in a
+  `Scenario Outline`, even with one justified row.
+- Keep independently variable roles apart even when their values coincide: a
+  horizon, a reporting interval and a recurrence interval of seven days are
+  three arguments with explicit units, not one `days`.
+- Keep a cohesive record or collection as one DataTable, not many scalar
+  columns. To vary whole records, give each an identity in the table and select
+  it from Examples.
+- Keep fixed rule criteria fixed. A diagnostic may bind the fixed value without
+  making the criterion configurable. Never replace actions, conditions or
+  diagnostics with prose-valued arguments such as `<reason>`.
+- Preserve subjects, negation, quantifiers, units, timing, relative selectors
+  and causes. Use explicit absence, not blank cells or `null`. Supply raw input
+  when its derivation is what the use case examines.
+
+## Discriminating examples
+
+Ask whether each example would still pass if a factor or rule were ignored; a
+factor of one hides a missing multiplication. Cover meaningful partitions,
+boundaries and failures, and keep unknown, absent, zero and invalid distinct.
+Recognize coverage already present and keep it on revision.
+
+A boundary belongs here when the domain expert would recognize it as their rule:
+a zero price, a repeated item, an amount shown with two decimals. A value that
+matters only because of machine representation (binary floating point, time
+zones, text normalization, overflow) is left out and named as a candidate for
+downstream programmatic tests, which are not written in Gherkin.
+
+Inspect relevant state/event pairs, repeated requests, missing information and
+mixed independent dimensions. A rejection states what was preserved; a query
+checks its answer without inventing a mutation. Each scenario supplies its own
+context and never depends on another having run. Parsing or a small
+cross-product does not prove exhaustive coverage.
+
+## Unresolved rules stay out of tables
+
+Separate what the requirements assert, what is justifiably inferred and what is
+undecided. When a row's expected outcome depends on an undecided rule, such as a
+rounding or validity policy, omit that row, state the open decision and deliver
+the supported rows. One supplied instance exposes a relationship's arguments; it
+does not establish behavior for members the source does not support.
+
+## Tags
+
+Tags are metadata the generator does not interpret. None is required, including
+`@code`; they only serve the project's own runner filters or conventions.
+Preserve tags already present when revising.
+
+## Validate with the generator
+
+When feat2test is installed, run `feat2test validate` on the delivered Feature
+through its file, `--text` or `--stdin`, with the project's runner and `--json`.
+Report the example count and diagnostics; it writes nothing. When it is not
+installed, check the format reference and say generator validation was not run.
+Validation proves generability, not semantic review.
+
+Write specifications in English unless the user or the project's `CLAUDE.md` or
+`AGENTS.md` explicitly asks for another language for them. Method names stay
+English unless the user explicitly asks for another language for the methods
+too; see [format and language](references/gherkin-format.md).
+
+## Review checklist
+
+Apply to the complete specification against the requirements and the user's
+constraints, whether or not another agent is available. Cite the scenario and
+evidence for each finding, and separate wording defects from undecided domain
+rules.
+
+- [ ] Each Feature is one use case; distinct purposes are separate Features.
+- [ ] Every step ends with a representative `<!-- name -->`, English unless chosen otherwise.
+- [ ] Each fact has one name; each name has one role and one input shape.
+- [ ] Every placeholder is bound in every row, including titles and DataTables.
+- [ ] Every Then step carries the expected value it checks.
+- [ ] No prose-valued arguments; roles, units and fixed criteria are explicit.
+- [ ] Examples discriminate factors, boundaries and failures; prior coverage kept.
+- [ ] No invented rules; open decisions are stated, not tabled.
+- [ ] Steps describe observable behavior, not implementation or tooling.
+- [ ] Syntax matches the format reference; `feat2test validate` passes when available.
+
+A review-only request returns findings and edits nothing. A revision fixes every
+affected occurrence of a shared step or argument and keeps justified behavior.
+
+exec
+/bin/bash -lc 'git status --short; ls -la .factory .agents/skills/implement 2>/dev/null' in <scratch>/g8/shop
+ exited 2 in 0ms:
+?? openspec/changes/
+.agents/skills/implement:
+total 16
+drwxrwxr-x  3 user user 4096 Nov 14 11:11 .
+drwxrwxr-x 10 user user 4096 Nov 14 11:11 ..
+-rw-rw-r--  1 user user 2463 Nov 14 11:10 SKILL.md
+drwxrwxr-x  3 user user 4096 Nov 14 11:11 references
+
+codex
+No existing specs, ADRs, or runbooks constrain this change. I’ll use `gherkin-craft` for acceptance scenarios and preserve the requested two-phase split.
+
+exec
+/bin/bash -lc 'cat .agents/skills/implement/references/workstreams/infrastructure/SKILL.md' in <scratch>/g8/shop
+exec
+/bin/bash -lc 'cat .agents/skills/implement/references/workstreams/adapters/SKILL.md' in <scratch>/g8/shop
+ succeeded in 0ms:
+---
+name: adapters
+description: Build the adapters workstream of the implementer: the resource adapters behind each anti-corruption layer, the only place where the environment lives. Read from the implement skill.
+---
+
+# adapters
+
+**Owns:** `src/<module>/infrastructure/adapters/` and `src/shared/infrastructure/adapters/` (the base adapters every module composes, such as `http-api.adapter.ts`).
+
+**Receives:** the ACLs of `infrastructure` (`acl/<name>.acl.ts`: `interface <Name>Acl` and the schemas of its records), fixed before this workstream starts, and the domain exceptions an adapter throws. The ACL is the seam: a repository implementation receives an adapter typed by it and never imports or constructs one, so this workstream and `infrastructure` are built apart.
+
+**Fakes:** nothing. Adapters are the edge; behind them is the real resource.
+
+## How
+
+1. Read the `## reference` of `adapters.examples.md`.
+2. Per ACL: one adapter per backend (`http-<name>.adapter.ts`, `in-memory-<name>.adapter.ts`), each a class that `implements <Name>Acl`, and `<name>.adapter.ts`, which picks one by environment and exports the ACL-typed instance (`export const <name>Adapter: <Name>Acl`). Every ACL needs at least one adapter.
+3. Speak the resource's shape: parse through the ACL's record schemas, never a domain schema. Translate the resource's failures into domain exceptions with the caught error as `cause`.
+
+No product tests for now: the rules are the check. Contract tests against the real services (testcontainers or similar) are a later decision; when they come, they belong here.
+
+**Check:** `pnpm exec factory check --workstream adapters [--module <module>]`.
+
+ succeeded in 0ms:
+---
+name: infrastructure
+description: Build the infrastructure workstream of the implementer: repository implementations, anti-corruption layers and paginators, and one integration test per repository implementation over an in-memory adapter typed by the real ACL. Read from the implement skill.
+---
+
+# infrastructure
+
+**Owns:** `src/<module>/infrastructure/` except `adapters`: `repository-implementations`, `acl`, and the emergent folders the configuration admits, such as `paginators`; and `test/integration/<module>/` (one `<x>-repository.test.ts` per repository implementation). The adapters are the `adapters` workstream.
+
+**Receives:** the repository interfaces of `app-domain` (it implements them exactly) and the domain props and exceptions they name. The ACLs it declares are seams that `adapters` implements. The change's design fixes both, with the record → props mapping one line per field and the domain exception for each failure of the resource.
+
+**Fakes:** the adapter, and only it. The ACL is real: its interface and its record schemas (the schema package) say which attributes the system needs and validate them. The integration test builds `new XRepositoryImplementation(new InMemoryXAdapter(records))`, where the in-memory adapter implements that ACL: the product's `in-memory-<x>.adapter.ts` once `adapters` has built it, or a class inside the test until then. Without the real adapter, repositories and ACLs are pure code: map records to props, raise domain exceptions. A repository or adapter throws only the exceptions of its own module (or `ValidationException`), with the resource's error in `cause`; a shared adapter such as `HttpApiAdapter` receives from the module adapter the exception to throw.
+
+## How
+
+1. Read the `## reference` of `infrastructure.examples.md` and `integration.examples.md`.
+2. Per resource: the ACL (record schema and interface) is already fixed; write the repository implementation over it. A repository never imports an adapter or does `new XAdapter(`: the composition root injects it.
+3. Per repository implementation, write `test/integration/<module>/<x>-repository.test.ts`: the mapping of every field the design names and the exception for every failure. Invent the records inside the ACL's schema, taking the Examples of the product specs as a guide where values overlap; no fixture comes from the artifacts. When the behavior changes, rewrite the test inside the same seams.
+
+**Check:** `pnpm exec factory check --workstream infrastructure [--module <module>]`, plus `pnpm exec factory test integration`.
+
+exec
+/bin/bash -lc 'cat .agents/skills/gherkin-craft/references/gherkin-format.md' in <scratch>/g8/shop
+ succeeded in 0ms:
+# Format and language
+
+Read for all authoring and review. Preserve the requested representation;
+formatting choices must not change the domain claim.
+
+## Language
+
+Specifications are English by default. Write them in another language only when
+the user, or the project's agent instructions (`CLAUDE.md`, `AGENTS.md`),
+explicitly request it for the specifications, including a request to retain an
+existing specification's language. Conversing in another language is not such a
+request. Apply the choice to titles, descriptions, sentences, and argument
+names. Preserve proper names, identifiers, contractual literal data, and terms
+required verbatim. Use established translations consistently; resolve material
+ambiguity from context or ask. Teaching examples in this skill remain English.
+
+Step method names are a separate choice and stay English camelCase even in a
+specification written in another language: `Dado un carrito vacío <!-- emptyCart -->`.
+Use another language for them only when the user explicitly requests it for the
+method names too; then write them as camelCase identifiers without accents or
+spaces (`<!-- carritoVacio -->`). The generator checks only that identifier
+format, not the language.
+
+For non-English output, use native `.feature` unless the user explicitly
+requires Markdown. Begin native output with `# language: <code>` using a
+supported Gherkin dialect, then use that dialect's keywords throughout. The
+directive is literally `language`, not a tag or YAML. English uses `en` and
+needs no declaration.
+
+If non-English Markdown is explicitly required, resolve the consumer's external
+dialect configuration before claiming valid output. A native per-file language
+directive does not configure Cucumber's Markdown dialect. Explain the constraint
+and offer native `.feature` when a self-contained declaration is needed; do not
+silently switch a requested format or invent a Markdown language attribute.
+
+## Common structure
+
+- A Feature contains one use case; Rule groups one governing rule; Scenario is
+  one observable example. When writing files, give each Feature its own file.
+- Given supplies prior facts; When names the whole action or query; Then states
+  its answer and relevant changed or preserved facts. And/But continue the
+  preceding role. But provides contrast, not automatic negation.
+- Every step line ends with its method name comment, `<!-- name -->`, in both
+  formats; a DataTable or Doc String follows on the next lines.
+- Each Examples row is independent. Group rows by intent and kind of outcome;
+  acceptance and rejection use different scenarios within the same use case.
+  One Outline may carry several titled Examples blocks: the first illustrates
+  the rule with a reader-friendly case; later blocks hold the boundaries the
+  expert confirmed. The split is presentation only; every row is one scenario.
+- A Scenario Outline exposes meaningful scalar arguments even for one row.
+  Every placeholder has a concrete Examples binding, including occurrences in
+  titles, DataTables, and consequences. Plain Scenarios suit argument-free cases.
+- DataTables describe a cohesive record or collection within one example;
+  Examples tables describe behavioral variation. Use Doc Strings for coherent
+  source text. Do not serialize an aggregate or reproduce a constructor.
+- Titles state the outcome and relevant condition, understandable on their own.
+  Avoid “happy path” and numbered case labels as their only meaning.
+- Background contains only preconditions shared by every example in its scope,
+  never varying data, actions, or assertions. Prefer repetition when it avoids
+  making the reader search for essential context. Tags are metadata.
+- Use concrete values, digits for numerical counts/positions, and explicit
+  presence or absence. Do not use blank cells or nullish stand-ins for missing
+  facts. Preserve literal source content when it is actually being examined.
+
+## Native `.feature`
+
+Use native keyword structure, indentation for readability, and ordinary bare
+Outline placeholders. A DataTable follows its step. Do not add Markdown heading
+markers, bullet steps, or Markdown formatting separator rows. In native tables,
+those separators become data, including additional Examples cases.
+
+Tags are metadata the generator ignores; in a non-English file they follow the
+`# language: <code>` line.
+
+## Markdown `.feature.md`
+
+Use Gherkin headings and bullet steps, for example `# Feature:`, `## Rule:`,
+`### Scenario Outline:`, `#### Examples:`, and `* Given ...`. Use native syntax
+only in native files; a fenced native document is not Markdown Gherkin structure.
+Only recognized headings, steps, tables, and backtick tags have Gherkin meaning;
+other prose remains documentation. Markdown preview hides each step's
+`<!-- name -->` comment; it remains in the source, where the generator reads it.
+
+Write each tag in its **own** backtick span, for example `` `@billing` `@slow` ``.
+A single span containing several tags parses as one compound tag, and native
+bare tag syntax in Markdown is ordinary prose.
+
+Use two leading spaces on every table row so Examples and DataTables are
+recognized. Insufficient indentation may silently hide a table.
+
+Cucumber's Markdown parser accepts header separators such as `| --- |`,
+including left, right, and centered alignment markers. These are formatting:
+they do not add Examples cases or DataTable values. Tables without separators
+are also supported. Do not report a separator as data corruption solely because
+it appears in Markdown; verify the intended rows and values with the consumer.
+
+Backticks around placeholders in headings or sentences protect their Markdown
+rendering. Inside Examples cells, DataTable cells, and Doc String contents, use
+plain values and bare placeholders. Formatting backticks there become literal
+data. Ordinary explanatory Markdown tables outside specifications can use normal
+Markdown separators; do not confuse them with Gherkin tables.
+
+## Verify interpretation
+
+Where `feat2test validate` or another parser is available, inspect expanded
+example counts, bindings, selected dialect, and resulting step/table values.
+Check all intended rows survived and formatting did not become data. Successful
+parsing is not a semantic review and does not demonstrate domain execution.
+
+## References
+
+- [Gherkin reference](https://cucumber.io/docs/gherkin/reference/)
+- [Spoken languages](https://cucumber.io/docs/gherkin/reference/#spoken-languages)
+- [Markdown with Gherkin](https://github.com/cucumber/gherkin/blob/main/MARKDOWN_WITH_GHERKIN.md)
+- [Markdown dialect selection](https://github.com/cucumber/gherkin/blob/main/javascript/src/GherkinInMarkdownTokenMatcher.ts)
+
+exec
+/bin/bash -lc 'cat .agents/skills/gherkin-craft/references/generator-contract.md' in <scratch>/g8/shop
+ succeeded in 0ms:
+# Generator step contract
+
+Read before writing or reviewing any step. feat2test turns each Feature into a
+Feature Test that only calls steps, and a Step Adapter with one method per
+distinct step name. These rules are mechanical; breaking them either fails
+generation or silently produces the wrong methods.
+
+## A step's name is its method
+
+Every step ends with one HTML comment holding its adapter method name:
+
+```gherkin
+Feature: Add units
+  Scenario Outline: Add <quantity> units
+    Given an empty cart <!-- emptyCart -->
+    When <quantity> units are added <!-- addUnits -->
+    Then the cart contains <quantity> units <!-- cartContains -->
+
+    Examples:
+      | quantity |
+      | 2        |
+```
+
+The name is the step's identity; the words before it are documentation. The
+comment closes the step line, after any placeholder; a DataTable or DocString
+follows on the next lines. Markdown preview hides it, while the `.feature.md`
+source and native `.feature` files show it.
+
+| Step text | Method |
+| --- | --- |
+| `the cart holds <quantity> items <!-- cartHolds -->` | `cartHolds(quantity: string)` |
+| `the cart contains <quantity> items <!-- cartHolds -->` | `cartHolds(quantity: string)` |
+| `el carrito contiene <quantity> artículos <!-- cartHolds -->` | `cartHolds(quantity: string)` |
+| `the cart holds <quantity> items <!-- cartStillHolds -->` | `cartStillHolds(quantity: string)` |
+| `the cart holds 2 items <!-- cartHoldsTwoItems -->` | `cartHoldsTwoItems()` |
+
+So:
+
+- Steps with one name call one method, whatever their words or language.
+  Steps with different names are different methods, even with identical words.
+  Give one fact one name across the Feature.
+- Rewording a step keeps its method and implementation. Renaming it creates a
+  new pending method and drops the old one once no step uses it. Changing only
+  Examples values keeps the method and its implementation.
+- A value that varies between examples is a placeholder, not a word. A literal
+  `2 items` is part of the documentation, never a parameter.
+- Names are English unless the user explicitly asks otherwise, and
+  representative: they state the action or fact (`confirmOrder`,
+  `orderTotal`), never a position or filler (`step1`, `doIt`).
+
+## Names the generator accepts
+
+The generator checks only the identifier format: `^[a-z][A-Za-z0-9]*$`, and
+not a JavaScript reserved word. It cannot tell whether a name is English or
+representative; that judgment is the author's.
+
+- A step without a trailing name comment fails with `MISSING_STEP_NAME`.
+- A name with spaces, hyphens, accents, a leading digit or capital, or a
+  reserved word such as `delete`, fails with `INVALID_STEP_NAME`. So does a
+  second comment in the same step, or a comment that does not end it.
+
+Both name the source, line and step, and are reported before any file is
+written. A trailing HTML comment in a step is always read as its name; put
+explanations in a description or a comment line instead.
+
+## Inputs become parameters
+
+- Each distinct `<name>` in the step text becomes a `string` parameter, in
+  order of first occurrence. A placeholder repeated in one step is one
+  parameter. The parameter name is the placeholder name with its first letter
+  lower-cased and any character that cannot appear in an identifier removed.
+- A DataTable becomes a final `table: string[][]` parameter: every row,
+  including the header, as strings.
+- A DocString becomes a final `text: string` parameter.
+- Every value arrives as a string. Numbers, money and dates are parsed by the
+  adapter, never by the generator.
+
+The parameter list is part of the signature. The same name used with a
+different placeholder name, or once with a DataTable and once without, fails
+with `CONFLICTING_STEP_INPUTS`.
+
+## Keywords set the role
+
+`Given` is Context, `When` is Action and `Then` is Outcome. `And`, `But` and
+`*` inherit the role of the previous step; a scenario that starts with `*`
+starts in Context. Background steps run first in every scenario. The same
+name with two roles, for example `<!-- orderConfirmed -->` on a Given and on a
+Then, fails with `CONFLICTING_STEP_ROLE`. Rename one of them.
+
+## Examples bind placeholders
+
+Each Examples row becomes one test and supplies the values for every
+placeholder in that expansion. Repeated titles are numbered (`#2`, `#3`). The
+name comment is never a placeholder.
+
+- A placeholder in the step text with no Examples column, or in a plain
+  `Scenario`, fails with `UNKNOWN_PLACEHOLDER`.
+- A placeholder in a scenario title or a DataTable cell with no column does
+  **not** fail: it stays as the literal text `<name>` in the test name or the
+  table value. Check those bindings by hand.
+
+## Generated tests only call steps
+
+The Feature Test is rewritten on every generation and contains no
+assertions. Each step becomes one call, in order, with its values as string
+literals, below a comment with its keyword and words but not its name. Every
+check lives in the adapter method of a Then step, which receives nothing but
+its parameters. A Then step therefore carries the value it checks
+(`the order total is <total> <!-- orderTotal -->`), never a judgment the
+method cannot compute from its inputs
+(`the total is correct <!-- totalIsCorrect -->`).
+
+## Tags are ignored
+
+Feature, Rule and Scenario tags are parsed and discarded. They do not change
+the generated test, the adapter or the runner.
+
+## Check with the generator
+
+```bash
+npx feat2test validate <feature> --runner vitest --json
+npx feat2test validate --text '<feature text>' --format feature --source draft.feature --runner vitest --json
+```
+
+Use `--format mdg` for Markdown, or `--stdin` instead of `--text`. Validation
+writes nothing. It reports `scenarioCount` (expanded examples), `stepCount`
+(distinct methods), warnings for table rows that will not parse as intended
+(a separator row in a native file, a Markdown row without two leading spaces),
+and the diagnostics above. It proves generability only, not that the
+specification is right.
+
+exec
+/bin/bash -lc 'pnpm exec factory --help' in <scratch>/g8/shop
+ exited 2 in 75ms:
+Unknown command: --help. Commands: check, generate, expect, test, validate, build, doctor, guard, gate, feedback, verify, archive, proof, openspec, prepare, review
+
+exec
+/bin/bash -lc 'cat .agents/skills/implement/references/workstreams/app-domain/SKILL.md .agents/skills/implement/references/workstreams/integrate/SKILL.md' in <scratch>/g8/shop
+ succeeded in 0ms:
+---
+name: app-domain
+description: Build the app-domain workstream of the implementer: the acceptance step adapters, the application layer (use cases, repository interfaces) and the domain layer, with repositories faked in memory. Read from the implement skill.
+---
+
+# app-domain
+
+**Owns:** `test/acceptance/<module>/` (one step adapter per use case, next to the test generated from its product spec), `src/<module>/application/` (use cases and repository interfaces) and `src/<module>/domain/` (entities, aggregates, value objects, schemas, exceptions, services).
+
+**Receives:** the product specs, one per use case under the configured product specs root (`openspec/specs/<module>/<use-case>/spec.md` by default), and nothing from other workstreams. The repository interfaces it declares are seams that `infrastructure` implements. The change's design defines them (which methods, which props and exceptions), and the implementer fixes them before this workstream starts.
+
+**Fakes:** repositories, and only them. Acceptance is a black box against the use case. Each repository the use cases need has an in-memory twin in `test/acceptance/<module>/repositories/in-memory-<name>.repository.ts`: `class InMemory<Name>Repository implements <Name>RepositoryInterface`, with no constructor parameter and a `seed(...)` method the Given steps call. It behaves like the one infrastructure will build: same contract, same exceptions of the module family. It never imports from `infrastructure`.
+
+## How
+
+1. Read the `## reference` sections of `acceptance.examples.md`, `application.examples.md` and `domain.examples.md`: they are the shape of correct code. The other sections show each way of breaking a rule.
+2. `pnpm exec factory generate`: each product spec becomes `test/acceptance/<module>/<use-case>.feature.test.ts` and a step adapter `<use-case>.feature.steps.ts` with a pending method per step. Never write or edit a test file; a behavior the spec lacks goes back as feedback on the change.
+3. Write the in-memory repositories, fill the step adapter of each use case, then write the use case and the domain it needs, until `pnpm exec factory test acceptance` is green. A step method keeps its parameter names equal to the spec's placeholders, or the next generation scaffolds it again. Steps check their data with assertions (`expect`), never `throw new Error(`; the `PENDING` bodies feat2test scaffolds break that rule, so the pipeline is red until every step is written.
+4. The module's exceptions are the family the design declares: one base extending `DomainException`, one subclass per business failure.
+5. Follow the core-wide rules even though `clean-architecture` checks them: no `any` in the core, only domain exceptions (the provider error in `cause`), the schema package only in `domain/schemas`.
+
+**Check:** `pnpm exec factory check --workstream app-domain [--module <module>]`, plus `pnpm exec factory test acceptance`.
+---
+name: integrate
+description: Run the integrate reduce workstream of the implementer: join the workstreams under it into the whole product and pass dead code and duplication. Read from the implement skill.
+---
+
+# integrate
+
+**Reduces:** the workstreams the topology lists under it (by default `clean-architecture`).
+
+**Owns:** the checks that only make sense once everything is wired:
+
+- `no-unused-files`: no file of the product is left unused. Everything is reached from the entry or from a test; the HTTP and in-memory adapters are both reachable because `x.adapter.ts` picks one by environment.
+- `duplication-below-threshold`: global duplication under 4 %. A block repeated in two modules is a candidate for `shared`. The generated acceptance tests are skipped: they repeat by design.
+
+## How
+
+1. Merge the upstream work; the entry is where the use cases, the repositories and the adapters meet.
+2. Run the check. It is the full pipeline: every workstream's rules, these two checks and the freshness of the generated tests. End-to-end tests will live here once `test/e2e` has them.
+
+**Check:** `pnpm exec factory check --workstream integrate`; `pnpm exec factory check` adds the freshness of the generated tests.
+
+exec
+/bin/bash -lc 'rg --files node_modules/factory | head -35' in <scratch>/g8/shop
+ succeeded in 0ms:
+node_modules/factory/openspec/schemas/clean-backend/schema.yaml
+node_modules/factory/openspec/schemas/clean-backend/templates/spec.md
+node_modules/factory/openspec/schemas/clean-backend/templates/plan.md
+node_modules/factory/workstreams/adapters/workstream.js
+node_modules/factory/workstreams/adapters/adapters.rules.js
+node_modules/factory/workstreams/integrate/workstream.js
+node_modules/factory/workstreams/app-domain/application.rules.js
+node_modules/factory/workstreams/app-domain/domain.rules.js
+node_modules/factory/workstreams/app-domain/workstream.js
+node_modules/factory/workstreams/app-domain/acceptance.rules.js
+node_modules/factory/workstreams/clean-architecture/workstream.js
+node_modules/factory/workstreams/clean-architecture/modules.rules.js
+node_modules/factory/workstreams/infrastructure/integration.rules.js
+node_modules/factory/workstreams/infrastructure/workstream.js
+node_modules/factory/workstreams/infrastructure/infrastructure.rules.js
+node_modules/factory/schemas/clean-backend.js
+node_modules/factory/validators/standard/validator.js
+node_modules/factory/package.json
+node_modules/factory/toolkit/proof.js
+node_modules/factory/toolkit/archunit.js
+node_modules/factory/toolkit/verify.js
+node_modules/factory/toolkit/prepare.js
+node_modules/factory/toolkit/test.js
+node_modules/factory/toolkit/oxlint.js
+node_modules/factory/toolkit/paths.js
+node_modules/factory/toolkit/check.js
+node_modules/factory/toolkit/merged.js
+node_modules/factory/toolkit/schema.js
+node_modules/factory/toolkit/validate.js
+node_modules/factory/toolkit/evidence.js
+node_modules/factory/toolkit/schema-yaml.js
+node_modules/factory/toolkit/archive.js
+node_modules/factory/toolkit/guard.js
+node_modules/factory/toolkit/plan.js
+node_modules/factory/toolkit/rules.js
+
+exec
+/bin/bash -lc 'cat node_modules/factory/toolkit/validate.js node_modules/factory/toolkit/test.js' in <scratch>/g8/shop
+ succeeded in 0ms:
+import { activeChanges, readChange } from "./change.js";
+import { readConsolidated } from "./consolidated.js";
+import { PROJECT_ROOT } from "./paths.js";
+import { hasUncheckedTasks, parsePlan } from "./plan.js";
+import { loadSchema, schemaNames } from "./schema.js";
+/** A change that cannot be judged: it does not exist, or no schema of this package made it. */
+export class NotValidatable extends Error {
+}
+/**
+ * Whether the change `name` of the project at `root` is ready, by the validator of the schema it
+ * was made with. A change with no plan is not ready and nothing else is said about it.
+ */
+export const validateChange = async (root, name) => {
+    const change = readChange(root, name);
+    if (!change)
+        throw new NotValidatable(`no active change is called ${name}; changes: ${activeChanges(root).join(", ") || "none"}`);
+    if (!change.schema || !schemaNames().includes(change.schema))
+        throw new NotValidatable(`the change ${name} was made with the schema ${change.schema ?? "(none)"}, which this package does not define; schemas: ${schemaNames().join(", ")}`);
+    const schema = await loadSchema(change.schema);
+    const findings = change.plan === undefined
+        ? [{ rule: "has-a-plan", message: "the change has no plan.md: every change has a plan" }]
+        : schema.validator.ready({
+            change,
+            plan: parsePlan(change.plan),
+            consolidated: readConsolidated(root),
+            workstreams: schema.definition.workstreams,
+        });
+    return { change: name, schema: change.schema, ready: findings.length === 0, findings };
+};
+/** The changes in implementation: those whose plan is ready and still has unchecked tasks. */
+export const changesInImplementation = async (root) => {
+    const found = [];
+    for (const name of activeChanges(root)) {
+        const text = readChange(root, name)?.plan;
+        if (text === undefined)
+            continue;
+        const plan = parsePlan(text);
+        if (!hasUncheckedTasks(plan))
+            continue;
+        try {
+            if ((await validateChange(root, name)).ready)
+                found.push({ name, plan });
+        }
+        catch (e) {
+            if (!(e instanceof NotValidatable))
+                throw e;
+        }
+    }
+    return found;
+};
+/**
+ * `factory validate <change>`: says whether the change is ready and, when it is not, every reason.
+ * Exit status 0 when ready, 1 when not ready, 2 when the change cannot be judged.
+ */
+export const validate = async (args) => {
+    const [name] = args;
+    if (!name) {
+        console.error(`Name the change to validate. Changes: ${activeChanges(PROJECT_ROOT).join(", ") || "none"}`);
+        return 2;
+    }
+    try {
+        const verdict = await validateChange(PROJECT_ROOT, name);
+        console.log(`${verdict.ready ? "ready" : "not ready"}: ${name} (${verdict.schema})`);
+        for (const f of verdict.findings)
+            console.log(`- [${f.rule}] ${f.message}`);
+        return verdict.ready ? 0 : 1;
+    }
+    catch (e) {
+        if (!(e instanceof NotValidatable))
+            throw e;
+        console.error(e.message);
+        return 2;
+    }
+};
+import { spawnSync } from "node:child_process";
+import { existsSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { cacheDir, PROJECT_ROOT } from "./paths.js";
+import { config } from "./project.js";
+const KINDS = { acceptance: () => config.acceptance, integration: () => config.integration };
+/**
+ * `factory test <acceptance|integration> [--report <file>]`: the product's tests of one kind, run
+ * with the project's own test runner over the configured root of that kind and nothing else.
+ * `--report` also writes each test's result to that file, as JSON.
+ */
+export const test = async (args) => {
+    const [kind] = args;
+    if (!kind || !(kind in KINDS)) {
+        console.error(`Unknown kind of test: ${kind}. Kinds: ${Object.keys(KINDS).join(", ")}`);
+        return 2;
+    }
+    const runner = join(PROJECT_ROOT, "node_modules/vitest/vitest.mjs");
+    if (!existsSync(runner)) {
+        console.error("the project has no test runner: add vitest to its development dependencies");
+        return 2;
+    }
+    const root = KINDS[kind]();
+    const path = join(cacheDir(PROJECT_ROOT), `vitest.${kind}.config.mjs`);
+    writeFileSync(path, `export default ${JSON.stringify({
+        root: PROJECT_ROOT,
+        test: { include: [`${root}/**/*.test.ts`], environment: "node", passWithNoTests: true },
+    })};\n`);
+    const report = args.indexOf("--report");
+    const reporters = report === -1
+        ? []
+        : ["--reporter=default", "--reporter=json", `--outputFile.json=${args[report + 1]}`];
+    const r = spawnSync(process.execPath, [runner, "run", "--config", path, ...reporters], {
+        stdio: "inherit",
+    });
+    return r.status ?? 1;
+};
+
+hook: PreToolUse
+hook: PreToolUse Completed
+apply patch
+patch: completed
+<scratch>/g8/shop/openspec/changes/list-customer-orders/plan.md
+<scratch>/g8/shop/openspec/changes/list-customer-orders/specs/orders/list-customer-orders/spec.md
+diff --git a/openspec/changes/list-customer-orders/plan.md b/openspec/changes/list-customer-orders/plan.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..6a0f35acac2df452197040bbcbe5edabb9d05fcd
+--- /dev/null
++++ b/openspec/changes/list-customer-orders/plan.md
+@@ -0,0 +1,169 @@
++---
++name: list-customer-orders
++description: List a customer's orders newest first through a use case backed by HTTP or in-memory orders.
++created_at: 2026-11-14
++created_by: user
++schema: clean-backend
++---
++
++# List customer orders
++
++## Goal
++
++Provide a query returning a customer's orders with id, customer id, total in cents and placement date, newest first. Deliver the use case and domain with acceptance coverage first; then connect the repository, anti-corruption layer, HTTP and development adapters, and entry.
++
++## Decisions
++
++- Use the `orders` module and `ListCustomerOrdersUseCase.execute(customerId)` returning order props, rather than introducing an inbound web server the request does not require.
++- The application sorts by placement instant descending, rather than relying on backend ordering; equal instants have no additional public ordering guarantee.
++- Return a complete array without pagination, rather than inventing a paging protocol absent from the service contract.
++- Keep placement dates as validated ISO timestamp strings in props and compare their parsed instants, rather than comparing strings or exposing mutable Date objects.
++- Map resource records to domain props in the repository; retain snake_case only in the ACL and adapters, rather than letting the service vocabulary enter the use case.
++- Use `NODE_ENV=development` for the in-memory backend (empty by default, constructor-seedable); all other environments use HTTP and require `ORDERS_API_URL`, rather than silently falling back to development data.
++- Translate invalid records to `ValidationException` and resource/configuration failures to `OrdersUnavailableException` with the original error as cause; reject the query rather than returning partial data or disguising failure as an empty list. No retry policy or public HTTP error status is introduced.
++- Use generated acceptance tests with a fake repository in phase 1 and repository integration tests with an ACL-typed in-memory adapter in phase 2, rather than real network calls in local tests.
++- The cents architecture decision below is explicitly requested by the user; it is already authorized.
++
++## Open questions
++
++- For a customer with no orders: return an empty list or report an error? Pick an empty list: it preserves the array query contract. The proposed spec and tests below assume this option pending confirmation.
++
++## Architecture decisions
++
++### Decision: money-in-integer-cents · Money amounts use integer cents
++
++@adds @area:product @topic:money @applies:domain,application,infrastructure,adapters @enforced:domain-and-acl-schemas,integration-tests,review
++
++Money amounts SHALL be represented as integers in cents across the product. `OrderProps.totalCents` and service `total_cents` SHALL carry the same cents value without division, rounding or conversion into floating-point major currency units. JavaScript number values SHALL pass safe-integer validation so the representation preserves exact cents.
++
++**Why** The user explicitly requires integer cents; retaining that unit avoids rounding and unit ambiguity at boundaries.
++
++**Alternatives** Decimal major units and floating-point currency values are discarded because they weaken the required representation.
++
++**Consequences** Future money fields must preserve this unit. Values outside the safe-integer range are rejected, not rounded. Currency, sign restrictions and exchange rates are outside this decision.
++
++## Procedures
++
++### Procedure: local-checks-and-tests · Run checks and tests locally
++
++@adds @purpose:operate @topic:local-validation @env:local,development
++
++**When** Before handing off a phase or verifying this change.
++
++**Requires** A local checkout, a Node.js version satisfying the installed dependencies' engine requirements, and pnpm. Run commands at the repository root. Acceptance and integration tests need no network, credentials or environment secrets. Development uses `NODE_ENV=development`; an HTTP run instead needs the non-secret service base URL in the local process environment as `ORDERS_API_URL`. No service credentials were specified; none are embedded in code or committed files.
++
++**Steps**
++
++1. Install the locked dependencies: `pnpm install --frozen-lockfile`.
++2. Run `pnpm exec factory doctor`; resolve any missing setup through `setup`. Its hook note requires Codex project trust and `/hooks` review, repeated after hook updates.
++3. Check planning readiness: `pnpm exec factory validate list-customer-orders` while the change is active.
++4. Regenerate acceptance tests from the active change's specs: `pnpm exec factory generate`. Fill generated step adapters during implementation; never edit generated test bodies.
++5. For phase 1, run `pnpm exec factory check --workstream app-domain --module orders`, `pnpm exec factory test acceptance`, and `pnpm exec tsc --noEmit`.
++6. For phase 2, run `pnpm exec factory check --workstream infrastructure --module orders`, `pnpm exec factory check --workstream adapters --module orders`, `pnpm exec factory test integration`, and `pnpm exec factory test acceptance`.
++7. Finish with `pnpm exec factory check` and `pnpm exec tsc --noEmit`. Review the test counts: a successful command with zero tests does not verify an implemented phase.
++
++**Verification** All phase commands exit zero; acceptance scenarios execute, phase 2 integration tests execute, and full checks confirm architecture and generated-test freshness. Planning readiness alone does not establish implementation correctness.
++
++## Phases
++
++### Phase 1: The customer-order query works against a fake repository
++
++**Seams**
++
++```ts
++// src/orders/domain/props/order.props.ts; schema validates each property.
++export interface OrderProps {
++  id: string;
++  customerId: string;
++  totalCents: number; // safe integer cents
++  placedAt: string; // ISO timestamp with explicit UTC offset
++}
++// src/orders/application/repositories/order.repository-interface.ts
++export interface OrderRepositoryInterface {
++  listByCustomerId(customerId: string): Promise<OrderProps[]>;
++}
++// src/orders/application/use-cases/list-customer-orders.use-case.ts
++export class ListCustomerOrdersUseCase {
++  constructor(repository: OrderRepositoryInterface);
++  execute(customerId: string): Promise<OrderProps[]>;
++}
++// Module exception family: OrdersException extends shared DomainException;
++// OrdersUnavailableException extends OrdersException; validation uses the
++// shared ValidationException. Causes preserve provider errors.
++// Acceptance-only fake: no infrastructure imports, no constructor arguments.
++export class InMemoryOrderRepository implements OrderRepositoryInterface {
++  seed(orders: OrderProps[]): void;
++  listByCustomerId(customerId: string): Promise<OrderProps[]>;
++}
++```
++
++The repository contract returns only the requested customer's validated orders, possibly empty and in any order. The use case sorts a copy newest first and returns every field unchanged. Define domain schemas in `domain/schemas` for nonempty ids, safe-integer cents, and valid timestamp instants with offsets; avoid inventing positive-only totals. The fake repository applies the same customer filter and props validation as the eventual implementation.
++
++**Tests**
++
++Generate `test/acceptance/orders/list-customer-orders.feature.test.ts` and fill its step adapter against the fake repository. Cover mixed customers, exact field preservation, unsorted input with three distinct dates, one order, and the proposed empty result. Include different totals to detect accidental unit conversion. Use domain schema tests for fractional/unsafe cents and malformed dates; do not add new business rules through those tests.
++
++- [ ] app-domain: Generate acceptance tests from the delta spec and implement Given/When/Then adapters over `InMemoryOrderRepository` with seed data.
++- [ ] app-domain: Build order props, schemas, module exceptions, repository interface and `ListCustomerOrdersUseCase` with descending instant ordering.
++- [ ] app-domain: Verify the phase with app-domain checks, acceptance tests, domain schema tests and TypeScript checking.
++
++### Phase 2: The query is connected to HTTP and development backends
++
++**Seams**
++
++```ts
++// src/orders/infrastructure/acl/orders.acl.ts
++// Export orderRecordSchema and orderRecordsSchema using the schema package.
++export interface OrderRecord {
++  id: string;
++  customer_id: string;
++  total_cents: number;
++  placed_at: string;
++}
++export interface OrdersAcl {
++  listCustomerOrders(customerId: string): Promise<OrderRecord[]>;
++}
++// src/orders/infrastructure/repository-implementations/order.repository-implementation.ts
++export class OrderRepositoryImplementation implements OrderRepositoryInterface {
++  constructor(orders: OrdersAcl);
++  listByCustomerId(customerId: string): Promise<OrderProps[]>;
++}
++// src/orders/infrastructure/adapters/
++export class HttpOrdersAdapter implements OrdersAcl {
++  constructor(baseUrl: string);
++  listCustomerOrders(customerId: string): Promise<OrderRecord[]>;
++}
++export class InMemoryOrdersAdapter implements OrdersAcl {
++  constructor(records?: OrderRecord[]);
++  listCustomerOrders(customerId: string): Promise<OrderRecord[]>;
++}
++// orders.adapter.ts selects by environment, exports:
++export const ordersAdapter: OrdersAcl;
++// src/entry.ts is the composition root and public callable entry:
++export const listCustomerOrders: (customerId: string) => Promise<OrderProps[]>;
++```
++
++The ACL schemas validate the actual JSON array and required fields, including safe-integer cents and valid timestamps. Extra service attributes need no domain equivalent. Record → props mapping is explicit:
++
++- `id` → `id`, unchanged.
++- `customer_id` → `customerId`, unchanged.
++- `total_cents` → `totalCents`, unchanged integer cents.
++- `placed_at` → `placedAt`, unchanged timestamp.
++
++The repository receives only `OrdersAcl`, imports no adapter, maps validated records, validates props, and filters by requested customer id so another customer's orders cannot escape the query. The HTTP adapter requests `GET <baseUrl>/customers/<encodedCustomerId>/orders`, safely joins trailing slashes while retaining any base path, checks success, decodes JSON, and validates through ACL schemas. Network, non-success status and invalid configuration produce `OrdersUnavailableException`; JSON decoding and record-shape failures produce `ValidationException`; both retain the original cause. There is no empty-list fallback on failure. The in-memory adapter validates and returns seeded resource records for the customer; it is distinct from the acceptance repository fake. Environment reads and backend selection live only in adapters. The entry injects the selected adapter into the repository and the repository into the use case, without reading environment variables.
++
++**Tests**
++
++`test/integration/orders/order-repository.test.ts` constructs the real repository over `InMemoryOrdersAdapter` implementing the real ACL. Verify every field mapping, unchanged cents, mixed-customer isolation, empty records, schema validation failures and propagation of module resource exceptions with causes; use a small failing ACL double for resource failures. Acceptance tests continue proving ordering through the same application seam. Adapter work uses the workstream's structural checks; real HTTP contract tests are deferred, not represented as covered by repository tests.
++
++- [ ] infrastructure: Define the Orders ACL and resource schemas; implement the injected order repository with explicit mapping and customer isolation.
++- [ ] adapters: Implement HTTP and in-memory Orders ACL adapters and environment-based selection using `ORDERS_API_URL` for HTTP.
++- [ ] infrastructure: Add repository integration coverage over the real ACL and in-memory adapter, including every mapped field and declared failure category.
++- [ ] clean-architecture: Join app-domain, infrastructure and adapters and run cross-module checks.
++- [ ] integrate: Wire the callable entry, ensure both backend implementations are reachable, and verify the phase with full factory checks, acceptance and integration tests, and TypeScript checking.
++
++## Feedback
++
++## Next step
++
++Confirm the empty-list decision, remove its open question, then rerun `pnpm exec factory validate list-customer-orders`. Once ready, use `implement` for phase 1 only; phase 2 follows after phase 1 verification.
+diff --git a/openspec/changes/list-customer-orders/specs/orders/list-customer-orders/spec.md b/openspec/changes/list-customer-orders/specs/orders/list-customer-orders/spec.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..0d4d98be2f012ead9d75ac37887c1ae8a45ea132
+--- /dev/null
++++ b/openspec/changes/list-customer-orders/specs/orders/list-customer-orders/spec.md
+@@ -0,0 +1,65 @@
++## Purpose
++
++Let a caller list the orders belonging to a customer, newest first, retaining each order's identity, customer identity, total in cents and placement date.
++
++## ADDED Requirements
++
++### Requirement: List only the requested customer's orders newest first
++
++The system SHALL return all orders belonging to the requested customer, ordered by placement date from newest to oldest. Each returned order SHALL retain its id, customer id, integer total in cents and placement date.
++
++#### Scenario Outline: List orders newest first for `<customerId>`
++
++- **GIVEN** these orders exist <!-- ordersExist -->
++  | id | customerId | totalCents | placedAt |
++  | order-old | customer-a | 1234 | 2026-01-01T10:00:00Z |
++  | order-other | customer-b | 5678 | 2026-01-04T10:00:00Z |
++  | order-new | customer-a | 9099 | 2026-01-03T10:00:00Z |
++  | order-middle | customer-a | 2501 | 2026-01-02T10:00:00Z |
++- **WHEN** orders are listed for customer `<customerId>` <!-- listCustomerOrders -->
++- **THEN** the returned orders are exactly these rows in this order <!-- listedOrdersAre -->
++  | id | customerId | totalCents | placedAt |
++  | <firstId> | <customerId> | <firstTotalCents> | <firstPlacedAt> |
++  | <secondId> | <customerId> | <secondTotalCents> | <secondPlacedAt> |
++  | <thirdId> | <customerId> | <thirdTotalCents> | <thirdPlacedAt> |
++
++##### Examples:
++
++  | customerId | firstId | firstTotalCents | firstPlacedAt | secondId | secondTotalCents | secondPlacedAt | thirdId | thirdTotalCents | thirdPlacedAt |
++  | ---------- | ------- | --------------- | ------------- | -------- | ---------------- | -------------- | ------- | --------------- | ------------- |
++  | customer-a | order-new | 9099 | 2026-01-03T10:00:00Z | order-middle | 2501 | 2026-01-02T10:00:00Z | order-old | 1234 | 2026-01-01T10:00:00Z |
++
++#### Scenario Outline: Return a single order for `<customerId>`
++
++- **GIVEN** these orders exist <!-- ordersExist -->
++  | id | customerId | totalCents | placedAt |
++  | order-old | customer-a | 1234 | 2026-01-01T10:00:00Z |
++  | order-other | customer-b | 5678 | 2026-01-04T10:00:00Z |
++- **WHEN** orders are listed for customer `<customerId>` <!-- listCustomerOrders -->
++- **THEN** the returned orders are exactly these rows in this order <!-- listedOrdersAre -->
++  | id | customerId | totalCents | placedAt |
++  | <orderId> | <customerId> | <totalCents> | <placedAt> |
++
++##### Examples:
++
++  | customerId | orderId | totalCents | placedAt |
++  | ---------- | ------- | ---------- | -------- |
++  | customer-b | order-other | 5678 | 2026-01-04T10:00:00Z |
++
++### Requirement: An empty customer order history is an empty list
++
++The system SHALL return an empty list when the requested customer has no orders.
++
++#### Scenario Outline: No orders returned for `<customerId>`
++
++- **GIVEN** these orders exist <!-- ordersExist -->
++  | id | customerId | totalCents | placedAt |
++  | order-other | customer-b | 5678 | 2026-01-04T10:00:00Z |
++- **WHEN** orders are listed for customer `<customerId>` <!-- listCustomerOrders -->
++- **THEN** the returned order count is `<count>` <!-- listedOrderCountIs -->
++
++##### Examples:
++
++  | customerId | count |
++  | ---------- | ----- |
++  | customer-without-orders | 0 |
+
+exec
+/bin/bash -lc 'pnpm exec factory validate list-customer-orders' in <scratch>/g8/shop
+ exited 1 in 116ms:
+not ready: list-customer-orders (clean-backend)
+- [no-open-questions] the plan lists 1 open question(s): the person answers them before the change is ready
+
+codex
+For a customer with no orders, should the query return an empty list? This is the plan’s only open decision.
+- Return [] (recommended)
+- Report an error
+codex
+Draft complete: two phases, cents ADR, local-check procedure. Validation reports one blocker: the empty-history decision just sent for review.
+
+exec
+/bin/bash -lc "rg -n 'feat2test|engines|generate' node_modules/factory/package.json node_modules/factory/toolkit/generate.js node_modules/factory/toolkit/merged.js" in <scratch>/g8/shop
+ succeeded in 0ms:
+node_modules/factory/toolkit/generate.js:8: * `factory generate [--check]`: the tests come from the specs.
+node_modules/factory/toolkit/generate.js:13: * (opsx-gherkin) and piped into feat2test, which writes
+node_modules/factory/toolkit/generate.js:17: * In the repository that develops the schemas, its own tests are generated the same way: every
+node_modules/factory/toolkit/generate.js:19: * `workstreams/<workstream>/<layer>.feature.test.ts`, and any other capability is generated into
+node_modules/factory/toolkit/generate.js:22: * generated.
+node_modules/factory/toolkit/generate.js:26:export const generate = async (args) => {
+node_modules/factory/toolkit/generate.js:38:        const generated = runTool("feat2test", [
+node_modules/factory/toolkit/generate.js:39:            "generate",
+node_modules/factory/toolkit/generate.js:50:        if (generated.status !== 0)
+node_modules/factory/package.json:20:    "feat2test": "4.0.0",
+node_modules/factory/package.json:26:  "engines": {
+
+exec
+/bin/bash -lc 'git diff --stat; git status --short; ls node_modules/.bin' in <scratch>/g8/shop
+ succeeded in 0ms:
+?? openspec/changes/
+factory
+tsc
+vite
+vitest
+
+exec
+/bin/bash -lc 'cat node_modules/factory/toolkit/generate.js node_modules/factory/toolkit/tools.js node_modules/factory/toolkit/merged.js' in <scratch>/g8/shop
+ exited 1 in 0ms:
+import { globSync, mkdirSync } from "node:fs";
+import { basename, dirname, join } from "node:path";
+import { ownerOf } from "./graph.js";
+import { mergedSpecs } from "./merged.js";
+import { ARCHITECTURE_SPECS, DEVELOPING, PACKAGE_ROOT, PROJECT_ROOT, runTool, WORKSTREAMS_DIR, } from "./paths.js";
+import { architecture, config } from "./project.js";
+/**
+ * `factory generate [--check]`: the tests come from the specs.
+ *
+ * Every product spec the configured `productSpecs` glob finds
+ * (`openspec/specs/<module>/<use-case>/spec.md` by default), as it will stand once the changes that
+ * validation reports ready are archived, is converted to plain Gherkin in memory
+ * (opsx-gherkin) and piped into feat2test, which writes
+ * `<acceptance>/<module>/<use-case>.feature.test.ts` next to the step adapter the implementer writes
+ * (`<use-case>.feature.steps.ts`, scaffolded on the first run and kept afterwards).
+ *
+ * In the repository that develops the schemas, its own tests are generated the same way: every
+ * `openspec/specs/architecture/<layer>/spec.md` whose name is a layer of some workstream becomes
+ * `workstreams/<workstream>/<layer>.feature.test.ts`, and any other capability is generated into
+ * the folder that holds its adapter, `<capability>.feature.steps.ts` (`review/`, a validator's
+ * folder). A capability with neither (`linting`) is verified by running the pipeline, not
+ * generated.
+ *
+ * `--check` only verifies the tests are fresh; `--product-specs <glob>` overrides the configured glob.
+ */
+export const generate = async (args) => {
+    const check = args.includes("--check");
+    const flag = args.lastIndexOf("--product-specs");
+    const productSpecs = flag >= 0 ? args[flag + 1] : config.productSpecs;
+    let failed = false;
+    const write = (spec, dir, name) => {
+        const gherkin = runTool("opsx-gherkin", [spec], { bin: "opsx-to-feature" });
+        if (gherkin.status !== 0) {
+            failed = true;
+            console.error(`${spec}: ${String(gherkin.stderr).trim()}`);
+            return;
+        }
+        const generated = runTool("feat2test", [
+            "generate",
+            dir,
+            "--stdin",
+            "--format",
+            "feature",
+            "--source",
+            `${name}.feature`,
+            "--runner",
+            "vitest",
+            ...(check ? ["--check"] : []),
+        ], { input: gherkin.stdout, stdio: ["pipe", "inherit", "inherit"] });
+        if (generated.status !== 0)
+            failed = true;
+    };
+    if (DEVELOPING) {
+        const adapters = new Map(globSync("**/*.feature.steps.ts", {
+            cwd: PACKAGE_ROOT,
+            exclude: (f) => ["node_modules", "dist", "workstreams"].includes(f),
+        }).map((f) => [basename(f, ".feature.steps.ts"), join(PACKAGE_ROOT, dirname(f))]));
+        for (const spec of globSync("openspec/specs/**/spec.md").sort()) {
+            const capability = basename(dirname(spec));
+            const owner = spec.startsWith(`${ARCHITECTURE_SPECS}/`)
+                ? ownerOf(architecture.workstreams, capability)
+                : undefined;
+            const dir = owner ? join(WORKSTREAMS_DIR, owner.id) : adapters.get(capability);
+            if (dir)
+                write(spec, dir, capability);
+        }
+    }
+    let merged;
+    try {
+        merged = await mergedSpecs(PROJECT_ROOT);
+    }
+    catch (e) {
+        console.error(e instanceof Error ? e.message : String(e));
+        return 1;
+    }
+    try {
+        const from = merged?.root ?? PROJECT_ROOT;
+        for (const spec of globSync(productSpecs, { cwd: from }).sort()) {
+            const useCase = basename(dirname(spec));
+            const module = basename(dirname(dirname(spec)));
+            const dir = `${config.acceptance}/${module}`;
+            if (!check)
+                mkdirSync(dir, { recursive: true });
+            write(join(from, spec), dir, useCase);
+        }
+    }
+    finally {
+        merged?.dispose();
+    }
+    return failed ? 1 : 0;
+};
+cat: node_modules/factory/toolkit/tools.js: No such file or directory
+import { cpSync, existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { activeChanges, CHANGES, readChange } from "./change.js";
+import { COMMAND, runTool } from "./paths.js";
+import { NotValidatable, validateChange } from "./validate.js";
+const TELEMETRY_OFF = { OPENSPEC_TELEMETRY: "0", DO_NOT_TRACK: "1" };
+/** Runs the specification tool in the project at `root`. */
+export const openspec = (root, args) => {
+    const r = runTool("@fission-ai/openspec", args, {
+        bin: "openspec",
+        cwd: root,
+        env: { ...process.env, ...TELEMETRY_OFF },
+    });
+    return { status: r.status ?? 1, output: `${r.stdout}${r.stderr}`.trim() };
+};
+/** The active changes that validation reports ready and that hold delta specs, oldest first. */
+const readyWithDeltas = async (root) => {
+    const found = [];
+    for (const name of activeChanges(root)) {
+        const change = readChange(root, name);
+        if (!change?.deltaSpecs.length)
+            continue;
+        try {
+            if ((await validateChange(root, name)).ready)
+                found.push({ name, created: change.created ?? "" });
+        }
+        catch (e) {
+            if (!(e instanceof NotValidatable))
+                throw e;
+        }
+    }
+    return found
+        .sort((a, b) => a.created.localeCompare(b.created) || a.name.localeCompare(b.name))
+        .map((c) => c.name);
+};
+/**
+ * The project's specs as they will stand once every ready change is archived: a copy of its
+ * `openspec` folder in which the specification tool has archived them, so the merge is the tool's
+ * own. Returns the folder of that copy, or nothing when no ready change holds a delta.
+ */
+export const mergedSpecs = async (root) => {
+    const changes = await readyWithDeltas(root);
+    if (!changes.length)
+        return undefined;
+    const copy = mkdtempSync(join(tmpdir(), `${COMMAND}-merged-`));
+    const dispose = () => rmSync(copy, { recursive: true, force: true });
+    try {
+        mkdirSync(join(copy, CHANGES), { recursive: true });
+        for (const part of ["openspec/specs", "openspec/config.yaml"])
+            if (existsSync(join(root, part)))
+                cpSync(join(root, part), join(copy, part), { recursive: true });
+        if (existsSync(join(root, "openspec/schemas")))
+            symlinkSync(realpathSync(join(root, "openspec/schemas")), join(copy, "openspec/schemas"));
+        for (const name of changes) {
+            cpSync(join(root, CHANGES, name), join(copy, CHANGES, name), { recursive: true });
+            const merged = openspec(copy, ["archive", name, "-y"]);
+            if (merged.status !== 0)
+                throw new Error(`the delta specs of ${name} do not merge:\n${merged.output}`);
+        }
+        return { root: copy, changes, dispose };
+    }
+    catch (e) {
+        dispose();
+        throw e;
+    }
+};
+
+exec
+/bin/bash -lc "node --input-type=module <<'JS'
+import { runTool } from './node_modules/factory/toolkit/paths.js';
+const spec = 'openspec/changes/list-customer-orders/specs/orders/list-customer-orders/spec.md';
+const converted = runTool('opsx-gherkin', [spec], { bin: 'opsx-to-feature' });
+if (converted.status "'!== 0) { console.error(String(converted.stderr)); process.exit(1); }
+const result = runTool('"'feat2test', ['validate', '--stdin', '--format', 'feature', '--source', 'list-customer-orders.feature', '--runner', 'vitest', '--json'], {input: converted.stdout});
+console.log(String(result.stdout));
+if (result.status "'!== 0) console.error(String(result.stderr));
+process.exit(result.status ?? 1);
+JS' in <scratch>/g8/shop
+ exited 1 in 136ms:
+exec
+/bin/bash -lc 'cat node_modules/factory/toolkit/paths.js' in <scratch>/g8/shop
+ succeeded in 0ms:
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { extname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+/** The command's own package: where the workstreams, the review and the schemas live. */
+export const PACKAGE_ROOT = fileURLToPath(new URL("..", import.meta.url)).replace(/\/$/, "");
+/** The project the command serves: the folder it runs in. */
+export const PROJECT_ROOT = process.cwd();
+/** The extension of the command's own modules: TypeScript where it is developed, JavaScript once built. */
+export const SOURCE_EXT = extname(fileURLToPath(import.meta.url));
+/** The name the command is installed under in a project. */
+export const COMMAND = "factory";
+/** Where the setup skill keeps the command, and the record of what the package says about itself. */
+export const SETUP_ASSETS = "setup/assets";
+export const INSTALLED = "manifest.json";
+/** The command runs in the repository that develops it, where the layer specs and the example files are sources. */
+export const DEVELOPING = PROJECT_ROOT === PACKAGE_ROOT;
+export const WORKSTREAMS_DIR = join(PACKAGE_ROOT, "workstreams");
+/** The layer specs. They exist in the repository that develops the workstreams, not in a project. */
+export const ARCHITECTURE_SPECS = "openspec/specs/architecture";
+export const hasLayerSpecs = (root = PACKAGE_ROOT) => existsSync(join(root, ARCHITECTURE_SPECS));
+/** Why the spec checks are skipped, for test titles. */
+export const SKIPPED_WITHOUT_SPECS = `skipped: ${ARCHITECTURE_SPECS} is absent`;
+/** The product spec of `useCase` in `module`, from the configured glob (`openspec/specs/*\/*\/spec.md`). */
+export const productSpecPath = (glob, module, useCase) => glob.replace("*", module).replace("*", useCase);
+/** Where the command writes the tool configurations it composes for one run, inside the project. */
+export const cacheDir = (root = process.cwd()) => {
+    const dir = join(root, "node_modules/.cache/factory");
+    mkdirSync(dir, { recursive: true });
+    return dir;
+};
+const require = createRequire(import.meta.url);
+/** The executable `name` of the package `pkg`, one of the command's own dependencies. */
+export const tool = (pkg, name = pkg) => {
+    for (const base of require.resolve.paths(pkg) ?? []) {
+        const manifest = join(base, pkg, "package.json");
+        if (!existsSync(manifest))
+            continue;
+        const { bin } = JSON.parse(readFileSync(manifest, "utf8"));
+        const path = typeof bin === "string" ? bin : bin?.[name];
+        if (path)
+            return join(base, pkg, path);
+    }
+    throw new Error(`the dependency ${pkg} provides no executable ${name}`);
+};
+/** Runs an executable of one of the command's dependencies under this Node. */
+export const runTool = (pkg, args, options = {}) => {
+    const { bin, ...rest } = options;
+    return spawnSync(process.execPath, [tool(pkg, bin), ...args], { encoding: "utf8", ...rest });
+};
+/** The JSON object a tool printed, whatever it printed around it. */
+export const jsonOf = (stdout) => JSON.parse(stdout.slice(stdout.indexOf("{"), stdout.lastIndexOf("}") + 1));
+/** Runs the command itself in the project at `root`, as an agent would; returns its status and the tail of what it printed. */
+export const self = (root, args, env = process.env) => {
+    const cli = join(PACKAGE_ROOT, "toolkit", `cli${SOURCE_EXT}`);
+    const r = spawnSync(process.execPath, [cli, ...args], { cwd: root, encoding: "utf8", env });
+    const output = `${r.stdout}${r.stderr}`.replace(/\u001b\[[0-9;]*m/g, "").trim();
+    return { status: r.status ?? 1, output: output.split("\n").slice(-60).join("\n") };
+};
+
+exec
+/bin/bash -lc 'pnpm exec factory openspec validate list-customer-orders --strict' in <scratch>/g8/shop
+ succeeded in 250ms:
+Change 'list-customer-orders' is valid
+
+exec
+/bin/bash -lc "node --input-type=module <<'JS'
+import { runTool } from './node_modules/factory/toolkit/paths.js';
+const r = runTool('opsx-gherkin', ['openspec/changes/list-customer-orders/specs/orders/list-customer-orders/spec.md'], { bin: 'opsx-to-feature' });
+console.log({status:r.status, error:r.error?.message, stdout:r.stdout, stderr:r.stderr});
+JS" in <scratch>/g8/shop
+ succeeded in 93ms:
+{
+  status: 0,
+  error: 'spawnSync ~/.nvm/versions/node/v22.23.2/bin/node EPERM',
+  stdout: '',
+  stderr: ''
+}
+
+exec
+/bin/bash -lc "node --input-type=module <<'JS'
+import { tool } from './node_modules/factory/toolkit/paths.js';
+console.log(tool('opsx-gherkin','opsx-to-feature'));
+console.log(tool('feat2test'));
+JS" in <scratch>/g8/shop
+ succeeded in 0ms:
+<scratch>/g8/shop/node_modules/.pnpm/factory@file+.agents+skills+setup+assets+factory-0.1.0.tgz/node_modules/opsx-gherkin/dist/opsx-to-feature.mjs
+<scratch>/g8/shop/node_modules/.pnpm/factory@file+.agents+skills+setup+assets+factory-0.1.0.tgz/node_modules/feat2test/dist/cli.mjs
+
+exec
+/bin/bash -lc 'node node_modules/.pnpm/factory@file+.agents+skills+setup+assets+factory-0.1.0.tgz/node_modules/opsx-gherkin/dist/opsx-to-feature.mjs openspec/changes/list-customer-orders/specs/orders/list-customer-orders/spec.md > /tmp/shop-list-customer-orders.feature' in <scratch>/g8/shop
+ succeeded in 48ms:
+exec
+/bin/bash -lc 'node node_modules/.pnpm/factory@file+.agents+skills+setup+assets+factory-0.1.0.tgz/node_modules/feat2test/dist/cli.mjs validate /tmp/shop-list-customer-orders.feature --runner vitest --json' in <scratch>/g8/shop
+ succeeded in 0ms:
+{"valid":true,"evidence":"generability","source":"/tmp/shop-list-customer-orders.feature","format":"feature","runner":"vitest","scenarioCount":3,"stepCount":4,"warnings":[],"diagnostics":[]}
+
+hook: PreToolUse
+hook: PreToolUse Completed
+apply patch
+patch: completed
+<scratch>/g8/shop/openspec/changes/list-customer-orders/plan.md
+diff --git a/openspec/changes/list-customer-orders/plan.md b/openspec/changes/list-customer-orders/plan.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..33733f18b9ae9b232d5f0eaa28e559ffbf762ded
+--- /dev/null
++++ b/openspec/changes/list-customer-orders/plan.md
+@@ -0,0 +1,171 @@
++---
++name: list-customer-orders
++description: List a customer's orders newest first through a use case backed by HTTP or in-memory orders.
++created_at: 2026-11-14
++created_by: user
++schema: clean-backend
++---
++
++# List customer orders
++
++## Goal
++
++Provide a query returning a customer's orders with id, customer id, total in cents and placement date, newest first. Deliver the use case and domain with acceptance coverage first; then connect the repository, anti-corruption layer, HTTP and development adapters, and entry.
++
++## Decisions
++
++- Use the `orders` module and `ListCustomerOrdersUseCase.execute(customerId)` returning order props, rather than introducing an inbound web server the request does not require.
++- The application sorts by placement instant descending, rather than relying on backend ordering; equal instants have no additional public ordering guarantee.
++- Return a complete array without pagination, rather than inventing a paging protocol absent from the service contract.
++- Keep placement dates as validated ISO timestamp strings in props and compare their parsed instants, rather than comparing strings or exposing mutable Date objects.
++- Map resource records to domain props in the repository; retain snake_case only in the ACL and adapters, rather than letting the service vocabulary enter the use case.
++- Use `NODE_ENV=development` for the in-memory backend (empty by default, constructor-seedable); all other environments use HTTP and require `ORDERS_API_URL`, rather than silently falling back to development data.
++- Translate invalid records to `ValidationException` and resource/configuration failures to `OrdersUnavailableException` with the original error as cause; reject the query rather than returning partial data or disguising failure as an empty list. No retry policy or public HTTP error status is introduced.
++- Use generated acceptance tests with a fake repository in phase 1 and repository integration tests with an ACL-typed in-memory adapter in phase 2, rather than real network calls in local tests.
++- The cents architecture decision below is explicitly requested by the user; it is already authorized.
++
++## Open questions
++
++- For a customer with no orders: return an empty list or report an error? Pick an empty list: it preserves the array query contract. The proposed spec and tests below assume this option pending confirmation.
++
++## Architecture decisions
++
++### Decision: money-in-integer-cents · Money amounts use integer cents
++
++@adds @area:product @topic:money @applies:domain,application,infrastructure,adapters @enforced:domain-and-acl-schemas,integration-tests,review
++
++Money amounts SHALL be represented as integers in cents across the product. `OrderProps.totalCents` and service `total_cents` SHALL carry the same cents value without division, rounding or conversion into floating-point major currency units. JavaScript number values SHALL pass safe-integer validation so the representation preserves exact cents.
++
++**Why** The user explicitly requires integer cents; retaining that unit avoids rounding and unit ambiguity at boundaries.
++
++**Alternatives** Decimal major units and floating-point currency values are discarded because they weaken the required representation.
++
++**Consequences** Future money fields must preserve this unit. Values outside the safe-integer range are rejected, not rounded. Currency, sign restrictions and exchange rates are outside this decision.
++
++## Procedures
++
++### Procedure: local-checks-and-tests · Run checks and tests locally
++
++@adds @purpose:operate @topic:local-validation @env:local,development
++
++**When** Before handing off a phase or verifying this change.
++
++**Requires** A local checkout, a Node.js version satisfying the installed dependencies' engine requirements, and pnpm. Run commands at the repository root. Acceptance and integration tests need no network, credentials or environment secrets. Development uses `NODE_ENV=development`; an HTTP run instead needs the non-secret service base URL in the local process environment as `ORDERS_API_URL`. No service credentials were specified; none are embedded in code or committed files.
++
++**Steps**
++
++1. Install the locked dependencies: `pnpm install --frozen-lockfile`.
++2. Run `pnpm exec factory doctor`; resolve any missing setup through `setup`. Its hook note requires Codex project trust and `/hooks` review, repeated after hook updates.
++3. Check planning readiness: `pnpm exec factory validate list-customer-orders` while the change is active.
++4. Regenerate acceptance tests from the active change's specs: `pnpm exec factory generate`. Fill generated step adapters during implementation; never edit generated test bodies.
++5. For phase 1, run `pnpm exec factory check --workstream app-domain --module orders`, `pnpm exec factory test acceptance`, and `pnpm exec tsc --noEmit`.
++6. For phase 2, run `pnpm exec factory check --workstream infrastructure --module orders`, `pnpm exec factory check --workstream adapters --module orders`, `pnpm exec factory test integration`, and `pnpm exec factory test acceptance`.
++7. Finish with `pnpm exec factory check` and `pnpm exec tsc --noEmit`. Review the test counts: a successful command with zero tests does not verify an implemented phase.
++
++**Verification** All phase commands exit zero; acceptance scenarios execute, phase 2 integration tests execute, and full checks confirm architecture and generated-test freshness. Planning readiness alone does not establish implementation correctness.
++
++## Phases
++
++### Phase 1: The customer-order query works against a fake repository
++
++**Seams**
++
++```ts
++// src/orders/domain/props/order.props.ts; schema validates each property.
++export interface OrderProps {
++  id: string;
++  customerId: string;
++  totalCents: number; // safe integer cents
++  placedAt: string; // ISO timestamp with explicit UTC offset
++}
++// src/orders/application/repositories/order.repository-interface.ts
++export interface OrderRepositoryInterface {
++  listByCustomerId(customerId: string): Promise<OrderProps[]>;
++}
++// src/orders/application/use-cases/list-customer-orders.use-case.ts
++export class ListCustomerOrdersUseCase {
++  constructor(repository: OrderRepositoryInterface);
++  execute(customerId: string): Promise<OrderProps[]>;
++}
++// Module exception family: OrdersException extends shared DomainException;
++// OrdersUnavailableException extends OrdersException; validation uses the
++// shared ValidationException. Causes preserve provider errors.
++// Acceptance-only fake: no infrastructure imports, no constructor arguments.
++export class InMemoryOrderRepository implements OrderRepositoryInterface {
++  seed(orders: OrderProps[]): void;
++  listByCustomerId(customerId: string): Promise<OrderProps[]>;
++}
++```
++
++The repository contract returns only the requested customer's validated orders, possibly empty and in any order. The use case sorts a copy newest first and returns every field unchanged. Define domain schemas in `domain/schemas` for nonempty ids, safe-integer cents, and valid timestamp instants with offsets; avoid inventing positive-only totals. The fake repository applies the same customer filter and props validation as the eventual implementation.
++
++**Tests**
++
++Generate `test/acceptance/orders/list-customer-orders.feature.test.ts` and fill its step adapter against the fake repository. Cover mixed customers, exact field preservation, unsorted input with three distinct dates, one order, and the proposed empty result. Include different totals to detect accidental unit conversion. Use domain schema tests for fractional/unsafe cents and malformed dates; do not add new business rules through those tests.
++
++- [ ] app-domain: Generate acceptance tests from the delta spec and implement Given/When/Then adapters over `InMemoryOrderRepository` with seed data.
++- [ ] app-domain: Build order props, schemas, module exceptions, repository interface and `ListCustomerOrdersUseCase` with descending instant ordering.
++- [ ] app-domain: Verify the phase with app-domain checks, acceptance tests, domain schema tests and TypeScript checking.
++
++### Phase 2: The query is connected to HTTP and development backends
++
++**Seams**
++
++```ts
++// src/orders/infrastructure/acl/orders.acl.ts
++// Export orderRecordSchema and orderRecordsSchema using the schema package.
++export interface OrderRecord {
++  id: string;
++  customer_id: string;
++  total_cents: number;
++  placed_at: string;
++}
++export interface OrdersAcl {
++  listCustomerOrders(customerId: string): Promise<OrderRecord[]>;
++}
++// src/orders/infrastructure/repository-implementations/order.repository-implementation.ts
++export class OrderRepositoryImplementation implements OrderRepositoryInterface {
++  constructor(orders: OrdersAcl);
++  listByCustomerId(customerId: string): Promise<OrderProps[]>;
++}
++// src/orders/infrastructure/adapters/
++export class HttpOrdersAdapter implements OrdersAcl {
++  constructor(baseUrl: string);
++  listCustomerOrders(customerId: string): Promise<OrderRecord[]>;
++}
++export class InMemoryOrdersAdapter implements OrdersAcl {
++  constructor(records?: OrderRecord[]);
++  listCustomerOrders(customerId: string): Promise<OrderRecord[]>;
++}
++// orders.adapter.ts selects by environment, exports:
++export const ordersAdapter: OrdersAcl;
++// src/entry.ts is the composition root and public callable entry:
++export const listCustomerOrders: (customerId: string) => Promise<OrderProps[]>;
++```
++
++The ACL schemas validate the actual JSON array and required fields, including safe-integer cents and valid timestamps. Extra service attributes need no domain equivalent. Record → props mapping is explicit:
++
++- `id` → `id`, unchanged.
++- `customer_id` → `customerId`, unchanged.
++- `total_cents` → `totalCents`, unchanged integer cents.
++- `placed_at` → `placedAt`, unchanged timestamp.
++
++The repository receives only `OrdersAcl`, imports no adapter, maps validated records, validates props, and filters by requested customer id so another customer's orders cannot escape the query. The HTTP adapter requests `GET <baseUrl>/customers/<encodedCustomerId>/orders`, safely joins trailing slashes while retaining any base path, checks success, decodes JSON, and validates through ACL schemas. Network, non-success status and invalid configuration produce `OrdersUnavailableException`; JSON decoding and record-shape failures produce `ValidationException`; both retain the original cause. There is no empty-list fallback on failure. The in-memory adapter validates and returns seeded resource records for the customer; it is distinct from the acceptance repository fake. Environment reads and backend selection live only in adapters. The entry injects the selected adapter into the repository and the repository into the use case, without reading environment variables.
++
++**Tests**
++
++`test/integration/orders/order-repository.test.ts` constructs the real repository over `InMemoryOrdersAdapter` implementing the real ACL. Verify every field mapping, unchanged cents, mixed-customer isolation, empty records, schema validation failures and propagation of module resource exceptions with causes; use a small failing ACL double for resource failures. Acceptance tests continue proving ordering through the same application seam. Adapter work uses the workstream's structural checks; real HTTP contract tests are deferred, not represented as covered by repository tests.
++
++- [ ] infrastructure: Define the Orders ACL and resource schemas; implement the injected order repository with explicit mapping and customer isolation.
++- [ ] adapters: Implement HTTP and in-memory Orders ACL adapters and environment-based selection using `ORDERS_API_URL` for HTTP.
++- [ ] infrastructure: Add repository integration coverage over the real ACL and in-memory adapter, including every mapped field and declared failure category.
++- [ ] clean-architecture: Join app-domain, infrastructure and adapters and run cross-module checks.
++- [ ] integrate: Wire the callable entry, ensure both backend implementations are reachable, and verify the phase with full factory checks, acceptance and integration tests, and TypeScript checking.
++
++## Feedback
++
++## Next step
++
++Planning checks: strict OpenSpec validation passes. Conversion through `opsx-to-feature` and `feat2test validate --runner vitest --json` passes with 3 scenarios, 4 step methods, no warnings and no diagnostics. `factory validate` reports only `no-open-questions`; no implementation checks or product tests have been run during planning.
++
++Confirm the empty-list decision, remove its open question, then rerun `pnpm exec factory validate list-customer-orders`. Once ready, use `implement` for phase 1 only; phase 2 follows after phase 1 verification.
+diff --git a/openspec/changes/list-customer-orders/specs/orders/list-customer-orders/spec.md b/openspec/changes/list-customer-orders/specs/orders/list-customer-orders/spec.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..0d4d98be2f012ead9d75ac37887c1ae8a45ea132
+--- /dev/null
++++ b/openspec/changes/list-customer-orders/specs/orders/list-customer-orders/spec.md
+@@ -0,0 +1,65 @@
++## Purpose
++
++Let a caller list the orders belonging to a customer, newest first, retaining each order's identity, customer identity, total in cents and placement date.
++
++## ADDED Requirements
++
++### Requirement: List only the requested customer's orders newest first
++
++The system SHALL return all orders belonging to the requested customer, ordered by placement date from newest to oldest. Each returned order SHALL retain its id, customer id, integer total in cents and placement date.
++
++#### Scenario Outline: List orders newest first for `<customerId>`
++
++- **GIVEN** these orders exist <!-- ordersExist -->
++  | id | customerId | totalCents | placedAt |
++  | order-old | customer-a | 1234 | 2026-01-01T10:00:00Z |
++  | order-other | customer-b | 5678 | 2026-01-04T10:00:00Z |
++  | order-new | customer-a | 9099 | 2026-01-03T10:00:00Z |
++  | order-middle | customer-a | 2501 | 2026-01-02T10:00:00Z |
++- **WHEN** orders are listed for customer `<customerId>` <!-- listCustomerOrders -->
++- **THEN** the returned orders are exactly these rows in this order <!-- listedOrdersAre -->
++  | id | customerId | totalCents | placedAt |
++  | <firstId> | <customerId> | <firstTotalCents> | <firstPlacedAt> |
++  | <secondId> | <customerId> | <secondTotalCents> | <secondPlacedAt> |
++  | <thirdId> | <customerId> | <thirdTotalCents> | <thirdPlacedAt> |
++
++##### Examples:
++
++  | customerId | firstId | firstTotalCents | firstPlacedAt | secondId | secondTotalCents | secondPlacedAt | thirdId | thirdTotalCents | thirdPlacedAt |
++  | ---------- | ------- | --------------- | ------------- | -------- | ---------------- | -------------- | ------- | --------------- | ------------- |
++  | customer-a | order-new | 9099 | 2026-01-03T10:00:00Z | order-middle | 2501 | 2026-01-02T10:00:00Z | order-old | 1234 | 2026-01-01T10:00:00Z |
++
++#### Scenario Outline: Return a single order for `<customerId>`
++
++- **GIVEN** these orders exist <!-- ordersExist -->
++  | id | customerId | totalCents | placedAt |
++  | order-old | customer-a | 1234 | 2026-01-01T10:00:00Z |
++  | order-other | customer-b | 5678 | 2026-01-04T10:00:00Z |
++- **WHEN** orders are listed for customer `<customerId>` <!-- listCustomerOrders -->
++- **THEN** the returned orders are exactly these rows in this order <!-- listedOrdersAre -->
++  | id | customerId | totalCents | placedAt |
++  | <orderId> | <customerId> | <totalCents> | <placedAt> |
++
++##### Examples:
++
++  | customerId | orderId | totalCents | placedAt |
++  | ---------- | ------- | ---------- | -------- |
++  | customer-b | order-other | 5678 | 2026-01-04T10:00:00Z |
++
++### Requirement: An empty customer order history is an empty list
++
++The system SHALL return an empty list when the requested customer has no orders.
++
++#### Scenario Outline: No orders returned for `<customerId>`
++
++- **GIVEN** these orders exist <!-- ordersExist -->
++  | id | customerId | totalCents | placedAt |
++  | order-other | customer-b | 5678 | 2026-01-04T10:00:00Z |
++- **WHEN** orders are listed for customer `<customerId>` <!-- listCustomerOrders -->
++- **THEN** the returned order count is `<count>` <!-- listedOrderCountIs -->
++
++##### Examples:
++
++  | customerId | count |
++  | ---------- | ----- |
++  | customer-without-orders | 0 |
+
+exec
+/bin/bash -lc 'pnpm exec factory validate list-customer-orders' in <scratch>/g8/shop
+ exited 1 in 116ms:
+not ready: list-customer-orders (clean-backend)
+- [no-open-questions] the plan lists 1 open question(s): the person answers them before the change is ready
+
+codex
+[Plan drafted](openspec/changes/list-customer-orders/plan.md): two phases, cents ADR, local-check procedure. Spec validation passes: 3 scenarios.
+
+Only readiness blocker: **return `[]` when a customer has no orders?** Recommended.
+
+The [plan skill](.agents/skills/plan/SKILL.md) requires: “Show the person the open questions.” After your answer, I’ll finalize and revalidate.
+hook: Stop
+hook: Stop Completed
+tokens used
+90,633
+[Plan drafted](openspec/changes/list-customer-orders/plan.md): two phases, cents ADR, local-check procedure. Spec validation passes: 3 scenarios.
+
+Only readiness blocker: **return `[]` when a customer has no orders?** Recommended.
+
+The [plan skill](.agents/skills/plan/SKILL.md) requires: “Show the person the open questions.” After your answer, I’ll finalize and revalidate.
+codex exit=0

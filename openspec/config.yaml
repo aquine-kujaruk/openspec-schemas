@@ -1,0 +1,14 @@
+schema: spec-driven
+
+context: |
+  This repository holds OpenSpec schemas, the resources they are built from and the packages
+  built from them. Specs are written in English and stay convertible between OpenSpec,
+  Markdown with Gherkin and plain Gherkin (the opsx-gherkin contract); their content follows
+  gherkin-craft: what the software does, never how.
+
+rules:
+  specs:
+    - Every Requirement description uses SHALL or MUST
+    - Scenarios are Scenario Outlines with bold GIVEN/WHEN/THEN steps and concrete Examples rows
+    - Every step ends with one HTML comment naming its step adapter method; one name has one role and one set of placeholders within a spec
+    - A spec speaks the vocabulary of its capability and names no library, framework or language construct; those go to design, examples or rules

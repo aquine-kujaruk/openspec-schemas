@@ -1,0 +1,2302 @@
+Reading additional input from stdin...
+OpenAI Codex v0.166.0
+--------
+workdir: <scratch>/g8/probe
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a1d99a-4db6-7fb1-9b26-df0d2200196a
+--------
+user
+$feedback discount-loyal-customers: my answer to the open question is that an unknown customer is charged the full price.
+warning: `--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.
+warning: `--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.
+codex
+I’ll use `feedback` to record full price for unknown customers, update the change, and validate it.
+exec
+/bin/bash -lc 'pnpm exec factory doctor' in <scratch>/g8/probe
+ succeeded in 216ms:
+nothing is lacking
+note: codex runs the guards only in a project it trusts and after each hook is reviewed with /hooks; review them again after every update that changes them
+
+exec
+/bin/bash -lc 'cat .agents/skills/feedback/SKILL.md' in <scratch>/g8/probe
+ succeeded in 0ms:
+---
+name: feedback
+description: Take feedback into a change. Updates the plan, and the delta specs when behaviour is affected, of the change the feedback is about, reopening only the phases it invalidates. Use when the person corrects an open change, or when a guard, the verify phase or the archive sends a change back.
+---
+
+# feedback
+
+Feedback goes back into the change it is about, whoever raised it: `the person`, `the completion gate`, `the verify phase`, `the archive` or `the implement phase`.
+
+1. `pnpm exec factory doctor`. When it prints anything as `missing` or `drift`, follow the `setup` skill first. A `note` is for the person: relay it once and go on.
+2. `pnpm exec factory feedback <change>` lists what was raised and is waiting. What the person just said is feedback from `the person`.
+3. For each piece of feedback, settle two things:
+   - the earliest phase whose work it undoes, or none when it only adds to what is left;
+   - the decisions it needs that only the person can take, by the question policy in the plan's instruction (`pnpm exec factory openspec instructions plan --change <change> --json`). Something neither the plan nor you can settle, such as a defect of the harness or an access you lack, is a question for the person too.
+4. Take it in:
+
+   ```bash
+   pnpm exec factory feedback <change> take --from "<source>" --says "<what it said and what changes>" --phase <n> --ask "<question>"
+   ```
+
+   Leave `--phase` out when no phase is undone, and give one `--ask` per question. The command adds the entry under Feedback, unchecks the tasks of phase `<n>` and of every phase after it, and lists each question under Open questions.
+5. Update what the feedback changes: the plan's decisions, seams and tasks, and the delta specs when behaviour is affected. Everything goes into this change.
+6. `pnpm exec factory validate <change>`. With open questions the change waits for the person: show them and stop. Once it prints `ready`, the `implement` skill goes on from the first phase with unchecked tasks.
+
+exec
+/bin/bash -lc "rg --files -g AGENTS.md -g '*discount*' -g '*plan*' -g '*.feature*' -g 'package.json' -g 'tasks.md' -g 'spec.md'" in <scratch>/g8/probe
+ succeeded in 0ms:
+openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md
+openspec/changes/discount-loyal-customers/plan.md
+package.json
+AGENTS.md
+test/acceptance/orders/price-order.feature.test.ts
+test/acceptance/orders/price-order.feature.steps.ts
+
+exec
+/bin/bash -lc 'pnpm exec factory openspec instructions plan --change discount-loyal-customers --json' in <scratch>/g8/probe
+exec
+/bin/bash -lc 'pnpm exec factory feedback discount-loyal-customers' in <scratch>/g8/probe
+ succeeded in 122ms:
+no feedback is waiting to be taken in
+
+ succeeded in 302ms:
+{
+  "changeName": "discount-loyal-customers",
+  "artifactId": "plan",
+  "schemaName": "clean-backend",
+  "changeDir": "<scratch>/g8/probe/openspec/changes/discount-loyal-customers",
+  "planningHome": {
+    "kind": "repo",
+    "root": "<scratch>/g8/probe",
+    "changesDir": "<scratch>/g8/probe/openspec/changes",
+    "defaultSchema": "spec-driven"
+  },
+  "outputPath": "plan.md",
+  "resolvedOutputPath": "<scratch>/g8/probe/openspec/changes/discount-loyal-customers/plan.md",
+  "existingOutputPaths": [
+    "<scratch>/g8/probe/openspec/changes/discount-loyal-customers/plan.md"
+  ],
+  "description": "Goal, decisions, tagged architecture decisions and procedures, and phases with seams, tests and tasks",
+  "instruction": "Write the plan from your own decisions before asking the person anything, then update it once per answer. Keep every section of the template, in order; a section with nothing to say keeps its heading.\n\nWrite each decision where its scope sends it:\n\n- A user of the product notices it: a delta spec.\n- A future change must respect it: an architecture decision.\n- It says how the system is set up, reached, diagnosed or operated: a procedure.\n- It matters only to this change: one line under Decisions, naming the alternative you discarded.\n- It would hold in any project: leave it out of the change and report it as a proposal for the schema's repository.\n\nArchitecture decisions and procedures are durable: archiving copies them to `openspec/adr` and `openspec/runbooks`. Read both trees before writing one, and tag each block, on the line under its heading, with what this change does to them:\n\n- `@adds` for a block no tree has.\n- `@modifies:<slug>`, `@replaces:<slug>`, `@renames:<slug>` or `@removes:<slug>` for a block a tree has, with `@base:<origin>` copied from the `@origin` of that block.\n- A decision also carries `@area:product` or `@area:production`, `@topic`, `@applies` (the layers it binds) and `@enforced` (the rule, check or review that holds it).\n- A procedure also carries `@purpose` (`setup`, `access`, `diagnose` or `operate`), `@topic` and `@env` (the environments it runs in). It names where each secret is kept; the secret itself stays out of the plan.\n\nA phase is a part of the change worth having on its own. It declares its seams (the public signatures its workstreams build against, as code), its tests, and its tasks. Only tasks are checkboxes, each one `<workstream>: <task>`, and the last task of a phase verifies it. A change that builds nothing has no phase.\n\nA change that changes no behaviour a user notices has no delta spec and says so with `skip_specs: true` in its `.openspec.yaml`.\n\nThe plan is done when `pnpm exec factory validate <change>` reports the change ready.\n\nWorkstreams a task may name: `app-domain`, `infrastructure`, `adapters`, `clean-architecture`, `integrate`.\n\n# Which decisions reach the person: ask on commitment\n\nA decision is a commitment when undoing it later costs the person something: behaviour users will meet, a rule future changes inherit, a standing rule withdrawn. Commitments reach the person; everything else is yours to decide.\n\nAsk, as an item under Open questions, when the decision is:\n\n- **Behaviour the consolidated specs leave open.** What a user will notice and no spec under `openspec/specs` settles.\n- **A decision that binds future changes.** Every architecture decision the plan writes.\n- **The end of a standing decision.** Every `@replaces` and every `@removes` on an architecture decision.\n\nDecide alone, in the artifact its scope picks, naming the alternative you discarded, when the decision is:\n\n- **Change-local.** It matters only while this change is built.\n- **Behaviour the consolidated specs settle.** Follow the spec; quote the requirement if the choice could surprise.\n\nAn open question states the decision in one line, the options, and the option you would pick with its reason. Write the rest of the change as if that option had been chosen, so one answer confirms the change or redirects it. When the person answers, record the decision in its artifact and remove the question in the same update.\n",
+  "template": "---\nname: <change name>\ndescription: <one sentence>\ncreated_at: <YYYY-MM-DD>\ncreated_by: <who stated the intention>\nschema: <schema of the change>\n---\n\n# <title>\n\n## Goal\n\n<!-- What is true once this change is archived, in two or three sentences. -->\n\n## Decisions\n\n<!-- One line per decision that matters only to this change: what was chosen, and the alternative discarded. -->\n\n## Open questions\n\n<!-- One item per decision only the person can take: the question, the options, and the one you would pick. Empty once the change is ready. -->\n\n## Architecture decisions\n\n<!--\nOne block per decision a future change must respect:\n\n### Decision: <slug> · <title>\n\n@adds @area:product @topic:<topic> @applies:<layers> @enforced:<rule, check or review>\n\n<The statement, with SHALL.>\n\n**Why** <the reason, in a sentence or two>\n\n**Alternatives** <what was discarded and why>\n\n**Consequences** <what this now costs or forbids>\n-->\n\n## Procedures\n\n<!--\nOne block per way of setting the system up, reaching it, diagnosing it or operating it:\n\n### Procedure: <slug> · <title>\n\n@adds @purpose:diagnose @topic:<topic> @env:<environments>\n\n**When** <the situation that calls for it>\n\n**Requires** <access and tools; where each secret is kept>\n\n**Steps**\n\n1. <step>\n\n**Verification** <how to tell it worked>\n-->\n\n## Phases\n\n### Phase 1: <what this phase leaves working>\n\n**Seams**\n\n```ts\n// the public signatures the workstreams of this phase build against\n```\n\n**Tests**\n\n<!-- The suites this phase adds or changes, and what each covers. -->\n\n- [ ] <workstream>: <task>\n- [ ] <workstream>: verify the phase\n\n## Feedback\n\n<!-- One entry per feedback taken in: where it came from, what it said, what changed. -->\n\n## Next step\n",
+  "dependencies": [],
+  "unlocks": [],
+  "root": {
+    "path": "<scratch>/g8/probe",
+    "source": "nearest"
+  }
+}
+
+codex
+Doctor passed. Note: Codex guards require a trusted project and hooks reviewed via `/hooks`.
+
+exec
+/bin/bash -lc 'cat openspec/changes/discount-loyal-customers/plan.md openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md .agents/skills/implement/SKILL.md' in <scratch>/g8/probe
+ succeeded in 0ms:
+---
+name: discount-loyal-customers
+description: Loyal customers get ten percent off an order
+created_at: 2026-11-14
+created_by: the person
+schema: clean-backend
+---
+
+# Discount loyal customers
+
+## Goal
+
+An order placed by a loyal customer is charged ten percent less.
+
+## Decisions
+
+- The discount is rounded down to whole cents; rounding half up was discarded.
+
+## Open questions
+
+- For an unknown customer, charge full price or reject pricing? Recommend full price because no loyalty is established; the provisional plan follows that option.
+
+## Architecture decisions
+
+## Procedures
+
+## Phases
+
+### Phase 1: An order is priced with the loyalty discount
+
+**Seams**
+
+```ts
+// src/orders/application/repository-interfaces/customer-loyalty.repository-interface.ts
+export interface CustomerLoyaltyRepositoryInterface {
+  isLoyalCustomer(customerId: string): Promise<boolean>;
+}
+
+// src/orders/application/use-cases/price-order.use-case.ts
+export class PriceOrderUseCase {
+  constructor(customers: CustomerLoyaltyRepositoryInterface);
+  execute(customerId: string, totalCents: number): Promise<number>;
+}
+```
+
+The repository reports whether the identified customer is loyal. Provisionally,
+an unknown customer returns false, pending the open question. Acceptance uses
+`InMemoryCustomerLoyaltyRepository`, with no constructor arguments and
+`seed(customers: { customerId: string; loyal: boolean }[]): void`.
+
+**Tests**
+
+The generated acceptance test of `orders/price-order`, including fractional-cent
+discounts rounded down. Add unknown-customer coverage once its policy is confirmed.
+
+- [ ] app-domain: write the use case that prices an order with the loyalty discount, and its acceptance step adapter
+- [ ] app-domain: verify the phase
+
+## Feedback
+
+- **the implement phase**: The use case cannot obtain loyalty through a declared seam. Add a customer loyalty repository seam with an in-memory acceptance twin. Ask how unknown customers are priced. Add acceptance examples proving the existing round-down discount decision.
+
+## Next step
+
+Resolve the unknown-customer question, then resume phase 1.
+## Purpose
+
+Pricing an order, so that a customer is charged the total that applies to them.
+
+## ADDED Requirements
+
+### Requirement: A loyal customer's order is discounted
+
+The system SHALL take ten percent off the total of an order placed by a loyal customer, and SHALL charge any other customer the full total.
+
+The system SHALL round the discount down to whole cents before subtracting it from the order total.
+
+#### Scenario Outline: `<customer>` pays `<charged>` for an order of `<total>`
+
+- **GIVEN** the customer `<customer>` whose loyalty is `<loyalty>` <!-- customerWithLoyalty -->
+- **WHEN** an order of `<total>` cents is priced for `<customer>` <!-- priceOrder -->
+- **THEN** the customer is charged `<charged>` cents <!-- customerCharged -->
+
+##### Examples:
+
+  | customer   | loyalty | total | charged |
+  | ---------- | ------- | ----- | ------- |
+  | customer-a | loyal   | 1000  | 900     |
+  | customer-b | new     | 1000  | 1000    |
+  | customer-c | loyal   | 1005  | 905     |
+  | customer-d | loyal   | 1009  | 909     |
+---
+name: implement
+description: Implement a change. Builds the first phase of a ready plan that still has unchecked tasks, one workstream at a time, each inside its own check. Use when the person asks to build, code or continue a planned change.
+---
+
+# implement
+
+One run builds one phase: the first phase of the plan that has an unchecked task.
+
+1. `pnpm exec factory doctor`. When it prints anything as `missing` or `drift`, follow the `setup` skill first. A `note` is for the person: relay it once and go on.
+2. `pnpm exec factory implement <change>`. It starts the phase only for a change validation reports ready, prepares the roots and generates the acceptance tests of the change's delta specs, each next to its step adapter, and prints the tasks to do. When it prints `not ready`, tell the person what it found and stop. From here until the phase's checks pass, product code can be written and the completion gate holds the turn.
+3. A generated test is written only by `pnpm exec factory generate`: run it again whenever a delta spec changes, and treat a behaviour the tests lack as feedback on the change.
+4. Write every seam the phase declares, signed exactly as the plan signs it, before the first task starts.
+5. Take the phase's tasks in order. For each one, read `references/workstreams/<workstream>/SKILL.md` and the example files beside it, do the task inside that workstream's folders, run that workstream's check until it passes, and tick the task in the plan.
+6. Keep the entry up to date. The entry (`src/main.ts` unless the project configures another) belongs to `clean-architecture`: it builds each adapter, hands it to its repository implementation, and hands the repositories to the use cases. Create it with the first use case and extend it with every use case, repository and adapter, so that every file of the product is reached from it or from a test.
+7. The phase's last task verifies it: run the check of the workstream it names, tick it when it passes, and stop. The next phase is another run.
+
+Decide alone what only the code needs: a private name, a helper, the order of the work. A decision a user would notice, a seam the plan does not sign, or a rule future changes would inherit is the plan's. When a task needs one the plan does not settle, stop the phase with the plan and the delta specs as they are, and raise it:
+
+```bash
+pnpm exec factory feedback <change> raise --from "the implement phase" --names "<workstream>: <task>" --says "<the decision that is missing>"
+```
+
+Then tell the person and follow the `feedback` skill.
+
+When you finish, the completion gate runs the phase's checks and sends you back with what fails. Fix that; the gate is satisfied by passing checks, and its pass ends the run: the next phase starts with step 2 again.
+
+exec
+/bin/bash -lc 'git status --short; rg --files src test openspec/specs' in <scratch>/g8/probe
+ succeeded in 0ms:
+test/acceptance/orders/price-order.feature.steps.ts
+test/acceptance/orders/price-order.feature.test.ts
+
+exec
+/bin/bash -lc 'pnpm exec factory feedback discount-loyal-customers take --from "the person" --says "Unknown customers are charged full price. Resolve the open question, confirm the repository returns false for unknown customers, and add an unknown-customer acceptance scenario."' in <scratch>/g8/probe
+ succeeded in 104ms:
+taken in: the person about discount-loyal-customers
+
+exec
+/bin/bash -lc 'cat .agents/skills/gherkin-craft/SKILL.md .agents/skills/implement/references/workstreams/app-domain/SKILL.md; rg --files .agents/skills/implement/references/workstreams/app-domain; cat test/acceptance/orders/price-order.feature.steps.ts package.json' in <scratch>/g8/probe
+ succeeded in 0ms:
+---
+name: gherkin-craft
+description: "Write, review, or revise native .feature and Markdown .feature.md Gherkin that specifies software behavior and generates good tests with feat2test. Use when turning software requirements into Gherkin, reviewing existing Features, or fixing Features that feat2test rejects. Ordinary summaries, prose editing, and implementation alone do not need this skill."
+---
+
+# Gherkin Craft
+
+Input: requirements for programmed software. Output: Gherkin whose named steps
+map to Step Adapter methods and whose examples drive the tests feat2test
+generates. Read [the generator contract](references/generator-contract.md) and
+[format and language](references/gherkin-format.md) before writing or
+reviewing. Use [the authoring guide](references/authoring-guide.md) for worked
+examples when choosing a formulation.
+
+## Every step is named
+
+End every step with one HTML comment naming its Step Adapter method:
+`When <quantity> units are added <!-- addUnits -->`. The name is the step's
+identity and the words are documentation; feat2test rejects a step without one
+(`MISSING_STEP_NAME`) or with a malformed one (`INVALID_STEP_NAME`). Names are
+camelCase, English by default, representative and semantically loaded: they
+state the action or fact (`<!-- confirmOrder -->`), never a position or filler
+(`<!-- step1 -->`, `<!-- doIt -->`). Give one fact one name across the Feature,
+even where its wording differs, and keep each name to one keyword role and one
+input shape. Markdown preview hides the names; they stay visible in the source
+and in `.feature` files, and no other marker syntax replaces them.
+
+Put every value that varies between examples in a placeholder, never in the
+words. Bind every placeholder in every row, including those in titles and
+DataTables, which the generator does not catch. The generated test only calls
+steps, so each Then step carries the value it checks
+(`the order total is <total> <!-- orderTotal -->`), not a verdict
+(`the total is correct <!-- totalIsCorrect -->`).
+
+## One Feature per use case
+
+Each Feature is one complete use case at the software's boundary: relevant prior
+facts, one whole action or query, and the observable answer or changed or
+preserved state. Rules and outcome variants of that use case, acceptance and
+rejection included, stay together in distinct scenarios. Distinct purposes get
+separate Features even when they share data; shared quantities keep one meaning.
+No human actor is required when the domain has none.
+
+Specify what the software answers, changes or preserves, not how. Replace a step
+that describes implementation
+(`the repository save method is called <!-- repositorySaveCalled -->`) with its
+observable result. Internal call order, algorithms, runners, languages and
+output layout are not acceptance criteria and never become steps or Examples
+columns.
+
+## Meaningful arguments
+
+- Expose identities, quantities, units, categories, relative positions,
+  negative facts and expected results as named arguments in a
+  `Scenario Outline`, even with one justified row.
+- Keep independently variable roles apart even when their values coincide: a
+  horizon, a reporting interval and a recurrence interval of seven days are
+  three arguments with explicit units, not one `days`.
+- Keep a cohesive record or collection as one DataTable, not many scalar
+  columns. To vary whole records, give each an identity in the table and select
+  it from Examples.
+- Keep fixed rule criteria fixed. A diagnostic may bind the fixed value without
+  making the criterion configurable. Never replace actions, conditions or
+  diagnostics with prose-valued arguments such as `<reason>`.
+- Preserve subjects, negation, quantifiers, units, timing, relative selectors
+  and causes. Use explicit absence, not blank cells or `null`. Supply raw input
+  when its derivation is what the use case examines.
+
+## Discriminating examples
+
+Ask whether each example would still pass if a factor or rule were ignored; a
+factor of one hides a missing multiplication. Cover meaningful partitions,
+boundaries and failures, and keep unknown, absent, zero and invalid distinct.
+Recognize coverage already present and keep it on revision.
+
+A boundary belongs here when the domain expert would recognize it as their rule:
+a zero price, a repeated item, an amount shown with two decimals. A value that
+matters only because of machine representation (binary floating point, time
+zones, text normalization, overflow) is left out and named as a candidate for
+downstream programmatic tests, which are not written in Gherkin.
+
+Inspect relevant state/event pairs, repeated requests, missing information and
+mixed independent dimensions. A rejection states what was preserved; a query
+checks its answer without inventing a mutation. Each scenario supplies its own
+context and never depends on another having run. Parsing or a small
+cross-product does not prove exhaustive coverage.
+
+## Unresolved rules stay out of tables
+
+Separate what the requirements assert, what is justifiably inferred and what is
+undecided. When a row's expected outcome depends on an undecided rule, such as a
+rounding or validity policy, omit that row, state the open decision and deliver
+the supported rows. One supplied instance exposes a relationship's arguments; it
+does not establish behavior for members the source does not support.
+
+## Tags
+
+Tags are metadata the generator does not interpret. None is required, including
+`@code`; they only serve the project's own runner filters or conventions.
+Preserve tags already present when revising.
+
+## Validate with the generator
+
+When feat2test is installed, run `feat2test validate` on the delivered Feature
+through its file, `--text` or `--stdin`, with the project's runner and `--json`.
+Report the example count and diagnostics; it writes nothing. When it is not
+installed, check the format reference and say generator validation was not run.
+Validation proves generability, not semantic review.
+
+Write specifications in English unless the user or the project's `CLAUDE.md` or
+`AGENTS.md` explicitly asks for another language for them. Method names stay
+English unless the user explicitly asks for another language for the methods
+too; see [format and language](references/gherkin-format.md).
+
+## Review checklist
+
+Apply to the complete specification against the requirements and the user's
+constraints, whether or not another agent is available. Cite the scenario and
+evidence for each finding, and separate wording defects from undecided domain
+rules.
+
+- [ ] Each Feature is one use case; distinct purposes are separate Features.
+- [ ] Every step ends with a representative `<!-- name -->`, English unless chosen otherwise.
+- [ ] Each fact has one name; each name has one role and one input shape.
+- [ ] Every placeholder is bound in every row, including titles and DataTables.
+- [ ] Every Then step carries the expected value it checks.
+- [ ] No prose-valued arguments; roles, units and fixed criteria are explicit.
+- [ ] Examples discriminate factors, boundaries and failures; prior coverage kept.
+- [ ] No invented rules; open decisions are stated, not tabled.
+- [ ] Steps describe observable behavior, not implementation or tooling.
+- [ ] Syntax matches the format reference; `feat2test validate` passes when available.
+
+A review-only request returns findings and edits nothing. A revision fixes every
+affected occurrence of a shared step or argument and keeps justified behavior.
+---
+name: app-domain
+description: Build the app-domain workstream of the implementer: the acceptance step adapters, the application layer (use cases, repository interfaces) and the domain layer, with repositories faked in memory. Read from the implement skill.
+---
+
+# app-domain
+
+**Owns:** `test/acceptance/<module>/` (one step adapter per use case, next to the test generated from its product spec), `src/<module>/application/` (use cases and repository interfaces) and `src/<module>/domain/` (entities, aggregates, value objects, schemas, exceptions, services).
+
+**Receives:** the product specs, one per use case under the configured product specs root (`openspec/specs/<module>/<use-case>/spec.md` by default), and nothing from other workstreams. The repository interfaces it declares are seams that `infrastructure` implements. The change's design defines them (which methods, which props and exceptions), and the implementer fixes them before this workstream starts.
+
+**Fakes:** repositories, and only them. Acceptance is a black box against the use case. Each repository the use cases need has an in-memory twin in `test/acceptance/<module>/repositories/in-memory-<name>.repository.ts`: `class InMemory<Name>Repository implements <Name>RepositoryInterface`, with no constructor parameter and a `seed(...)` method the Given steps call. It behaves like the one infrastructure will build: same contract, same exceptions of the module family. It never imports from `infrastructure`.
+
+## How
+
+1. Read the `## reference` sections of `acceptance.examples.md`, `application.examples.md` and `domain.examples.md`: they are the shape of correct code. The other sections show each way of breaking a rule.
+2. `pnpm exec factory generate`: each product spec becomes `test/acceptance/<module>/<use-case>.feature.test.ts` and a step adapter `<use-case>.feature.steps.ts` with a pending method per step. Never write or edit a test file; a behavior the spec lacks goes back as feedback on the change.
+3. Write the in-memory repositories, fill the step adapter of each use case, then write the use case and the domain it needs, until `pnpm exec factory test acceptance` is green. A step method keeps its parameter names equal to the spec's placeholders, or the next generation scaffolds it again. Steps check their data with assertions (`expect`), never `throw new Error(`; the `PENDING` bodies feat2test scaffolds break that rule, so the pipeline is red until every step is written.
+4. The module's exceptions are the family the design declares: one base extending `DomainException`, one subclass per business failure.
+5. Follow the core-wide rules even though `clean-architecture` checks them: no `any` in the core, only domain exceptions (the provider error in `cause`), the schema package only in `domain/schemas`.
+
+**Check:** `pnpm exec factory check --workstream app-domain [--module <module>]`, plus `pnpm exec factory test acceptance`.
+.agents/skills/implement/references/workstreams/app-domain/SKILL.md
+.agents/skills/implement/references/workstreams/app-domain/domain.examples.md
+.agents/skills/implement/references/workstreams/app-domain/application.examples.md
+.agents/skills/implement/references/workstreams/app-domain/acceptance.examples.md
+// Synced by feat2test. Matching step implementations are preserved.
+
+export function createSteps() {
+  return {
+    // Context
+    customerWithLoyalty(customer: string, loyalty: string): void {
+      throw new Error('PENDING: customerWithLoyalty')
+    },
+
+    // Action
+    priceOrder(total: string, customer: string): void {
+      throw new Error('PENDING: priceOrder')
+    },
+
+    // Outcome
+    customerCharged(charged: string): void {
+      throw new Error('PENDING: customerCharged')
+    },
+  }
+}
+{"name":"probe","private":true,"type":"module","devDependencies":{"factory":"file:.agents/skills/setup/assets/factory-0.1.1.tgz","typescript":"7.0.2","vitest":"5.0.5","zod":"^4.6.7"}}
+
+codex
+Your answer confirms the proposed behavior. I’ll add explicit coverage for an unknown customer, then resume phase 1 using `implement` and `gherkin-craft`.
+
+exec
+/bin/bash -lc 'cat .agents/skills/gherkin-craft/references/generator-contract.md .agents/skills/gherkin-craft/references/gherkin-format.md .agents/skills/implement/references/workstreams/app-domain/acceptance.examples.md .agents/skills/implement/references/workstreams/app-domain/application.examples.md .agents/skills/implement/references/workstreams/app-domain/domain.examples.md' in <scratch>/g8/probe
+ succeeded in 0ms:
+# Generator step contract
+
+Read before writing or reviewing any step. feat2test turns each Feature into a
+Feature Test that only calls steps, and a Step Adapter with one method per
+distinct step name. These rules are mechanical; breaking them either fails
+generation or silently produces the wrong methods.
+
+## A step's name is its method
+
+Every step ends with one HTML comment holding its adapter method name:
+
+```gherkin
+Feature: Add units
+  Scenario Outline: Add <quantity> units
+    Given an empty cart <!-- emptyCart -->
+    When <quantity> units are added <!-- addUnits -->
+    Then the cart contains <quantity> units <!-- cartContains -->
+
+    Examples:
+      | quantity |
+      | 2        |
+```
+
+The name is the step's identity; the words before it are documentation. The
+comment closes the step line, after any placeholder; a DataTable or DocString
+follows on the next lines. Markdown preview hides it, while the `.feature.md`
+source and native `.feature` files show it.
+
+| Step text | Method |
+| --- | --- |
+| `the cart holds <quantity> items <!-- cartHolds -->` | `cartHolds(quantity: string)` |
+| `the cart contains <quantity> items <!-- cartHolds -->` | `cartHolds(quantity: string)` |
+| `el carrito contiene <quantity> artículos <!-- cartHolds -->` | `cartHolds(quantity: string)` |
+| `the cart holds <quantity> items <!-- cartStillHolds -->` | `cartStillHolds(quantity: string)` |
+| `the cart holds 2 items <!-- cartHoldsTwoItems -->` | `cartHoldsTwoItems()` |
+
+So:
+
+- Steps with one name call one method, whatever their words or language.
+  Steps with different names are different methods, even with identical words.
+  Give one fact one name across the Feature.
+- Rewording a step keeps its method and implementation. Renaming it creates a
+  new pending method and drops the old one once no step uses it. Changing only
+  Examples values keeps the method and its implementation.
+- A value that varies between examples is a placeholder, not a word. A literal
+  `2 items` is part of the documentation, never a parameter.
+- Names are English unless the user explicitly asks otherwise, and
+  representative: they state the action or fact (`confirmOrder`,
+  `orderTotal`), never a position or filler (`step1`, `doIt`).
+
+## Names the generator accepts
+
+The generator checks only the identifier format: `^[a-z][A-Za-z0-9]*$`, and
+not a JavaScript reserved word. It cannot tell whether a name is English or
+representative; that judgment is the author's.
+
+- A step without a trailing name comment fails with `MISSING_STEP_NAME`.
+- A name with spaces, hyphens, accents, a leading digit or capital, or a
+  reserved word such as `delete`, fails with `INVALID_STEP_NAME`. So does a
+  second comment in the same step, or a comment that does not end it.
+
+Both name the source, line and step, and are reported before any file is
+written. A trailing HTML comment in a step is always read as its name; put
+explanations in a description or a comment line instead.
+
+## Inputs become parameters
+
+- Each distinct `<name>` in the step text becomes a `string` parameter, in
+  order of first occurrence. A placeholder repeated in one step is one
+  parameter. The parameter name is the placeholder name with its first letter
+  lower-cased and any character that cannot appear in an identifier removed.
+- A DataTable becomes a final `table: string[][]` parameter: every row,
+  including the header, as strings.
+- A DocString becomes a final `text: string` parameter.
+- Every value arrives as a string. Numbers, money and dates are parsed by the
+  adapter, never by the generator.
+
+The parameter list is part of the signature. The same name used with a
+different placeholder name, or once with a DataTable and once without, fails
+with `CONFLICTING_STEP_INPUTS`.
+
+## Keywords set the role
+
+`Given` is Context, `When` is Action and `Then` is Outcome. `And`, `But` and
+`*` inherit the role of the previous step; a scenario that starts with `*`
+starts in Context. Background steps run first in every scenario. The same
+name with two roles, for example `<!-- orderConfirmed -->` on a Given and on a
+Then, fails with `CONFLICTING_STEP_ROLE`. Rename one of them.
+
+## Examples bind placeholders
+
+Each Examples row becomes one test and supplies the values for every
+placeholder in that expansion. Repeated titles are numbered (`#2`, `#3`). The
+name comment is never a placeholder.
+
+- A placeholder in the step text with no Examples column, or in a plain
+  `Scenario`, fails with `UNKNOWN_PLACEHOLDER`.
+- A placeholder in a scenario title or a DataTable cell with no column does
+  **not** fail: it stays as the literal text `<name>` in the test name or the
+  table value. Check those bindings by hand.
+
+## Generated tests only call steps
+
+The Feature Test is rewritten on every generation and contains no
+assertions. Each step becomes one call, in order, with its values as string
+literals, below a comment with its keyword and words but not its name. Every
+check lives in the adapter method of a Then step, which receives nothing but
+its parameters. A Then step therefore carries the value it checks
+(`the order total is <total> <!-- orderTotal -->`), never a judgment the
+method cannot compute from its inputs
+(`the total is correct <!-- totalIsCorrect -->`).
+
+## Tags are ignored
+
+Feature, Rule and Scenario tags are parsed and discarded. They do not change
+the generated test, the adapter or the runner.
+
+## Check with the generator
+
+```bash
+npx feat2test validate <feature> --runner vitest --json
+npx feat2test validate --text '<feature text>' --format feature --source draft.feature --runner vitest --json
+```
+
+Use `--format mdg` for Markdown, or `--stdin` instead of `--text`. Validation
+writes nothing. It reports `scenarioCount` (expanded examples), `stepCount`
+(distinct methods), warnings for table rows that will not parse as intended
+(a separator row in a native file, a Markdown row without two leading spaces),
+and the diagnostics above. It proves generability only, not that the
+specification is right.
+# Format and language
+
+Read for all authoring and review. Preserve the requested representation;
+formatting choices must not change the domain claim.
+
+## Language
+
+Specifications are English by default. Write them in another language only when
+the user, or the project's agent instructions (`CLAUDE.md`, `AGENTS.md`),
+explicitly request it for the specifications, including a request to retain an
+existing specification's language. Conversing in another language is not such a
+request. Apply the choice to titles, descriptions, sentences, and argument
+names. Preserve proper names, identifiers, contractual literal data, and terms
+required verbatim. Use established translations consistently; resolve material
+ambiguity from context or ask. Teaching examples in this skill remain English.
+
+Step method names are a separate choice and stay English camelCase even in a
+specification written in another language: `Dado un carrito vacío <!-- emptyCart -->`.
+Use another language for them only when the user explicitly requests it for the
+method names too; then write them as camelCase identifiers without accents or
+spaces (`<!-- carritoVacio -->`). The generator checks only that identifier
+format, not the language.
+
+For non-English output, use native `.feature` unless the user explicitly
+requires Markdown. Begin native output with `# language: <code>` using a
+supported Gherkin dialect, then use that dialect's keywords throughout. The
+directive is literally `language`, not a tag or YAML. English uses `en` and
+needs no declaration.
+
+If non-English Markdown is explicitly required, resolve the consumer's external
+dialect configuration before claiming valid output. A native per-file language
+directive does not configure Cucumber's Markdown dialect. Explain the constraint
+and offer native `.feature` when a self-contained declaration is needed; do not
+silently switch a requested format or invent a Markdown language attribute.
+
+## Common structure
+
+- A Feature contains one use case; Rule groups one governing rule; Scenario is
+  one observable example. When writing files, give each Feature its own file.
+- Given supplies prior facts; When names the whole action or query; Then states
+  its answer and relevant changed or preserved facts. And/But continue the
+  preceding role. But provides contrast, not automatic negation.
+- Every step line ends with its method name comment, `<!-- name -->`, in both
+  formats; a DataTable or Doc String follows on the next lines.
+- Each Examples row is independent. Group rows by intent and kind of outcome;
+  acceptance and rejection use different scenarios within the same use case.
+  One Outline may carry several titled Examples blocks: the first illustrates
+  the rule with a reader-friendly case; later blocks hold the boundaries the
+  expert confirmed. The split is presentation only; every row is one scenario.
+- A Scenario Outline exposes meaningful scalar arguments even for one row.
+  Every placeholder has a concrete Examples binding, including occurrences in
+  titles, DataTables, and consequences. Plain Scenarios suit argument-free cases.
+- DataTables describe a cohesive record or collection within one example;
+  Examples tables describe behavioral variation. Use Doc Strings for coherent
+  source text. Do not serialize an aggregate or reproduce a constructor.
+- Titles state the outcome and relevant condition, understandable on their own.
+  Avoid “happy path” and numbered case labels as their only meaning.
+- Background contains only preconditions shared by every example in its scope,
+  never varying data, actions, or assertions. Prefer repetition when it avoids
+  making the reader search for essential context. Tags are metadata.
+- Use concrete values, digits for numerical counts/positions, and explicit
+  presence or absence. Do not use blank cells or nullish stand-ins for missing
+  facts. Preserve literal source content when it is actually being examined.
+
+## Native `.feature`
+
+Use native keyword structure, indentation for readability, and ordinary bare
+Outline placeholders. A DataTable follows its step. Do not add Markdown heading
+markers, bullet steps, or Markdown formatting separator rows. In native tables,
+those separators become data, including additional Examples cases.
+
+Tags are metadata the generator ignores; in a non-English file they follow the
+`# language: <code>` line.
+
+## Markdown `.feature.md`
+
+Use Gherkin headings and bullet steps, for example `# Feature:`, `## Rule:`,
+`### Scenario Outline:`, `#### Examples:`, and `* Given ...`. Use native syntax
+only in native files; a fenced native document is not Markdown Gherkin structure.
+Only recognized headings, steps, tables, and backtick tags have Gherkin meaning;
+other prose remains documentation. Markdown preview hides each step's
+`<!-- name -->` comment; it remains in the source, where the generator reads it.
+
+Write each tag in its **own** backtick span, for example `` `@billing` `@slow` ``.
+A single span containing several tags parses as one compound tag, and native
+bare tag syntax in Markdown is ordinary prose.
+
+Use two leading spaces on every table row so Examples and DataTables are
+recognized. Insufficient indentation may silently hide a table.
+
+Cucumber's Markdown parser accepts header separators such as `| --- |`,
+including left, right, and centered alignment markers. These are formatting:
+they do not add Examples cases or DataTable values. Tables without separators
+are also supported. Do not report a separator as data corruption solely because
+it appears in Markdown; verify the intended rows and values with the consumer.
+
+Backticks around placeholders in headings or sentences protect their Markdown
+rendering. Inside Examples cells, DataTable cells, and Doc String contents, use
+plain values and bare placeholders. Formatting backticks there become literal
+data. Ordinary explanatory Markdown tables outside specifications can use normal
+Markdown separators; do not confuse them with Gherkin tables.
+
+## Verify interpretation
+
+Where `feat2test validate` or another parser is available, inspect expanded
+example counts, bindings, selected dialect, and resulting step/table values.
+Check all intended rows survived and formatting did not become data. Successful
+parsing is not a semantic review and does not demonstrate domain execution.
+
+## References
+
+- [Gherkin reference](https://cucumber.io/docs/gherkin/reference/)
+- [Spoken languages](https://cucumber.io/docs/gherkin/reference/#spoken-languages)
+- [Markdown with Gherkin](https://github.com/cucumber/gherkin/blob/main/MARKDOWN_WITH_GHERKIN.md)
+- [Markdown dialect selection](https://github.com/cucumber/gherkin/blob/main/javascript/src/GherkinInMarkdownTokenMatcher.ts)
+# acceptance
+
+## reference
+
+```md openspec/specs/module/list-invoices/spec.md
+# module/list-invoices Specification
+
+## Purpose
+
+Listing the invoices of the account, so that whoever bills it sees everything that was issued.
+
+## Requirements
+
+### Requirement: The invoices are listed
+
+The system SHALL list every invoice the repository holds.
+
+#### Scenario Outline: `<count>` stored invoices are listed
+
+- **GIVEN** the repository holds `<count>` invoices <!-- invoicesStored -->
+- **WHEN** the invoices are listed <!-- invoicesListed -->
+- **THEN** `<count>` invoices are returned <!-- invoicesReturned -->
+
+##### Examples:
+
+  | count |
+  | ----- |
+  | 0     |
+  | 2     |
+```
+
+```ts test/acceptance/module/repositories/in-memory-invoice.repository.ts
+import type { InvoiceRepositoryInterface } from "../../../../src/module/application/repository-interfaces/invoice.repository-interface";
+import type { InvoiceProps } from "../../../../src/module/domain/schemas/invoice.schema";
+export class InMemoryInvoiceRepository implements InvoiceRepositoryInterface {
+  private invoices: InvoiceProps[] = [];
+  seed(invoices: InvoiceProps[]) {
+    this.invoices = invoices;
+  }
+  async listInvoices() {
+    return this.invoices;
+  }
+  async findInvoice(invoiceId: string) {
+    return this.invoices.find((invoice) => invoice.id === invoiceId) ?? null;
+  }
+}
+```
+
+```ts test/acceptance/module/list-invoices.feature.steps.ts
+import { expect } from "vitest";
+import { ListInvoicesUseCase } from "../../../src/module/application/use-cases/list-invoices.use-case";
+import { InvoiceStatus } from "../../../src/module/domain/schemas/invoice.schema";
+import { InMemoryInvoiceRepository } from "./repositories/in-memory-invoice.repository";
+export function createSteps() {
+  const invoices = new InMemoryInvoiceRepository();
+  let listed = 0;
+  return {
+    async invoicesStored(count: string) {
+      invoices.seed(
+        Array.from({ length: Number(count) }, (_, i) => ({
+          id: `i${i}`,
+          total: 100,
+          status: InvoiceStatus.PAID,
+        })),
+      );
+    },
+    async invoicesListed() {
+      listed = (await new ListInvoicesUseCase(invoices).execute()).length;
+    },
+    async invoicesReturned(count: string) {
+      expect(listed).toBe(Number(count));
+    },
+  };
+}
+```
+
+```ts test/acceptance/module/list-invoices.feature.test.ts
+import { createSteps } from "./list-invoices.feature.steps";
+export const run = async () => {
+  const steps = createSteps();
+  await steps.invoicesStored("2");
+  await steps.invoicesListed();
+  await steps.invoicesReturned("2");
+};
+```
+
+## acceptance-test-targets-use-case
+
+### steps-without-use-case
+
+```md openspec/specs/module/ghost/spec.md
+# module/ghost Specification
+```
+
+```ts test/acceptance/module/ghost.feature.steps.ts
+export function createSteps() {
+  return {};
+}
+```
+
+```expect
+- test/acceptance/module/ghost.feature.steps.ts (archunit)
+```
+
+### steps-without-spec
+
+```ts src/module/application/use-cases/pay-invoice.use-case.ts
+export class PayInvoiceUseCase {
+  execute() {
+    return 1;
+  }
+}
+```
+
+```ts test/acceptance/module/pay-invoice.feature.steps.ts
+export function createSteps() {
+  return {};
+}
+```
+
+```expect
+- test/acceptance/module/pay-invoice.feature.steps.ts (archunit)
+```
+
+### hand-written-test
+
+```ts test/acceptance/module/list-invoices.test.ts
+export const run = () => 1;
+```
+
+```expect
+- test/acceptance/module/list-invoices.test.ts (archunit)
+```
+
+### test-outside-module-folder
+
+```ts test/acceptance/list-invoices.feature.steps.ts
+export function createSteps() {
+  return {};
+}
+```
+
+```expect
+- test/acceptance/list-invoices.feature.steps.ts (archunit)
+```
+
+### helper-outside-repositories
+
+```ts test/acceptance/module/module.fakes.ts
+export const inMemoryInvoices = () => ({ listInvoices: async () => [] });
+```
+
+```expect
+- test/acceptance/module/module.fakes.ts (archunit)
+```
+
+## acceptance-repository-is-a-repository
+
+### repository-without-interface
+
+```ts test/acceptance/module/repositories/in-memory-invoice.repository.ts
+export class InMemoryInvoiceRepository {
+  async listInvoices() {
+    return [];
+  }
+}
+```
+
+```expect
+- test/acceptance/module/repositories/in-memory-invoice.repository.ts (archunit)
+```
+
+### repository-with-constructor-args
+
+```ts test/acceptance/module/repositories/in-memory-invoice.repository.ts
+import type { InvoiceRepositoryInterface } from "../../../../src/module/application/repository-interfaces/invoice.repository-interface";
+import type { InvoiceProps } from "../../../../src/module/domain/schemas/invoice.schema";
+export class InMemoryInvoiceRepository implements InvoiceRepositoryInterface {
+  constructor(private readonly invoices: InvoiceProps[]) {}
+  async listInvoices() {
+    return this.invoices;
+  }
+  async findInvoice(invoiceId: string) {
+    return this.invoices.find((invoice) => invoice.id === invoiceId) ?? null;
+  }
+}
+```
+
+```expect
+- test/acceptance/module/repositories/in-memory-invoice.repository.ts (archunit)
+```
+
+### repository-misnamed
+
+```ts test/acceptance/module/repositories/invoice-double.ts
+import type { InvoiceRepositoryInterface } from "../../../../src/module/application/repository-interfaces/invoice.repository-interface";
+export class InvoiceDouble implements InvoiceRepositoryInterface {
+  async listInvoices() {
+    return [];
+  }
+  async findInvoice() {
+    return null;
+  }
+}
+```
+
+```expect
+- test/acceptance/module/repositories/invoice-double.ts (archunit)
+```
+
+## acceptance-throws-domain-exceptions
+
+### steps-throw-raw-error
+
+```ts test/acceptance/module/list-invoices.feature.steps.ts
+export function createSteps() {
+  return {
+    async invoicesStored(count: string) {
+      if (Number.isNaN(Number(count))) throw new Error(`not a count: ${count}`);
+    },
+  };
+}
+```
+
+```expect
+- test/acceptance/module/list-invoices.feature.steps.ts (archunit)
+```
+
+### repository-throws-foreign-exception
+
+```ts test/acceptance/module/repositories/in-memory-invoice.repository.ts
+import type { InvoiceRepositoryInterface } from "../../../../src/module/application/repository-interfaces/invoice.repository-interface";
+import { DomainException } from "../../../../src/shared/domain/exceptions/domain.exceptions";
+export class InMemoryInvoiceRepository implements InvoiceRepositoryInterface {
+  async listInvoices() {
+    throw new DomainException("offline");
+  }
+  async findInvoice() {
+    return null;
+  }
+}
+```
+
+```expect
+- test/acceptance/module/repositories/in-memory-invoice.repository.ts (archunit)
+```
+# application
+
+## reference
+
+```ts src/module/application/repository-interfaces/invoice.repository-interface.ts
+import type { InvoiceProps } from "../../domain/schemas/invoice.schema";
+export interface InvoiceRepositoryInterface {
+  listInvoices(): Promise<InvoiceProps[]>;
+  findInvoice(invoiceId: string): Promise<InvoiceProps | null>;
+}
+```
+
+```ts src/module/application/use-cases/list-invoices.use-case.ts
+import { InvoiceEntity } from "../../domain/entities/invoice.entity";
+import type { InvoiceRepositoryInterface } from "../repository-interfaces/invoice.repository-interface";
+export class ListInvoicesUseCase {
+  constructor(private readonly invoices: InvoiceRepositoryInterface) {}
+  async execute() {
+    return (await this.invoices.listInvoices()).map((props) => new InvoiceEntity(props));
+  }
+}
+```
+
+```ts src/module/application/use-cases/get-invoice.use-case.ts
+import { InvoiceEntity } from "../../domain/entities/invoice.entity";
+import { InvoiceNotFoundException } from "../../domain/exceptions/invoice.exceptions";
+import type { InvoiceRepositoryInterface } from "../repository-interfaces/invoice.repository-interface";
+export class GetInvoiceUseCase {
+  constructor(private readonly invoices: InvoiceRepositoryInterface) {}
+  async execute(invoiceId: string) {
+    const props = await this.invoices.findInvoice(invoiceId);
+    if (!props) throw new InvoiceNotFoundException(invoiceId);
+    return new InvoiceEntity(props);
+  }
+}
+```
+
+## application-vocabulary
+
+### folder-outside-vocabulary
+
+```ts src/module/application/dto/invoice.dto.ts
+export type InvoiceDto = { id: string };
+```
+
+```expect
+- src/module/application/dto/invoice.dto.ts (archunit)
+```
+
+### wrong-suffix
+
+```ts src/module/application/use-cases/list-invoices.ts
+export class ListInvoicesUseCase {
+  execute() {
+    return [];
+  }
+}
+```
+
+```expect
+- src/module/application/use-cases/list-invoices.ts (archunit)
+```
+
+### services-folder
+
+```ts src/module/application/services/invoice.service.ts
+export class InvoiceService {
+  list() {
+    return [];
+  }
+}
+```
+
+```expect
+- src/module/application/services/invoice.service.ts (archunit)
+```
+
+## use-case-is-class-with-execute
+
+### no-use-case-class
+
+```ts src/module/application/use-cases/list-invoices.use-case.ts
+export const listInvoices = () => [];
+```
+
+```expect
+- src/module/application/use-cases/list-invoices.use-case.ts (archunit)
+```
+
+## repository-contract-is-interface
+
+### no-interface
+
+```ts src/module/application/repository-interfaces/invoice.repository-interface.ts
+export type InvoiceRepositoryInterface = { listInvoices(): string[] };
+```
+
+```expect
+- src/module/application/repository-interfaces/invoice.repository-interface.ts (archunit)
+```
+
+### prefixed-with-i
+
+```ts src/module/application/repository-interfaces/invoice.repository-interface.ts
+export interface IInvoiceRepository {
+  listInvoices(): Promise<string[]>;
+}
+```
+
+```expect
+- src/module/application/repository-interfaces/invoice.repository-interface.ts (archunit)
+```
+
+## repository-method-naming
+
+### fetch-verb
+
+```ts src/module/application/repository-interfaces/invoice.repository-interface.ts
+export interface InvoiceRepositoryInterface {
+  fetchInvoices(): Promise<string[]>;
+}
+```
+
+```expect
+- src/module/application/repository-interfaces/invoice.repository-interface.ts (archunit)
+```
+
+### bare-verb
+
+```ts src/module/application/repository-interfaces/invoice.repository-interface.ts
+export interface InvoiceRepositoryInterface {
+  list(): Promise<string[]>;
+}
+```
+
+```expect
+- src/module/application/repository-interfaces/invoice.repository-interface.ts (archunit)
+```
+
+### get-returns-null
+
+```ts src/module/application/repository-interfaces/invoice.repository-interface.ts
+export interface InvoiceRepositoryInterface {
+  getInvoice(invoiceId: string): Promise<string | null>;
+}
+```
+
+```expect
+- src/module/application/repository-interfaces/invoice.repository-interface.ts (archunit)
+```
+
+### find-never-null
+
+```ts src/module/application/repository-interfaces/invoice.repository-interface.ts
+export interface InvoiceRepositoryInterface {
+  findInvoice(invoiceId: string): Promise<string>;
+}
+```
+
+```expect
+- src/module/application/repository-interfaces/invoice.repository-interface.ts (archunit)
+```
+
+## use-case-depends-on-contracts
+
+### depends-on-implementation
+
+```ts src/module/application/use-cases/list-invoices.use-case.ts
+import { InvoiceRepositoryImplementation } from "../../infrastructure/repository-implementations/invoice.repository-implementation";
+export class ListInvoicesUseCase {
+  constructor(private readonly invoices: InvoiceRepositoryImplementation) {}
+  execute() {
+    return this.invoices.listInvoices();
+  }
+}
+```
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+export class InvoiceRepositoryImplementation {
+  async listInvoices() {
+    return [];
+  }
+}
+```
+
+```expect
+- src/module/application/use-cases/list-invoices.use-case.ts (archunit)
+```
+
+### depends-on-adapter
+
+```ts src/module/application/use-cases/list-invoices.use-case.ts
+import type { HttpInvoiceAdapter } from "../../infrastructure/adapters/http-invoice.adapter";
+export class ListInvoicesUseCase {
+  constructor(private readonly api: HttpInvoiceAdapter) {}
+  execute() {
+    return this.api.listInvoices();
+  }
+}
+```
+
+```ts src/module/infrastructure/adapters/http-invoice.adapter.ts
+export class HttpInvoiceAdapter {
+  async listInvoices() {
+    return [];
+  }
+}
+```
+
+```expect
+- src/module/application/use-cases/list-invoices.use-case.ts (archunit)
+```
+
+## application-imports-only-domain
+
+### imports-infrastructure
+
+```ts src/module/application/use-cases/list-invoices.use-case.ts
+import { InvoiceRepositoryImplementation } from "../../infrastructure/repository-implementations/invoice.repository-implementation";
+export class ListInvoicesUseCase {
+  constructor(private repository = new InvoiceRepositoryImplementation()) {}
+  execute() {
+    return this.repository;
+  }
+}
+```
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+export class InvoiceRepositoryImplementation {}
+```
+
+```expect
+- src/module/application/use-cases/list-invoices.use-case.ts (fallow)
+```
+
+## no-framework-import
+
+### imports-framework-package
+
+```ts src/module/application/use-cases/list-invoices.use-case.ts
+import express from "express";
+export class ListInvoicesUseCase {
+  execute() {
+    return express;
+  }
+}
+```
+
+```expect
+- src/module/application/use-cases/list-invoices.use-case.ts (oxlint)
+```
+
+## no-environment
+
+### calls-environment
+
+```ts src/module/application/use-cases/list-invoices.use-case.ts
+export class ListInvoicesUseCase {
+  execute() {
+    return process.cwd();
+  }
+}
+```
+
+```expect
+- src/module/application/use-cases/list-invoices.use-case.ts (fallow, oxlint)
+```
+# domain
+
+## reference
+
+```ts src/shared/domain/exceptions/domain.exceptions.ts
+export class DomainException extends Error {
+  constructor(message: string, options: { cause?: unknown } = {}) {
+    super(message, { cause: options.cause });
+    this.name = new.target.name;
+  }
+}
+```
+
+```ts src/shared/domain/exceptions/validation.exceptions.ts
+import { DomainException } from "./domain.exceptions";
+export class ValidationException extends DomainException {
+  constructor(
+    public readonly source: string,
+    cause: unknown,
+  ) {
+    super(`${source} rejected its props`, { cause });
+  }
+}
+```
+
+```ts src/shared/domain/schemas/validation.schema.ts
+import type { z } from "zod";
+import { ValidationException } from "../exceptions/validation.exceptions";
+export const validateSchema = <S extends z.ZodType>(
+  target: object,
+  schema: S,
+  props: unknown,
+): z.output<S> => {
+  const result = schema.safeParse(props);
+  if (!result.success) throw new ValidationException(target.constructor.name, result.error);
+  Object.assign(target, result.data);
+  return result.data;
+};
+```
+
+```ts src/module/domain/schemas/invoice.schema.ts
+import { z } from "zod";
+export enum InvoiceStatus {
+  PAID = "paid",
+  PENDING = "pending",
+}
+export const InvoiceSchema = z.object({
+  id: z.string().min(1),
+  total: z.number().int(),
+  status: z.enum(InvoiceStatus),
+});
+export type InvoiceProps = z.infer<typeof InvoiceSchema>;
+```
+
+```ts src/module/domain/schemas/invoice-book.schema.ts
+import { z } from "zod";
+import { InvoiceSchema } from "./invoice.schema";
+export const InvoiceBookSchema = z.object({
+  year: z.number().int(),
+  invoices: z.array(InvoiceSchema),
+});
+export type InvoiceBookProps = z.infer<typeof InvoiceBookSchema>;
+```
+
+```ts src/module/domain/entities/invoice.entity.ts
+import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
+import { InvoiceSchema, InvoiceStatus, type InvoiceProps } from "../schemas/invoice.schema";
+export class InvoiceEntity {
+  public readonly id!: string;
+  public readonly total!: number;
+  public readonly status!: InvoiceStatus;
+  constructor(props: InvoiceProps) {
+    validateSchema(this, InvoiceSchema, props);
+  }
+  get isPaid() {
+    return this.status === InvoiceStatus.PAID;
+  }
+}
+```
+
+```ts src/module/domain/aggregates/invoice-book.aggregate.ts
+import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
+import { InvoiceEntity } from "../entities/invoice.entity";
+import { InvoiceBookSchema, type InvoiceBookProps } from "../schemas/invoice-book.schema";
+export class InvoiceBookAggregate {
+  public readonly year!: number;
+  public readonly invoices: InvoiceEntity[];
+  constructor(props: InvoiceBookProps) {
+    const valid = validateSchema(this, InvoiceBookSchema, props);
+    this.invoices = valid.invoices.map((invoice) => new InvoiceEntity(invoice));
+  }
+  get unpaid() {
+    return this.invoices.filter((invoice) => !invoice.isPaid);
+  }
+}
+```
+
+```ts src/module/domain/exceptions/invoice.exceptions.ts
+import { DomainException } from "../../../shared/domain/exceptions/domain.exceptions";
+export class ModuleException extends DomainException {}
+export class InvoiceNotFoundException extends ModuleException {
+  constructor(
+    public readonly invoiceId: string,
+    options: { cause?: unknown } = {},
+  ) {
+    super(`Invoice ${invoiceId} does not exist`, options);
+  }
+}
+export class InvoiceUnavailableException extends ModuleException {
+  constructor(options: { cause?: unknown } = {}) {
+    super("Invoices are unavailable", options);
+  }
+}
+export class ClientsUnavailableException extends ModuleException {
+  constructor(options: { cause?: unknown } = {}) {
+    super("Clients are unavailable", options);
+  }
+}
+```
+
+```ts src/module/domain/services/late-payment.service.ts
+import type { InvoiceEntity } from "../entities/invoice.entity";
+export class LatePaymentService {
+  lateOn(invoices: InvoiceEntity[], graceDays: number) {
+    return invoices.filter((invoice) => !invoice.isPaid && graceDays > 30);
+  }
+}
+```
+
+## domain-vocabulary
+
+### folder-outside-vocabulary
+
+```ts src/module/domain/helpers/format.ts
+export const format = (s: string) => s.trim();
+```
+
+```expect
+- src/module/domain/helpers/format.ts (archunit)
+```
+
+### wrong-suffix
+
+```ts src/module/domain/entities/invoice.ts
+export class InvoiceEntity {}
+```
+
+```expect
+- src/module/domain/entities/invoice.ts (archunit)
+```
+
+### rules-folder
+
+```ts src/module/domain/rules/dead-statuses.ts
+export const DEAD_STATUSES = ["cancelled", "expired"];
+```
+
+```expect
+- src/module/domain/rules/dead-statuses.ts (archunit)
+```
+
+## entity-validates-with-schema
+
+### no-schema
+
+```ts src/module/domain/entities/invoice.entity.ts
+export class InvoiceEntity {
+  constructor(public id: string) {}
+}
+```
+
+```expect
+- src/module/domain/entities/invoice.entity.ts (archunit)
+```
+
+### parses-directly
+
+```ts src/module/domain/entities/invoice.entity.ts
+import { InvoiceSchema, type InvoiceProps } from "../schemas/invoice.schema";
+export class InvoiceEntity {
+  constructor(private props: InvoiceProps) {
+    this.props = InvoiceSchema.parse(props);
+  }
+}
+```
+
+```ts src/module/domain/schemas/invoice.schema.ts
+import { z } from "zod";
+export const InvoiceSchema = z.object({ id: z.string() });
+export type InvoiceProps = z.infer<typeof InvoiceSchema>;
+```
+
+```expect
+- src/module/domain/entities/invoice.entity.ts (archunit)
+```
+
+### validates-elsewhere
+
+```ts src/module/domain/entities/invoice.entity.ts
+import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
+import { InvoiceSchema, type InvoiceProps } from "../schemas/invoice.schema";
+export class InvoiceEntity {
+  public readonly id!: string;
+  private constructor() {}
+  static from(props: InvoiceProps) {
+    const invoice = new InvoiceEntity();
+    validateSchema(invoice, InvoiceSchema, props);
+    return invoice;
+  }
+}
+```
+
+```ts src/module/domain/schemas/invoice.schema.ts
+import { z } from "zod";
+export const InvoiceSchema = z.object({ id: z.string() });
+export type InvoiceProps = z.infer<typeof InvoiceSchema>;
+```
+
+```ts src/shared/domain/schemas/validation.schema.ts
+export const validateSchema = (target: object, schema: { parse(p: unknown): object }, props: unknown) =>
+  Object.assign(target, schema.parse(props));
+```
+
+```expect
+- src/module/domain/entities/invoice.entity.ts (archunit)
+```
+
+## aggregate-composes-domain-objects
+
+### composes-nothing
+
+```ts src/module/domain/aggregates/invoice-book.aggregate.ts
+import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
+import { InvoiceBookSchema, type InvoiceBookProps } from "../schemas/invoice-book.schema";
+export class InvoiceBookAggregate {
+  public readonly year!: number;
+  public readonly count!: number;
+  constructor(props: InvoiceBookProps) {
+    validateSchema(this, InvoiceBookSchema, props);
+  }
+}
+```
+
+```ts src/module/domain/schemas/invoice-book.schema.ts
+import { z } from "zod";
+export const InvoiceBookSchema = z.object({ year: z.number(), count: z.number() });
+export type InvoiceBookProps = z.infer<typeof InvoiceBookSchema>;
+```
+
+```ts src/shared/domain/schemas/validation.schema.ts
+export const validateSchema = (target: object, schema: { parse(p: unknown): object }, props: unknown) =>
+  Object.assign(target, schema.parse(props));
+```
+
+```expect
+- src/module/domain/aggregates/invoice-book.aggregate.ts (archunit)
+```
+
+### imports-but-holds-none
+
+```ts src/module/domain/aggregates/invoice-book.aggregate.ts
+import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
+import { InvoiceEntity } from "../entities/invoice.entity";
+import { InvoiceBookSchema, type InvoiceBookProps } from "../schemas/invoice-book.schema";
+export class InvoiceBookAggregate {
+  public readonly year!: number;
+  constructor(props: InvoiceBookProps) {
+    validateSchema(this, InvoiceBookSchema, props);
+  }
+  first() {
+    return new InvoiceEntity({ id: "1" });
+  }
+}
+```
+
+```ts src/module/domain/entities/invoice.entity.ts
+export class InvoiceEntity {
+  constructor(public readonly props: { id: string }) {}
+}
+```
+
+```ts src/module/domain/schemas/invoice-book.schema.ts
+import { z } from "zod";
+export const InvoiceBookSchema = z.object({ year: z.number() });
+export type InvoiceBookProps = z.infer<typeof InvoiceBookSchema>;
+```
+
+```ts src/shared/domain/schemas/validation.schema.ts
+export const validateSchema = (target: object, schema: { parse(p: unknown): object }, props: unknown) =>
+  Object.assign(target, schema.parse(props));
+```
+
+```expect
+- src/module/domain/aggregates/invoice-book.aggregate.ts (archunit)
+```
+
+## exception-extends-domain-exception
+
+### extends-error
+
+```ts src/module/domain/exceptions/invoice.exceptions.ts
+export class InvoiceNotFoundException extends Error {}
+```
+
+```expect
+- src/module/domain/exceptions/invoice.exceptions.ts (archunit)
+```
+
+### extends-nothing
+
+```ts src/module/domain/exceptions/invoice.exceptions.ts
+export class InvoiceNotFoundException {
+  constructor(public readonly invoiceId: string) {}
+}
+```
+
+```expect
+- src/module/domain/exceptions/invoice.exceptions.ts (archunit)
+```
+
+### redeclares-base
+
+```ts src/module/domain/exceptions/invoice.exceptions.ts
+export class DomainException extends Error {}
+export class InvoiceNotFoundException extends DomainException {}
+```
+
+```expect
+- src/module/domain/exceptions/invoice.exceptions.ts (archunit)
+```
+
+### two-module-bases
+
+```ts src/module/domain/exceptions/invoice.exceptions.ts
+import { DomainException } from "../../../shared/domain/exceptions/domain.exceptions";
+export class InvoiceException extends DomainException {}
+```
+
+```ts src/module/domain/exceptions/client.exceptions.ts
+import { DomainException } from "../../../shared/domain/exceptions/domain.exceptions";
+export class ClientException extends DomainException {}
+```
+
+```expect
+- src/module/domain/exceptions/client.exceptions.ts (archunit)
+- src/module/domain/exceptions/invoice.exceptions.ts (archunit)
+```
+
+## closed-set-lives-in-schema
+
+### enum-in-entity
+
+```ts src/module/domain/entities/invoice.entity.ts
+export enum InvoiceStatus {
+  PAID = "paid",
+  PENDING = "pending",
+}
+export class InvoiceEntity {
+  constructor(public readonly status: InvoiceStatus) {}
+}
+```
+
+```expect
+- src/module/domain/entities/invoice.entity.ts (archunit)
+```
+
+### enum-in-use-case
+
+```ts src/module/application/use-cases/list-invoices.use-case.ts
+export enum InvoiceFilter {
+  ALL = "all",
+  UNPAID = "unpaid",
+}
+export class ListInvoicesUseCase {
+  execute(filter: InvoiceFilter) {
+    return [filter];
+  }
+}
+```
+
+```expect
+- src/module/application/use-cases/list-invoices.use-case.ts (archunit)
+```
+
+### enum-in-repository
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+export enum InvoiceSource {
+  BILLING = "billing",
+  LEGACY = "legacy",
+}
+export class InvoiceRepositoryImplementation {
+  source = InvoiceSource.BILLING;
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
+```
+
+## no-magic-closed-set-strings
+
+### compares-status-literal
+
+```ts src/module/domain/entities/invoice.entity.ts
+export class InvoiceEntity {
+  constructor(public readonly status: string) {}
+  get isPaid() {
+    return this.status === "paid";
+  }
+}
+```
+
+```expect
+- src/module/domain/entities/invoice.entity.ts (archunit)
+```
+
+### switches-on-type-literal
+
+```ts src/module/application/use-cases/describe-invoice.use-case.ts
+export class DescribeInvoiceUseCase {
+  execute(invoice: { type: string }) {
+    switch (invoice.type) {
+      case "proforma":
+        return "draft";
+      default:
+        return "final";
+    }
+  }
+}
+```
+
+```expect
+- src/module/application/use-cases/describe-invoice.use-case.ts (archunit)
+```
+
+## domain-service-named-by-policy
+
+### named-helper
+
+```ts src/module/domain/services/invoice-helper.service.ts
+export class InvoiceHelperService {
+  total(amounts: number[]) {
+    return amounts.reduce((a, b) => a + b, 0);
+  }
+}
+```
+
+```expect
+- src/module/domain/services/invoice-helper.service.ts (archunit)
+```
+
+### exports-no-class
+
+```ts src/module/domain/services/late-payment.service.ts
+export const isLate = (graceDays: number) => graceDays > 30;
+```
+
+```expect
+- src/module/domain/services/late-payment.service.ts (archunit)
+```
+
+## domain-imports-only-domain
+
+### imports-infrastructure
+
+```ts src/module/domain/entities/invoice.entity.ts
+import { InvoiceRepositoryImplementation } from "../../infrastructure/repository-implementations/invoice.repository-implementation";
+export class InvoiceEntity {
+  repository = new InvoiceRepositoryImplementation();
+}
+```
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+export class InvoiceRepositoryImplementation {}
+```
+
+```expect
+- src/module/domain/entities/invoice.entity.ts (fallow)
+```
+
+## no-framework-import
+
+### imports-framework-package
+
+```ts src/module/domain/entities/invoice.entity.ts
+import express from "express";
+export class InvoiceEntity {
+  server = express;
+}
+```
+
+```expect
+- src/module/domain/entities/invoice.entity.ts (oxlint)
+```
+
+## no-environment
+
+### calls-environment
+
+```ts src/module/domain/entities/invoice.entity.ts
+export class InvoiceEntity {
+  folder() {
+    return process.cwd();
+  }
+}
+```
+
+```expect
+- src/module/domain/entities/invoice.entity.ts (fallow, oxlint)
+```
+
+hook: PreToolUse
+hook: PreToolUse Completed
+apply patch
+patch: completed
+<scratch>/g8/probe/openspec/changes/discount-loyal-customers/plan.md
+<scratch>/g8/probe/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md
+diff --git a/openspec/changes/discount-loyal-customers/plan.md b/openspec/changes/discount-loyal-customers/plan.md
+index 35551cc9a8edb0a4c8ef6090ff08c548773217c7..85fe813c301631603f6b3abb3fa41cda1e8ccaa0
+--- a/openspec/changes/discount-loyal-customers/plan.md
++++ b/openspec/changes/discount-loyal-customers/plan.md
+@@ -18,7 +18,6 @@
+ 
+ ## Open questions
+ 
+-- For an unknown customer, charge full price or reject pricing? Recommend full price because no loyalty is established; the provisional plan follows that option.
+ 
+ ## Architecture decisions
+ 
+@@ -43,15 +42,15 @@
+ }
+ ```
+ 
+-The repository reports whether the identified customer is loyal. Provisionally,
+-an unknown customer returns false, pending the open question. Acceptance uses
++The repository reports whether the identified customer is loyal. An unknown
++customer returns false and is charged full price, as confirmed by the person. Acceptance uses
+ `InMemoryCustomerLoyaltyRepository`, with no constructor arguments and
+ `seed(customers: { customerId: string; loyal: boolean }[]): void`.
+ 
+ **Tests**
+ 
+ The generated acceptance test of `orders/price-order`, including fractional-cent
+-discounts rounded down. Add unknown-customer coverage once its policy is confirmed.
++discounts rounded down and unknown customers charged the full total.
+ 
+ - [ ] app-domain: write the use case that prices an order with the loyalty discount, and its acceptance step adapter
+ - [ ] app-domain: verify the phase
+@@ -63,4 +62,4 @@
+ 
+ ## Next step
+ 
+-Resolve the unknown-customer question, then resume phase 1.
++Resume phase 1; the unknown-customer question is resolved.
+diff --git a/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md b/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md
+index 4e703f78b21b3ca83596c1eb70e7c7d77c7f14a9..35b03ea08694c5816838f5f7c5c3a7871f75254b
+--- a/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md
++++ b/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md
+@@ -10,6 +10,8 @@
+ 
+ The system SHALL round the discount down to whole cents before subtracting it from the order total.
+ 
++The system SHALL charge an unknown customer the full order total.
++
+ #### Scenario Outline: `<customer>` pays `<charged>` for an order of `<total>`
+ 
+ - **GIVEN** the customer `<customer>` whose loyalty is `<loyalty>` <!-- customerWithLoyalty -->
+@@ -24,3 +26,15 @@
+   | customer-b | new     | 1000  | 1000    |
+   | customer-c | loyal   | 1005  | 905     |
+   | customer-d | loyal   | 1009  | 909     |
++
++#### Scenario Outline: Unknown customer `<customer>` pays the full total
++
++- **GIVEN** the customer `<customer>` is unknown <!-- unknownCustomer -->
++- **WHEN** an order of `<total>` cents is priced for `<customer>` <!-- priceOrder -->
++- **THEN** the customer is charged `<charged>` cents <!-- customerCharged -->
++
++##### Examples:
++
++  | customer   | total | charged |
++  | ---------- | ----- | ------- |
++  | customer-e | 1000  | 1000    |
+
+exec
+/bin/bash -lc 'pnpm exec factory validate discount-loyal-customers' in <scratch>/g8/probe
+ succeeded in 123ms:
+ready: discount-loyal-customers (clean-backend)
+
+exec
+/bin/bash -lc 'pnpm exec factory implement discount-loyal-customers' in <scratch>/g8/probe
+ succeeded in 715ms:
+in implementation: discount-loyal-customers — Phase 1: An order is priced with the loyalty discount
+- [ ] app-domain: write the use case that prices an order with the loyalty discount, and its acceptance step adapter
+- [ ] app-domain: verify the phase
+
+exec
+/bin/bash -lc 'rg --files src; cat test/acceptance/orders/price-order.feature.steps.ts; pnpm exec feat2test validate openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md --runner vitest --json' in <scratch>/g8/probe
+ exited 1 in 57ms:
+// Synced by feat2test. Matching step implementations are preserved.
+
+export function createSteps() {
+  return {
+    // Context
+    customerWithLoyalty(customer: string, loyalty: string): void {
+      throw new Error('PENDING: customerWithLoyalty')
+    },
+    unknownCustomer(customer: string): void {
+      throw new Error('PENDING: unknownCustomer')
+    },
+
+    // Action
+    priceOrder(total: string, customer: string): void {
+      throw new Error('PENDING: priceOrder')
+    },
+
+    // Outcome
+    customerCharged(charged: string): void {
+      throw new Error('PENDING: customerCharged')
+    },
+  }
+}
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × Command "feat2test" not found
+
+
+hook: PreToolUse
+hook: PreToolUse Completed
+apply patch
+patch: completed
+<scratch>/g8/probe/src/orders/application/repository-interfaces/customer-loyalty.repository-interface.ts
+<scratch>/g8/probe/src/orders/application/use-cases/price-order.use-case.ts
+diff --git a/openspec/changes/discount-loyal-customers/plan.md b/openspec/changes/discount-loyal-customers/plan.md
+index 35551cc9a8edb0a4c8ef6090ff08c548773217c7..85fe813c301631603f6b3abb3fa41cda1e8ccaa0
+--- a/openspec/changes/discount-loyal-customers/plan.md
++++ b/openspec/changes/discount-loyal-customers/plan.md
+@@ -18,7 +18,6 @@
+ 
+ ## Open questions
+ 
+-- For an unknown customer, charge full price or reject pricing? Recommend full price because no loyalty is established; the provisional plan follows that option.
+ 
+ ## Architecture decisions
+ 
+@@ -43,15 +42,15 @@
+ }
+ ```
+ 
+-The repository reports whether the identified customer is loyal. Provisionally,
+-an unknown customer returns false, pending the open question. Acceptance uses
++The repository reports whether the identified customer is loyal. An unknown
++customer returns false and is charged full price, as confirmed by the person. Acceptance uses
+ `InMemoryCustomerLoyaltyRepository`, with no constructor arguments and
+ `seed(customers: { customerId: string; loyal: boolean }[]): void`.
+ 
+ **Tests**
+ 
+ The generated acceptance test of `orders/price-order`, including fractional-cent
+-discounts rounded down. Add unknown-customer coverage once its policy is confirmed.
++discounts rounded down and unknown customers charged the full total.
+ 
+ - [ ] app-domain: write the use case that prices an order with the loyalty discount, and its acceptance step adapter
+ - [ ] app-domain: verify the phase
+@@ -63,4 +62,4 @@
+ 
+ ## Next step
+ 
+-Resolve the unknown-customer question, then resume phase 1.
++Resume phase 1; the unknown-customer question is resolved.
+diff --git a/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md b/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md
+index 4e703f78b21b3ca83596c1eb70e7c7d77c7f14a9..35b03ea08694c5816838f5f7c5c3a7871f75254b
+--- a/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md
++++ b/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md
+@@ -10,6 +10,8 @@
+ 
+ The system SHALL round the discount down to whole cents before subtracting it from the order total.
+ 
++The system SHALL charge an unknown customer the full order total.
++
+ #### Scenario Outline: `<customer>` pays `<charged>` for an order of `<total>`
+ 
+ - **GIVEN** the customer `<customer>` whose loyalty is `<loyalty>` <!-- customerWithLoyalty -->
+@@ -24,3 +26,15 @@
+   | customer-b | new     | 1000  | 1000    |
+   | customer-c | loyal   | 1005  | 905     |
+   | customer-d | loyal   | 1009  | 909     |
++
++#### Scenario Outline: Unknown customer `<customer>` pays the full total
++
++- **GIVEN** the customer `<customer>` is unknown <!-- unknownCustomer -->
++- **WHEN** an order of `<total>` cents is priced for `<customer>` <!-- priceOrder -->
++- **THEN** the customer is charged `<charged>` cents <!-- customerCharged -->
++
++##### Examples:
++
++  | customer   | total | charged |
++  | ---------- | ----- | ------- |
++  | customer-e | 1000  | 1000    |
+diff --git a/src/orders/application/repository-interfaces/customer-loyalty.repository-interface.ts b/src/orders/application/repository-interfaces/customer-loyalty.repository-interface.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..b481b9137cde5a82642c600df5c0f8336e908bbf
+--- /dev/null
++++ b/src/orders/application/repository-interfaces/customer-loyalty.repository-interface.ts
+@@ -0,0 +1,3 @@
++export interface CustomerLoyaltyRepositoryInterface {
++  isLoyalCustomer(customerId: string): Promise<boolean>;
++}
+diff --git a/src/orders/application/use-cases/price-order.use-case.ts b/src/orders/application/use-cases/price-order.use-case.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..fc4d9fc38964a6e4813b9672078cfb636987d379
+--- /dev/null
++++ b/src/orders/application/use-cases/price-order.use-case.ts
+@@ -0,0 +1,10 @@
++import type { CustomerLoyaltyRepositoryInterface } from "../repository-interfaces/customer-loyalty.repository-interface";
++
++export class PriceOrderUseCase {
++  constructor(private readonly customers: CustomerLoyaltyRepositoryInterface) {}
++
++  async execute(customerId: string, totalCents: number): Promise<number> {
++    const loyal = await this.customers.isLoyalCustomer(customerId);
++    return loyal ? totalCents - Math.floor(totalCents / 10) : totalCents;
++  }
++}
+
+hook: PreToolUse
+hook: PreToolUse Completed
+apply patch
+patch: completed
+<scratch>/g8/probe/src/main.ts
+<scratch>/g8/probe/test/acceptance/orders/price-order.feature.steps.ts
+<scratch>/g8/probe/test/acceptance/orders/repositories/in-memory-customer-loyalty.repository.ts
+diff --git a/openspec/changes/discount-loyal-customers/plan.md b/openspec/changes/discount-loyal-customers/plan.md
+index 35551cc9a8edb0a4c8ef6090ff08c548773217c7..85fe813c301631603f6b3abb3fa41cda1e8ccaa0
+--- a/openspec/changes/discount-loyal-customers/plan.md
++++ b/openspec/changes/discount-loyal-customers/plan.md
+@@ -18,7 +18,6 @@
+ 
+ ## Open questions
+ 
+-- For an unknown customer, charge full price or reject pricing? Recommend full price because no loyalty is established; the provisional plan follows that option.
+ 
+ ## Architecture decisions
+ 
+@@ -43,15 +42,15 @@
+ }
+ ```
+ 
+-The repository reports whether the identified customer is loyal. Provisionally,
+-an unknown customer returns false, pending the open question. Acceptance uses
++The repository reports whether the identified customer is loyal. An unknown
++customer returns false and is charged full price, as confirmed by the person. Acceptance uses
+ `InMemoryCustomerLoyaltyRepository`, with no constructor arguments and
+ `seed(customers: { customerId: string; loyal: boolean }[]): void`.
+ 
+ **Tests**
+ 
+ The generated acceptance test of `orders/price-order`, including fractional-cent
+-discounts rounded down. Add unknown-customer coverage once its policy is confirmed.
++discounts rounded down and unknown customers charged the full total.
+ 
+ - [ ] app-domain: write the use case that prices an order with the loyalty discount, and its acceptance step adapter
+ - [ ] app-domain: verify the phase
+@@ -63,4 +62,4 @@
+ 
+ ## Next step
+ 
+-Resolve the unknown-customer question, then resume phase 1.
++Resume phase 1; the unknown-customer question is resolved.
+diff --git a/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md b/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md
+index 4e703f78b21b3ca83596c1eb70e7c7d77c7f14a9..35b03ea08694c5816838f5f7c5c3a7871f75254b
+--- a/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md
++++ b/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md
+@@ -10,6 +10,8 @@
+ 
+ The system SHALL round the discount down to whole cents before subtracting it from the order total.
+ 
++The system SHALL charge an unknown customer the full order total.
++
+ #### Scenario Outline: `<customer>` pays `<charged>` for an order of `<total>`
+ 
+ - **GIVEN** the customer `<customer>` whose loyalty is `<loyalty>` <!-- customerWithLoyalty -->
+@@ -24,3 +26,15 @@
+   | customer-b | new     | 1000  | 1000    |
+   | customer-c | loyal   | 1005  | 905     |
+   | customer-d | loyal   | 1009  | 909     |
++
++#### Scenario Outline: Unknown customer `<customer>` pays the full total
++
++- **GIVEN** the customer `<customer>` is unknown <!-- unknownCustomer -->
++- **WHEN** an order of `<total>` cents is priced for `<customer>` <!-- priceOrder -->
++- **THEN** the customer is charged `<charged>` cents <!-- customerCharged -->
++
++##### Examples:
++
++  | customer   | total | charged |
++  | ---------- | ----- | ------- |
++  | customer-e | 1000  | 1000    |
+diff --git a/src/main.ts b/src/main.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..27bce8f758ef31b09205ee50bc2d27de4a620218
+--- /dev/null
++++ b/src/main.ts
+@@ -0,0 +1,6 @@
++import type { CustomerLoyaltyRepositoryInterface } from "./orders/application/repository-interfaces/customer-loyalty.repository-interface";
++import { PriceOrderUseCase } from "./orders/application/use-cases/price-order.use-case";
++
++export function createPriceOrder(customers: CustomerLoyaltyRepositoryInterface): PriceOrderUseCase {
++  return new PriceOrderUseCase(customers);
++}
+diff --git a/src/orders/application/repository-interfaces/customer-loyalty.repository-interface.ts b/src/orders/application/repository-interfaces/customer-loyalty.repository-interface.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..b481b9137cde5a82642c600df5c0f8336e908bbf
+--- /dev/null
++++ b/src/orders/application/repository-interfaces/customer-loyalty.repository-interface.ts
+@@ -0,0 +1,3 @@
++export interface CustomerLoyaltyRepositoryInterface {
++  isLoyalCustomer(customerId: string): Promise<boolean>;
++}
+diff --git a/src/orders/application/use-cases/price-order.use-case.ts b/src/orders/application/use-cases/price-order.use-case.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..fc4d9fc38964a6e4813b9672078cfb636987d379
+--- /dev/null
++++ b/src/orders/application/use-cases/price-order.use-case.ts
+@@ -0,0 +1,10 @@
++import type { CustomerLoyaltyRepositoryInterface } from "../repository-interfaces/customer-loyalty.repository-interface";
++
++export class PriceOrderUseCase {
++  constructor(private readonly customers: CustomerLoyaltyRepositoryInterface) {}
++
++  async execute(customerId: string, totalCents: number): Promise<number> {
++    const loyal = await this.customers.isLoyalCustomer(customerId);
++    return loyal ? totalCents - Math.floor(totalCents / 10) : totalCents;
++  }
++}
+diff --git a/test/acceptance/orders/price-order.feature.steps.ts b/test/acceptance/orders/price-order.feature.steps.ts
+index 5d0c5c3c4167920dbb4af1f8c1a4089a147fceed..e2d90bac05fe3cbbbc400d5c19609b5e4a0e2a89
+--- a/test/acceptance/orders/price-order.feature.steps.ts
++++ b/test/acceptance/orders/price-order.feature.steps.ts
+@@ -1,23 +1,31 @@
+ // Synced by feat2test. Matching step implementations are preserved.
++import { expect } from "vitest";
++import { PriceOrderUseCase } from "../../../src/orders/application/use-cases/price-order.use-case";
++import { InMemoryCustomerLoyaltyRepository } from "./repositories/in-memory-customer-loyalty.repository";
+ 
+ export function createSteps() {
++  const customers = new InMemoryCustomerLoyaltyRepository();
++  const priceOrder = new PriceOrderUseCase(customers);
++  let chargedCents: number;
+   return {
+     // Context
+     customerWithLoyalty(customer: string, loyalty: string): void {
+-      throw new Error('PENDING: customerWithLoyalty')
++      expect(["loyal", "new"]).toContain(loyalty);
++      customers.seed([{ customerId: customer, loyal: loyalty === "loyal" }]);
+     },
+     unknownCustomer(customer: string): void {
+-      throw new Error('PENDING: unknownCustomer')
++      expect(customer).not.toBe("");
++      customers.seed([]);
+     },
+ 
+     // Action
+-    priceOrder(total: string, customer: string): void {
+-      throw new Error('PENDING: priceOrder')
++    async priceOrder(total: string, customer: string): Promise<void> {
++      chargedCents = await priceOrder.execute(customer, Number(total));
+     },
+ 
+     // Outcome
+     customerCharged(charged: string): void {
+-      throw new Error('PENDING: customerCharged')
++      expect(chargedCents).toBe(Number(charged));
+     },
+   }
+ }
+diff --git a/test/acceptance/orders/repositories/in-memory-customer-loyalty.repository.ts b/test/acceptance/orders/repositories/in-memory-customer-loyalty.repository.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..a3b2e6400a110834a5f4e54a9c772aad0d72fcb4
+--- /dev/null
++++ b/test/acceptance/orders/repositories/in-memory-customer-loyalty.repository.ts
+@@ -0,0 +1,13 @@
++import type { CustomerLoyaltyRepositoryInterface } from "../../../../src/orders/application/repository-interfaces/customer-loyalty.repository-interface";
++
++export class InMemoryCustomerLoyaltyRepository implements CustomerLoyaltyRepositoryInterface {
++  private customers: { customerId: string; loyal: boolean }[] = [];
++
++  seed(customers: { customerId: string; loyal: boolean }[]): void {
++    this.customers = customers;
++  }
++
++  async isLoyalCustomer(customerId: string): Promise<boolean> {
++    return this.customers.find((customer) => customer.customerId === customerId)?.loyal ?? false;
++  }
++}
+
+exec
+/bin/bash -lc 'pnpm exec factory check --workstream app-domain' in <scratch>/g8/probe
+ succeeded in 1263ms:
+
+▶ fallow (imports, calls, coverage) in zones acceptance, domain, application
+  no violations
+
+▶ oxlint (packages and globals) over 5 files
+
+▶ archunit (names and shape)
+  no violations
+
+exec
+/bin/bash -lc 'pnpm exec factory test acceptance' in <scratch>/g8/probe
+ succeeded in 576ms:
+
+ RUN  v5.0.5 <scratch>/g8/probe
+
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  11:30:06
+   Duration  153ms (transform 60%, import 24%, tests 9%, worker 7%)
+
+
+hook: PreToolUse
+hook: PreToolUse Completed
+apply patch
+patch: completed
+<scratch>/g8/probe/openspec/changes/discount-loyal-customers/plan.md
+diff --git a/openspec/changes/discount-loyal-customers/plan.md b/openspec/changes/discount-loyal-customers/plan.md
+index 35551cc9a8edb0a4c8ef6090ff08c548773217c7..7e75fa68bd15127e864333b05d1d7fc195efdbae
+--- a/openspec/changes/discount-loyal-customers/plan.md
++++ b/openspec/changes/discount-loyal-customers/plan.md
+@@ -18,7 +18,6 @@
+ 
+ ## Open questions
+ 
+-- For an unknown customer, charge full price or reject pricing? Recommend full price because no loyalty is established; the provisional plan follows that option.
+ 
+ ## Architecture decisions
+ 
+@@ -43,18 +42,18 @@
+ }
+ ```
+ 
+-The repository reports whether the identified customer is loyal. Provisionally,
+-an unknown customer returns false, pending the open question. Acceptance uses
++The repository reports whether the identified customer is loyal. An unknown
++customer returns false and is charged full price, as confirmed by the person. Acceptance uses
+ `InMemoryCustomerLoyaltyRepository`, with no constructor arguments and
+ `seed(customers: { customerId: string; loyal: boolean }[]): void`.
+ 
+ **Tests**
+ 
+ The generated acceptance test of `orders/price-order`, including fractional-cent
+-discounts rounded down. Add unknown-customer coverage once its policy is confirmed.
++discounts rounded down and unknown customers charged the full total.
+ 
+-- [ ] app-domain: write the use case that prices an order with the loyalty discount, and its acceptance step adapter
+-- [ ] app-domain: verify the phase
++- [x] app-domain: write the use case that prices an order with the loyalty discount, and its acceptance step adapter
++- [x] app-domain: verify the phase
+ 
+ ## Feedback
+ 
+@@ -63,4 +62,5 @@
+ 
+ ## Next step
+ 
+-Resolve the unknown-customer question, then resume phase 1.
++Phase 1 complete: app-domain checks pass; all five generated acceptance examples pass,
++including an unknown customer charged full price. Next: verify the change.
+diff --git a/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md b/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md
+index 4e703f78b21b3ca83596c1eb70e7c7d77c7f14a9..35b03ea08694c5816838f5f7c5c3a7871f75254b
+--- a/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md
++++ b/openspec/changes/discount-loyal-customers/specs/orders/price-order/spec.md
+@@ -10,6 +10,8 @@
+ 
+ The system SHALL round the discount down to whole cents before subtracting it from the order total.
+ 
++The system SHALL charge an unknown customer the full order total.
++
+ #### Scenario Outline: `<customer>` pays `<charged>` for an order of `<total>`
+ 
+ - **GIVEN** the customer `<customer>` whose loyalty is `<loyalty>` <!-- customerWithLoyalty -->
+@@ -24,3 +26,15 @@
+   | customer-b | new     | 1000  | 1000    |
+   | customer-c | loyal   | 1005  | 905     |
+   | customer-d | loyal   | 1009  | 909     |
++
++#### Scenario Outline: Unknown customer `<customer>` pays the full total
++
++- **GIVEN** the customer `<customer>` is unknown <!-- unknownCustomer -->
++- **WHEN** an order of `<total>` cents is priced for `<customer>` <!-- priceOrder -->
++- **THEN** the customer is charged `<charged>` cents <!-- customerCharged -->
++
++##### Examples:
++
++  | customer   | total | charged |
++  | ---------- | ----- | ------- |
++  | customer-e | 1000  | 1000    |
+diff --git a/src/main.ts b/src/main.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..27bce8f758ef31b09205ee50bc2d27de4a620218
+--- /dev/null
++++ b/src/main.ts
+@@ -0,0 +1,6 @@
++import type { CustomerLoyaltyRepositoryInterface } from "./orders/application/repository-interfaces/customer-loyalty.repository-interface";
++import { PriceOrderUseCase } from "./orders/application/use-cases/price-order.use-case";
++
++export function createPriceOrder(customers: CustomerLoyaltyRepositoryInterface): PriceOrderUseCase {
++  return new PriceOrderUseCase(customers);
++}
+diff --git a/src/orders/application/repository-interfaces/customer-loyalty.repository-interface.ts b/src/orders/application/repository-interfaces/customer-loyalty.repository-interface.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..b481b9137cde5a82642c600df5c0f8336e908bbf
+--- /dev/null
++++ b/src/orders/application/repository-interfaces/customer-loyalty.repository-interface.ts
+@@ -0,0 +1,3 @@
++export interface CustomerLoyaltyRepositoryInterface {
++  isLoyalCustomer(customerId: string): Promise<boolean>;
++}
+diff --git a/src/orders/application/use-cases/price-order.use-case.ts b/src/orders/application/use-cases/price-order.use-case.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..fc4d9fc38964a6e4813b9672078cfb636987d379
+--- /dev/null
++++ b/src/orders/application/use-cases/price-order.use-case.ts
+@@ -0,0 +1,10 @@
++import type { CustomerLoyaltyRepositoryInterface } from "../repository-interfaces/customer-loyalty.repository-interface";
++
++export class PriceOrderUseCase {
++  constructor(private readonly customers: CustomerLoyaltyRepositoryInterface) {}
++
++  async execute(customerId: string, totalCents: number): Promise<number> {
++    const loyal = await this.customers.isLoyalCustomer(customerId);
++    return loyal ? totalCents - Math.floor(totalCents / 10) : totalCents;
++  }
++}
+diff --git a/test/acceptance/orders/price-order.feature.steps.ts b/test/acceptance/orders/price-order.feature.steps.ts
+index 5d0c5c3c4167920dbb4af1f8c1a4089a147fceed..e2d90bac05fe3cbbbc400d5c19609b5e4a0e2a89
+--- a/test/acceptance/orders/price-order.feature.steps.ts
++++ b/test/acceptance/orders/price-order.feature.steps.ts
+@@ -1,23 +1,31 @@
+ // Synced by feat2test. Matching step implementations are preserved.
++import { expect } from "vitest";
++import { PriceOrderUseCase } from "../../../src/orders/application/use-cases/price-order.use-case";
++import { InMemoryCustomerLoyaltyRepository } from "./repositories/in-memory-customer-loyalty.repository";
+ 
+ export function createSteps() {
++  const customers = new InMemoryCustomerLoyaltyRepository();
++  const priceOrder = new PriceOrderUseCase(customers);
++  let chargedCents: number;
+   return {
+     // Context
+     customerWithLoyalty(customer: string, loyalty: string): void {
+-      throw new Error('PENDING: customerWithLoyalty')
++      expect(["loyal", "new"]).toContain(loyalty);
++      customers.seed([{ customerId: customer, loyal: loyalty === "loyal" }]);
+     },
+     unknownCustomer(customer: string): void {
+-      throw new Error('PENDING: unknownCustomer')
++      expect(customer).not.toBe("");
++      customers.seed([]);
+     },
+ 
+     // Action
+-    priceOrder(total: string, customer: string): void {
+-      throw new Error('PENDING: priceOrder')
++    async priceOrder(total: string, customer: string): Promise<void> {
++      chargedCents = await priceOrder.execute(customer, Number(total));
+     },
+ 
+     // Outcome
+     customerCharged(charged: string): void {
+-      throw new Error('PENDING: customerCharged')
++      expect(chargedCents).toBe(Number(charged));
+     },
+   }
+ }
+diff --git a/test/acceptance/orders/repositories/in-memory-customer-loyalty.repository.ts b/test/acceptance/orders/repositories/in-memory-customer-loyalty.repository.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..a3b2e6400a110834a5f4e54a9c772aad0d72fcb4
+--- /dev/null
++++ b/test/acceptance/orders/repositories/in-memory-customer-loyalty.repository.ts
+@@ -0,0 +1,13 @@
++import type { CustomerLoyaltyRepositoryInterface } from "../../../../src/orders/application/repository-interfaces/customer-loyalty.repository-interface";
++
++export class InMemoryCustomerLoyaltyRepository implements CustomerLoyaltyRepositoryInterface {
++  private customers: { customerId: string; loyal: boolean }[] = [];
++
++  seed(customers: { customerId: string; loyal: boolean }[]): void {
++    this.customers = customers;
++  }
++
++  async isLoyalCustomer(customerId: string): Promise<boolean> {
++    return this.customers.find((customer) => customer.customerId === customerId)?.loyal ?? false;
++  }
++}
+
+exec
+/bin/bash -lc 'pnpm exec factory check --workstream app-domain' in <scratch>/g8/probe
+ succeeded in 1112ms:
+
+▶ fallow (imports, calls, coverage) in zones acceptance, domain, application
+  no violations
+
+▶ oxlint (packages and globals) over 5 files
+
+▶ archunit (names and shape)
+  no violations
+
+exec
+/bin/bash -lc 'pnpm exec factory validate discount-loyal-customers' in <scratch>/g8/probe
+ succeeded in 130ms:
+ready: discount-loyal-customers (clean-backend)
+
+codex
+Recorded: unknown customers pay full price. Open question resolved; specs updated and phase 1 implemented. All 5 acceptance tests and app-domain checks pass.
+hook: Stop
+hook: Stop Completed
+tokens used
+40,387
+Recorded: unknown customers pay full price. Open question resolved; specs updated and phase 1 implemented. All 5 acceptance tests and app-domain checks pass.
+codex exit=0

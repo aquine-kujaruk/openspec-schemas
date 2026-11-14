@@ -1,0 +1,1759 @@
+Reading additional input from stdin...
+OpenAI Codex v0.166.0
+--------
+workdir: <scratch>/g8/shop
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a1d999-81c6-7d42-b094-d1f7f6b2011d
+--------
+user
+$implement list-customer-orders
+warning: `--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.
+warning: `--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.
+codex
+Usaré `implement` para `list-customer-orders`: comprobaré el entorno y ejecutaré la primera fase pendiente.
+
+exec
+/bin/bash -lc 'pnpm exec factory doctor' in <scratch>/g8/shop
+ succeeded in 224ms:
+nothing is lacking
+note: codex runs the guards only in a project it trusts and after each hook is reviewed with /hooks; review them again after every update that changes them
+
+exec
+/bin/bash -lc "rg -n 'shop|arch-linter|list-customer-orders' ~/.codex/memories/MEMORY.md" in <scratch>/g8/shop
+ exited 1 in 0ms:
+exec
+/bin/bash -lc 'pnpm exec factory implement list-customer-orders' in <scratch>/g8/shop
+ succeeded in 737ms:
+in implementation: list-customer-orders — Phase 2: The query is connected to HTTP and development backends
+- [ ] infrastructure: Define the Orders ACL and resource schemas; implement the injected order repository with explicit mapping and customer isolation.
+- [ ] adapters: Implement HTTP and in-memory Orders ACL adapters and environment-based selection using `ORDERS_API_URL` for HTTP.
+- [ ] infrastructure: Add repository integration coverage over the real ACL and in-memory adapter, including every mapped field and declared failure category.
+- [ ] clean-architecture: Wire the callable entry in `src/main.ts`, join app-domain, infrastructure and adapters, and run cross-module checks.
+- [ ] integrate: Ensure both backend implementations are reachable from `src/main.ts`, and verify the phase with full factory checks, acceptance and integration tests, and TypeScript checking.
+
+exec
+/bin/bash -lc "rg --files -g 'AGENTS.md' -g '*list-customer-orders*' -g '*plan*' -g 'package.json' -g 'tsconfig*' -g '*.ts' -g 'SKILL.md' -g '*.feature*' -g '*.md' . | head -100" in <scratch>/g8/shop
+ succeeded in 0ms:
+./openspec/changes/list-customer-orders/specs/orders/list-customer-orders/spec.md
+./openspec/changes/list-customer-orders/plan.md
+./package.json
+./AGENTS.md
+./test/order.schema.test.ts
+./test/acceptance/orders/list-customer-orders.feature.test.ts
+./test/acceptance/orders/list-customer-orders.feature.steps.ts
+./test/acceptance/orders/repositories/in-memory-order.repository.ts
+./src/shared/domain/exceptions/domain.exceptions.ts
+./src/shared/domain/exceptions/validation.exceptions.ts
+./src/orders/application/use-cases/list-customer-orders.use-case.ts
+./src/orders/application/repository-interfaces/order.repository-interface.ts
+./src/orders/domain/schemas/order.schema.ts
+./src/orders/domain/exceptions/orders.exceptions.ts
+./src/main.ts
+./tsconfig.json
+
+exec
+/bin/bash -lc 'git status --short; cat .agents/skills/implement/references/workstreams/infrastructure/SKILL.md; ls .agents/skills/implement/references/workstreams/infrastructure' in <scratch>/g8/shop
+ succeeded in 0ms:
+?? openspec/changes/list-customer-orders/gate.json
+---
+name: infrastructure
+description: Build the infrastructure workstream of the implementer: repository implementations, anti-corruption layers and paginators, and one integration test per repository implementation over an in-memory adapter typed by the real ACL. Read from the implement skill.
+---
+
+# infrastructure
+
+**Owns:** `src/<module>/infrastructure/` except `adapters`: `repository-implementations`, `acl`, and the emergent folders the configuration admits, such as `paginators`; and `test/integration/<module>/` (one `<x>-repository.test.ts` per repository implementation). The adapters are the `adapters` workstream.
+
+**Receives:** the repository interfaces of `app-domain` (it implements them exactly) and the domain props and exceptions they name. The ACLs it declares are seams that `adapters` implements. The change's design fixes both, with the record → props mapping one line per field and the domain exception for each failure of the resource.
+
+**Fakes:** the adapter, and only it. The ACL is real: its interface and its record schemas (the schema package) say which attributes the system needs and validate them. The integration test builds `new XRepositoryImplementation(new InMemoryXAdapter(records))`, where the in-memory adapter implements that ACL: the product's `in-memory-<x>.adapter.ts` once `adapters` has built it, or a class inside the test until then. Without the real adapter, repositories and ACLs are pure code: map records to props, raise domain exceptions. A repository or adapter throws only the exceptions of its own module (or `ValidationException`), with the resource's error in `cause`; a shared adapter such as `HttpApiAdapter` receives from the module adapter the exception to throw.
+
+## How
+
+1. Read the `## reference` of `infrastructure.examples.md` and `integration.examples.md`.
+2. Per resource: the ACL (record schema and interface) is already fixed; write the repository implementation over it. A repository never imports an adapter or does `new XAdapter(`: the composition root injects it.
+3. Per repository implementation, write `test/integration/<module>/<x>-repository.test.ts`: the mapping of every field the design names and the exception for every failure. Invent the records inside the ACL's schema, taking the Examples of the product specs as a guide where values overlap; no fixture comes from the artifacts. When the behavior changes, rewrite the test inside the same seams.
+
+**Check:** `pnpm exec factory check --workstream infrastructure [--module <module>]`, plus `pnpm exec factory test integration`.
+SKILL.md
+infrastructure.examples.md
+integration.examples.md
+
+exec
+/bin/bash -lc 'cat openspec/changes/list-customer-orders/plan.md openspec/changes/list-customer-orders/specs/orders/list-customer-orders/spec.md; cat package.json tsconfig.json; cat .agents/skills/implement/references/workstreams/infrastructure/{infrastructure.examples.md,integration.examples.md}' in <scratch>/g8/shop
+ succeeded in 0ms:
+---
+name: list-customer-orders
+description: List a customer's orders newest first through a use case backed by HTTP or in-memory orders.
+created_at: 2026-11-14
+created_by: user
+schema: clean-backend
+---
+
+# List customer orders
+
+## Goal
+
+Provide a query returning a customer's orders with id, customer id, total in cents and placement date, newest first. Deliver the use case and domain with acceptance coverage first; then connect the repository, anti-corruption layer, HTTP and development adapters, and entry.
+
+## Decisions
+
+- Use the `orders` module and `ListCustomerOrdersUseCase.execute(customerId)` returning order props, rather than introducing an inbound web server the request does not require.
+- The application sorts by placement instant descending, rather than relying on backend ordering; equal instants have no additional public ordering guarantee.
+- Return a complete array without pagination, rather than inventing a paging protocol absent from the service contract.
+- Keep placement dates as validated ISO timestamp strings in props and compare their parsed instants, rather than comparing strings or exposing mutable Date objects.
+- Map resource records to domain props in the repository; retain snake_case only in the ACL and adapters, rather than letting the service vocabulary enter the use case.
+- Use `NODE_ENV=development` for the in-memory backend (empty by default, constructor-seedable); all other environments use HTTP and require `ORDERS_API_URL`, rather than silently falling back to development data.
+- Translate invalid records to `ValidationException` and resource/configuration failures to `OrdersUnavailableException` with the original error as cause; reject the query rather than returning partial data or disguising failure as an empty list. No retry policy or public HTTP error status is introduced.
+- Use generated acceptance tests with a fake repository in phase 1 and repository integration tests with an ACL-typed in-memory adapter in phase 2, rather than real network calls in local tests.
+- The cents architecture decision below is explicitly requested by the user; it is already authorized.
+
+## Open questions
+
+
+## Architecture decisions
+
+### Decision: money-in-integer-cents · Money amounts use integer cents
+
+@adds @area:product @topic:money @applies:domain,application,infrastructure,adapters @enforced:domain-and-acl-schemas,integration-tests,review
+
+Money amounts SHALL be represented as integers in cents across the product. `OrderProps.totalCents` and service `total_cents` SHALL carry the same cents value without division, rounding or conversion into floating-point major currency units. JavaScript number values SHALL pass safe-integer validation so the representation preserves exact cents.
+
+**Why** The user explicitly requires integer cents; retaining that unit avoids rounding and unit ambiguity at boundaries.
+
+**Alternatives** Decimal major units and floating-point currency values are discarded because they weaken the required representation.
+
+**Consequences** Future money fields must preserve this unit. Values outside the safe-integer range are rejected, not rounded. Currency, sign restrictions and exchange rates are outside this decision.
+
+## Procedures
+
+### Procedure: local-checks-and-tests · Run checks and tests locally
+
+@adds @purpose:operate @topic:local-validation @env:local,development
+
+**When** Before handing off a phase or verifying this change.
+
+**Requires** A local checkout, a Node.js version satisfying the installed dependencies' engine requirements, and pnpm. Run commands at the repository root. Acceptance and integration tests need no network, credentials or environment secrets. Development uses `NODE_ENV=development`; an HTTP run instead needs the non-secret service base URL in the local process environment as `ORDERS_API_URL`. No service credentials were specified; none are embedded in code or committed files.
+
+**Steps**
+
+1. Install the locked dependencies: `pnpm install --frozen-lockfile`.
+2. Run `pnpm exec factory doctor`; resolve any missing setup through `setup`. Its hook note requires Codex project trust and `/hooks` review, repeated after hook updates.
+3. Check planning readiness: `pnpm exec factory validate list-customer-orders` while the change is active.
+4. Regenerate acceptance tests from the active change's specs: `pnpm exec factory generate`. Fill generated step adapters during implementation; never edit generated test bodies.
+5. For phase 1, run `pnpm exec factory check --workstream app-domain --module orders`, `pnpm exec factory test acceptance`, `pnpm exec vitest run test/order.schema.test.ts`, and `pnpm exec tsc --noEmit`.
+6. For phase 2, run `pnpm exec factory check --workstream infrastructure --module orders`, `pnpm exec factory check --workstream adapters --module orders`, `pnpm exec factory test integration`, and `pnpm exec factory test acceptance`.
+7. Finish with `pnpm exec factory check` and `pnpm exec tsc --noEmit`. Review the test counts: a successful command with zero tests does not verify an implemented phase.
+
+**Verification** All phase commands exit zero; acceptance scenarios execute, phase 2 integration tests execute, and full checks confirm architecture and generated-test freshness. Planning readiness alone does not establish implementation correctness.
+
+## Phases
+
+### Phase 1: The customer-order query works against a fake repository
+
+**Seams**
+
+```ts
+// app-domain owns src/orders/domain/schemas/order.schema.ts.
+// Export OrderSchema and its inferred OrderProps with this validated shape:
+// validateOrder(props: OrderProps): OrderProps validates and throws ValidationException.
+export interface OrderProps {
+  id: string;
+  customerId: string;
+  totalCents: number; // safe integer cents
+  placedAt: string; // ISO timestamp with explicit UTC offset
+}
+// src/orders/application/repository-interfaces/order.repository-interface.ts
+export interface OrderRepositoryInterface {
+  listByCustomerId(customerId: string): Promise<OrderProps[]>;
+}
+// src/orders/application/use-cases/list-customer-orders.use-case.ts
+export class ListCustomerOrdersUseCase {
+  constructor(repository: OrderRepositoryInterface);
+  execute(customerId: string): Promise<OrderProps[]>;
+}
+// app-domain owns src/shared/domain/exceptions/domain.exceptions.ts
+export class DomainException extends Error {
+  constructor(message: string, options?: { cause?: unknown });
+}
+// app-domain owns src/shared/domain/exceptions/validation.exceptions.ts
+export class ValidationException extends DomainException {
+  constructor(source: string, cause: unknown);
+}
+// app-domain owns src/orders/domain/exceptions/orders.exceptions.ts
+export class OrdersException extends DomainException {}
+export class OrdersUnavailableException extends OrdersException {
+  constructor(options?: { cause?: unknown });
+}
+// app-domain owns test/acceptance/orders/repositories/in-memory-order.repository.ts
+// Acceptance-only fake: no infrastructure imports, no constructor arguments.
+export class InMemoryOrderRepository implements OrderRepositoryInterface {
+  seed(orders: OrderProps[]): void;
+  listByCustomerId(customerId: string): Promise<OrderProps[]>;
+}
+```
+
+The repository contract returns only the requested customer's validated orders, possibly empty and in any order. The use case sorts a copy newest first and returns every field unchanged. Define domain schemas in `domain/schemas` for nonempty ids, safe-integer cents, and valid timestamp instants with offsets; avoid inventing positive-only totals. The fake repository applies the same customer filter and props validation as the eventual implementation.
+
+**Tests**
+
+Generate `test/acceptance/orders/list-customer-orders.feature.test.ts` and fill `test/acceptance/orders/list-customer-orders.feature.steps.ts` against the fake repository. Cover mixed customers, exact field preservation, unsorted input with three distinct dates, one order, and the confirmed empty result. Include different totals to detect accidental unit conversion. Use domain schema tests for fractional/unsafe cents and malformed dates; do not add new business rules through those tests.
+
+- [x] app-domain: Generate acceptance tests from the delta spec and implement Given/When/Then adapters over `InMemoryOrderRepository` with seed data.
+- [x] app-domain: Build order props, schemas, module exceptions, repository interface and `ListCustomerOrdersUseCase` with descending instant ordering.
+- [x] app-domain: Verify the phase with app-domain checks, acceptance tests, domain schema tests and TypeScript checking.
+
+### Phase 2: The query is connected to HTTP and development backends
+
+**Seams**
+
+```ts
+// src/orders/infrastructure/acl/orders.acl.ts
+// Export orderRecordSchema and orderRecordsSchema using the schema package.
+export interface OrderRecord {
+  id: string;
+  customer_id: string;
+  total_cents: number;
+  placed_at: string;
+}
+export interface OrdersAcl {
+  listCustomerOrders(customerId: string): Promise<OrderRecord[]>;
+}
+// src/orders/infrastructure/repository-implementations/order.repository-implementation.ts
+export class OrderRepositoryImplementation implements OrderRepositoryInterface {
+  constructor(orders: OrdersAcl);
+  listByCustomerId(customerId: string): Promise<OrderProps[]>;
+}
+// adapters owns src/orders/infrastructure/adapters/http-orders.adapter.ts
+export class HttpOrdersAdapter implements OrdersAcl {
+  constructor(baseUrl: string);
+  listCustomerOrders(customerId: string): Promise<OrderRecord[]>;
+}
+// adapters owns src/orders/infrastructure/adapters/in-memory-orders.adapter.ts
+export class InMemoryOrdersAdapter implements OrdersAcl {
+  constructor(records?: OrderRecord[]);
+  listCustomerOrders(customerId: string): Promise<OrderRecord[]>;
+}
+// adapters owns src/orders/infrastructure/adapters/orders.adapter.ts
+// Selects by environment and exports:
+export const ordersAdapter: OrdersAcl;
+// clean-architecture owns src/main.ts: composition root and public callable entry.
+export const listCustomerOrders: (customerId: string) => Promise<OrderProps[]>;
+```
+
+The ACL schemas validate the actual JSON array and required fields, including safe-integer cents and valid timestamps. Extra service attributes need no domain equivalent. Record → props mapping is explicit:
+
+- `id` → `id`, unchanged.
+- `customer_id` → `customerId`, unchanged.
+- `total_cents` → `totalCents`, unchanged integer cents.
+- `placed_at` → `placedAt`, unchanged timestamp.
+
+The repository receives only `OrdersAcl`, imports no adapter, maps validated records, validates props, and filters by requested customer id so another customer's orders cannot escape the query. The HTTP adapter requests `GET <baseUrl>/customers/<encodedCustomerId>/orders`, safely joins trailing slashes while retaining any base path, checks success, decodes JSON, and validates through ACL schemas. Network, non-success status and invalid configuration produce `OrdersUnavailableException`; JSON decoding and record-shape failures produce `ValidationException`; both retain the original cause. There is no empty-list fallback on failure. The in-memory adapter validates and returns seeded resource records for the customer; it is distinct from the acceptance repository fake. Environment reads and backend selection live only in adapters. The entry injects the selected adapter into the repository and the repository into the use case, without reading environment variables.
+
+**Tests**
+
+`test/integration/orders/order-repository.test.ts` constructs the real repository over `InMemoryOrdersAdapter` implementing the real ACL. Verify every field mapping, unchanged cents, mixed-customer isolation, empty records, schema validation failures and propagation of module resource exceptions with causes; use a small failing ACL double for resource failures. Acceptance tests continue proving ordering through the same application seam. Adapter work uses the workstream's structural checks; real HTTP contract tests are deferred, not represented as covered by repository tests.
+
+- [ ] infrastructure: Define the Orders ACL and resource schemas; implement the injected order repository with explicit mapping and customer isolation.
+- [ ] adapters: Implement HTTP and in-memory Orders ACL adapters and environment-based selection using `ORDERS_API_URL` for HTTP.
+- [ ] infrastructure: Add repository integration coverage over the real ACL and in-memory adapter, including every mapped field and declared failure category.
+- [ ] clean-architecture: Wire the callable entry in `src/main.ts`, join app-domain, infrastructure and adapters, and run cross-module checks.
+- [ ] integrate: Ensure both backend implementations are reachable from `src/main.ts`, and verify the phase with full factory checks, acceptance and integration tests, and TypeScript checking.
+
+## Feedback
+
+- **the person**: Confirmed empty list for a customer without orders. Correct the signed seam folders and file names to the workstream Owns and reference examples; retain both unimplemented phases.
+- **the completion gate**: Generated acceptance tests stale or missing; run factory generate and preserve its generated test output.
+- **the completion gate**: Executed factory generate; its nested Node spawnSync reports EPERM and passes empty converter output to feat2test, causing INVALID_GHERKIN. Direct execution of the identical tools over factory merged specs generated 1 Feature, 3 scenarios, 4 steps; direct freshness check passes. Factory generate --check remains blocked by the subprocess environment. Generated tests and scaffold left as written; no implementation task completed.
+- **the completion gate**: Generation now passes in the gate. Complete phase 1: missing use case and pending acceptance steps fail app-domain checks and acceptance tests.
+- **the implement phase**: Phase 1 use case, schemas, exceptions, repository fake and step adapters are implemented. Acceptance 3/3 and tsc pass. Verification blocked by acceptance-test-targets-use-case requiring the new use case consolidated spec before archive; generation instead merges active deltas only temporarily. Harness correction needed outside this change; no premature consolidation or harness edit performed.
+
+## Next step
+
+Phase 1 is complete with factory 0.1.1: generation and app-domain checks pass against the active delta spec, acceptance passes 3/3, domain schema and exception tests pass 18/18, and `pnpm exec tsc --noEmit` passes. Domain tests live at `test/order.schema.test.ts`, within the harness's allowed `test/*.ts` paths. Generated tests remain generator-owned. The completion gate passes, including full product checks and generation freshness.
+
+Phase 2 has not started. The next implement run connects the repository, ACL, HTTP and development adapters, and callable entry.
+## Purpose
+
+Let a caller list the orders belonging to a customer, newest first, retaining each order's identity, customer identity, total in cents and placement date.
+
+## ADDED Requirements
+
+### Requirement: List only the requested customer's orders newest first
+
+The system SHALL return all orders belonging to the requested customer, ordered by placement date from newest to oldest. Each returned order SHALL retain its id, customer id, integer total in cents and placement date.
+
+#### Scenario Outline: List orders newest first for `<customerId>`
+
+- **GIVEN** these orders exist <!-- ordersExist -->
+  | id | customerId | totalCents | placedAt |
+  | order-old | customer-a | 1234 | 2026-01-01T10:00:00Z |
+  | order-other | customer-b | 5678 | 2026-01-04T10:00:00Z |
+  | order-new | customer-a | 9099 | 2026-01-03T10:00:00Z |
+  | order-middle | customer-a | 2501 | 2026-01-02T10:00:00Z |
+- **WHEN** orders are listed for customer `<customerId>` <!-- listCustomerOrders -->
+- **THEN** the returned orders are exactly these rows in this order <!-- listedOrdersAre -->
+  | id | customerId | totalCents | placedAt |
+  | <firstId> | <customerId> | <firstTotalCents> | <firstPlacedAt> |
+  | <secondId> | <customerId> | <secondTotalCents> | <secondPlacedAt> |
+  | <thirdId> | <customerId> | <thirdTotalCents> | <thirdPlacedAt> |
+
+##### Examples:
+
+  | customerId | firstId | firstTotalCents | firstPlacedAt | secondId | secondTotalCents | secondPlacedAt | thirdId | thirdTotalCents | thirdPlacedAt |
+  | ---------- | ------- | --------------- | ------------- | -------- | ---------------- | -------------- | ------- | --------------- | ------------- |
+  | customer-a | order-new | 9099 | 2026-01-03T10:00:00Z | order-middle | 2501 | 2026-01-02T10:00:00Z | order-old | 1234 | 2026-01-01T10:00:00Z |
+
+#### Scenario Outline: Return a single order for `<customerId>`
+
+- **GIVEN** these orders exist <!-- ordersExist -->
+  | id | customerId | totalCents | placedAt |
+  | order-old | customer-a | 1234 | 2026-01-01T10:00:00Z |
+  | order-other | customer-b | 5678 | 2026-01-04T10:00:00Z |
+- **WHEN** orders are listed for customer `<customerId>` <!-- listCustomerOrders -->
+- **THEN** the returned orders are exactly these rows in this order <!-- listedOrdersAre -->
+  | id | customerId | totalCents | placedAt |
+  | <orderId> | <customerId> | <totalCents> | <placedAt> |
+
+##### Examples:
+
+  | customerId | orderId | totalCents | placedAt |
+  | ---------- | ------- | ---------- | -------- |
+  | customer-b | order-other | 5678 | 2026-01-04T10:00:00Z |
+
+### Requirement: An empty customer order history is an empty list
+
+The system SHALL return an empty list when the requested customer has no orders.
+
+#### Scenario Outline: No orders returned for `<customerId>`
+
+- **GIVEN** these orders exist <!-- ordersExist -->
+  | id | customerId | totalCents | placedAt |
+  | order-other | customer-b | 5678 | 2026-01-04T10:00:00Z |
+- **WHEN** orders are listed for customer `<customerId>` <!-- listCustomerOrders -->
+- **THEN** the returned order count is `<count>` <!-- listedOrderCountIs -->
+
+##### Examples:
+
+  | customerId | count |
+  | ---------- | ----- |
+  | customer-without-orders | 0 |
+{"name":"shop","private":true,"type":"module","devDependencies":{"factory":"file:.claude/skills/setup/assets/factory-0.1.1.tgz","typescript":"7.0.2","vitest":"5.0.5","zod":"^4.6.7"}}
+{ "compilerOptions": { "target": "es2023", "module": "esnext", "moduleResolution": "bundler", "strict": true, "noEmit": true, "skipLibCheck": true }, "include": ["src", "test"] }
+# infrastructure
+
+## reference
+
+```ts src/module/infrastructure/acl/invoice.acl.ts
+import type { z } from "zod";
+import { InvoiceSchema } from "../../domain/schemas/invoice.schema";
+export const InvoiceRecordSchema = InvoiceSchema;
+export type InvoiceRecord = z.infer<typeof InvoiceRecordSchema>;
+export interface InvoiceAcl {
+  listInvoices(): Promise<InvoiceRecord[]>;
+  findInvoice(invoiceId: string): Promise<InvoiceRecord | null>;
+}
+```
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+import type { InvoiceRepositoryInterface } from "../../application/repository-interfaces/invoice.repository-interface";
+import type { InvoiceProps } from "../../domain/schemas/invoice.schema";
+import type { InvoiceAcl } from "../acl/invoice.acl";
+export class InvoiceRepositoryImplementation implements InvoiceRepositoryInterface {
+  constructor(private readonly invoices: InvoiceAcl) {}
+  listInvoices(): Promise<InvoiceProps[]> {
+    return this.invoices.listInvoices();
+  }
+  findInvoice(invoiceId: string): Promise<InvoiceProps | null> {
+    return this.invoices.findInvoice(invoiceId);
+  }
+}
+```
+
+```ts src/module/application/repository-interfaces/client.repository-interface.ts
+export interface ClientRepositoryInterface {
+  listClients(): Promise<string[]>;
+}
+```
+
+```ts src/module/infrastructure/acl/client.acl.ts
+export interface ClientAcl {
+  listClients(segment: string): Promise<string[]>;
+}
+```
+
+```ts src/module/infrastructure/repository-implementations/client.repository-implementation.ts
+import type { ClientRepositoryInterface } from "../../application/repository-interfaces/client.repository-interface";
+import type { ClientAcl } from "../acl/client.acl";
+export abstract class ClientRepositoryBase implements ClientRepositoryInterface {
+  constructor(private readonly clients: ClientAcl) {}
+  protected abstract readonly segment: string;
+  listClients() {
+    return this.clients.listClients(this.segment);
+  }
+}
+```
+
+```ts src/module/infrastructure/repository-implementations/b2b-client.repository-implementation.ts
+import { ClientRepositoryBase } from "./client.repository-implementation";
+export class B2bClientRepositoryImplementation extends ClientRepositoryBase {
+  protected readonly segment = "b2b";
+}
+```
+
+```ts src/module/infrastructure/repository-implementations/b2c-client.repository-implementation.ts
+import { ClientRepositoryBase } from "./client.repository-implementation";
+export class B2cClientRepositoryImplementation extends ClientRepositoryBase {
+  protected readonly segment = "b2c";
+}
+```
+
+## infrastructure-vocabulary
+
+### folder-outside-vocabulary
+
+```ts src/module/infrastructure/mappers/headers.ts
+export const headers = () => ({});
+```
+
+```expect
+- src/module/infrastructure/mappers/headers.ts (archunit)
+```
+
+### wrong-suffix
+
+```ts src/module/infrastructure/acl/invoice.ts
+export interface InvoiceAcl {
+  listInvoices(): Promise<string[]>;
+}
+```
+
+```expect
+- src/module/infrastructure/acl/invoice.ts (archunit)
+```
+
+### emergent-wrong-suffix
+
+```ts src/module/infrastructure/paginators/page.ts
+export class PagePaginator {}
+```
+
+```expect
+- src/module/infrastructure/paginators/page.ts (archunit)
+```
+
+## repository-implements-interface
+
+### no-implements
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+export class InvoiceRepositoryImplementation {
+  listInvoices() {
+    return [];
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
+```
+
+### extends-base-without-interface
+
+```ts src/module/infrastructure/repository-implementations/client.repository-implementation.ts
+export abstract class ClientRepositoryBase {
+  listClients() {
+    return [];
+  }
+}
+```
+
+```ts src/module/infrastructure/repository-implementations/b2b-client.repository-implementation.ts
+import { ClientRepositoryBase } from "./client.repository-implementation";
+export class B2bClientRepositoryImplementation extends ClientRepositoryBase {}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/b2b-client.repository-implementation.ts (archunit)
+- src/module/infrastructure/repository-implementations/client.repository-implementation.ts (archunit)
+```
+
+### named-by-technology
+
+```ts src/module/application/repository-interfaces/invoice.repository-interface.ts
+export interface InvoiceRepositoryInterface {
+  listInvoices(): Promise<string[]>;
+}
+```
+
+```ts src/module/infrastructure/repository-implementations/http-invoice.repository-implementation.ts
+import type { InvoiceRepositoryInterface } from "../../application/repository-interfaces/invoice.repository-interface";
+export class HttpInvoiceRepository implements InvoiceRepositoryInterface {
+  async listInvoices() {
+    return [];
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/http-invoice.repository-implementation.ts (archunit)
+```
+
+## repository-depends-on-acl
+
+### typed-by-adapter-class
+
+```ts src/module/infrastructure/adapters/http-invoice.adapter.ts
+export class HttpInvoiceAdapter {
+  async listInvoices() {
+    return [];
+  }
+}
+```
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+import type { HttpInvoiceAdapter } from "../adapters/http-invoice.adapter";
+export class InvoiceRepositoryImplementation {
+  constructor(private readonly invoices: HttpInvoiceAdapter) {}
+  listInvoices() {
+    return this.invoices.listInvoices();
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
+```
+
+### imports-adapter-file
+
+```ts src/module/infrastructure/acl/invoice.acl.ts
+export interface InvoiceAcl {
+  listInvoices(): Promise<string[]>;
+}
+```
+
+```ts src/module/infrastructure/adapters/invoice.adapter.ts
+import type { InvoiceAcl } from "../acl/invoice.acl";
+export const invoiceAdapter: InvoiceAcl = { listInvoices: async () => [] };
+```
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+import type { InvoiceAcl } from "../acl/invoice.acl";
+import { invoiceAdapter } from "../adapters/invoice.adapter";
+export class InvoiceRepositoryImplementation {
+  constructor(private readonly invoices: InvoiceAcl = invoiceAdapter) {}
+  listInvoices() {
+    return this.invoices.listInvoices();
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
+```
+
+## repository-never-news-adapter
+
+### news-adapter-in-default
+
+```ts src/module/infrastructure/acl/invoice.acl.ts
+export interface InvoiceAcl {
+  listInvoices(): Promise<string[]>;
+}
+```
+
+```ts src/module/infrastructure/adapters/http-invoice.adapter.ts
+import type { InvoiceAcl } from "../acl/invoice.acl";
+export class HttpInvoiceAdapter implements InvoiceAcl {
+  async listInvoices() {
+    return [];
+  }
+}
+```
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+import type { InvoiceAcl } from "../acl/invoice.acl";
+import { HttpInvoiceAdapter } from "../adapters/http-invoice.adapter";
+export class InvoiceRepositoryImplementation {
+  constructor(private readonly invoices: InvoiceAcl = new HttpInvoiceAdapter()) {}
+  listInvoices() {
+    return this.invoices.listInvoices();
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
+```
+
+### news-adapter-in-method
+
+```ts src/module/infrastructure/adapters/http-invoice.adapter.ts
+export class HttpInvoiceAdapter {
+  async listInvoices() {
+    return [];
+  }
+}
+```
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+import { HttpInvoiceAdapter } from "../adapters/http-invoice.adapter";
+export class InvoiceRepositoryImplementation {
+  listInvoices() {
+    return new HttpInvoiceAdapter().listInvoices();
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
+```
+
+## infrastructure-names-the-role
+
+### class-named-helper
+
+```ts src/module/infrastructure/acl/invoice-headers.acl.ts
+export class InvoiceHeadersHelper {
+  headers() {
+    return {};
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/acl/invoice-headers.acl.ts (archunit)
+```
+
+### file-named-util
+
+```ts src/module/infrastructure/acl/http-util.acl.ts
+export const join = (base: string, path: string) => `${base}${path}`;
+```
+
+```expect
+- src/module/infrastructure/acl/http-util.acl.ts (archunit)
+```
+
+## infrastructure-throws-domain-exceptions
+
+### throws-raw-error
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+export class InvoiceRepositoryImplementation {
+  async findInvoice(invoiceId: string) {
+    throw new Error(`invoice ${invoiceId} missing`);
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
+```
+
+### throws-own-exception-class
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+class InvoiceMissingException extends Error {}
+export class InvoiceRepositoryImplementation {
+  async findInvoice(invoiceId: string) {
+    throw new InvoiceMissingException("invoice missing", { cause: invoiceId });
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
+```
+
+### throws-without-cause
+
+```ts src/module/domain/exceptions/invoice.exceptions.ts
+export class InvoiceNotFoundException extends Error {}
+```
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+import { InvoiceNotFoundException } from "../../domain/exceptions/invoice.exceptions";
+export class InvoiceRepositoryImplementation {
+  async findInvoice(invoiceId: string) {
+    throw new InvoiceNotFoundException(invoiceId);
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
+```
+
+### throws-shared-exception
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+import { DomainException } from "../../../shared/domain/exceptions/domain.exceptions";
+export class InvoiceRepositoryImplementation {
+  async findInvoice(invoiceId: string) {
+    throw new DomainException("invoice lookup failed", { cause: invoiceId });
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
+```
+
+## infrastructure-imports-only-core
+
+### imports-entry
+
+```ts src/main.ts
+export const invoicesKey = () => ["invoices"] as const;
+```
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+import { invoicesKey } from "../../../main";
+export class InvoiceRepositoryImplementation {
+  key = invoicesKey();
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (fallow)
+```
+
+### imports-adapter
+
+```ts src/module/infrastructure/adapters/http-invoice.adapter.ts
+export const invoicesPath = "/invoices";
+```
+
+```ts src/module/infrastructure/acl/invoice.acl.ts
+import { invoicesPath } from "../adapters/http-invoice.adapter";
+export const INVOICES = invoicesPath;
+```
+
+```expect
+- src/module/infrastructure/acl/invoice.acl.ts (fallow)
+```
+
+## no-framework-import
+
+### imports-framework-package
+
+```ts src/module/infrastructure/acl/session.acl.ts
+import express from "express";
+export const session = express();
+```
+
+```expect
+- src/module/infrastructure/acl/session.acl.ts (oxlint)
+```
+
+## only-adapters-touch-environment
+
+### uses-platform-global
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+export class InvoiceRepositoryImplementation {
+  listInvoices() {
+    return fetch("/invoices").then((r) => r.json());
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (oxlint)
+```
+# integration
+
+## reference
+
+```ts test/integration/module/invoice-repository.test.ts
+import type { InvoiceAcl, InvoiceRecord } from "../../../src/module/infrastructure/acl/invoice.acl";
+import { InvoiceRepositoryImplementation } from "../../../src/module/infrastructure/repository-implementations/invoice.repository-implementation";
+class InMemoryInvoiceAdapter implements InvoiceAcl {
+  constructor(private readonly records: InvoiceRecord[]) {}
+  async listInvoices() {
+    return this.records;
+  }
+  async findInvoice(invoiceId: string) {
+    return this.records.find((r) => r.id === invoiceId) ?? null;
+  }
+}
+export const run = () => new InvoiceRepositoryImplementation(new InMemoryInvoiceAdapter([])).listInvoices();
+```
+
+## integration-test-targets-repository-implementation
+
+### test-without-implementation
+
+```ts test/integration/module/ghost-repository.test.ts
+export const run = () => 1;
+```
+
+```expect
+- test/integration/module/ghost-repository.test.ts (archunit)
+```
+
+### test-outside-module-folder
+
+```ts test/integration/invoice-repository.test.ts
+export const run = () => 1;
+```
+
+```expect
+- test/integration/invoice-repository.test.ts (archunit)
+```
+
+### test-without-repository-suffix
+
+```ts test/integration/module/invoice.test.ts
+export const run = () => 1;
+```
+
+```expect
+- test/integration/module/invoice.test.ts (archunit)
+```
+
+exec
+/bin/bash -lc 'cat src/main.ts src/orders/application/repository-interfaces/order.repository-interface.ts src/orders/application/use-cases/list-customer-orders.use-case.ts src/orders/domain/schemas/order.schema.ts src/orders/domain/exceptions/orders.exceptions.ts src/shared/domain/exceptions/*.ts; cat test/order.schema.test.ts' in <scratch>/g8/shop
+ succeeded in 0ms:
+export { ListCustomerOrdersUseCase } from "./orders/application/use-cases/list-customer-orders.use-case";
+import type { OrderProps } from "../../domain/schemas/order.schema";
+export interface OrderRepositoryInterface {
+  listByCustomerId(customerId: string): Promise<OrderProps[]>;
+}
+import type { OrderRepositoryInterface } from "../repository-interfaces/order.repository-interface";
+import type { OrderProps } from "../../domain/schemas/order.schema";
+export class ListCustomerOrdersUseCase {
+  constructor(private readonly repository: OrderRepositoryInterface) {}
+  async execute(customerId: string): Promise<OrderProps[]> {
+    const orders = await this.repository.listByCustomerId(customerId);
+    return [...orders].sort((a, b) => Date.parse(b.placedAt) - Date.parse(a.placedAt));
+  }
+}
+import { z } from "zod";
+import { ValidationException } from "../../../shared/domain/exceptions/validation.exceptions";
+export const OrderSchema = z.object({
+  id: z.string().min(1),
+  customerId: z.string().min(1),
+  totalCents: z.number().int().refine(Number.isSafeInteger),
+  placedAt: z.iso.datetime({ offset: true }),
+});
+export type OrderProps = z.infer<typeof OrderSchema>;
+export function validateOrder(props: OrderProps): OrderProps {
+  const result = OrderSchema.safeParse(props);
+  if (!result.success) throw new ValidationException("Order", result.error);
+  return result.data;
+}
+import { DomainException } from "../../../shared/domain/exceptions/domain.exceptions";
+export class OrdersException extends DomainException {}
+export class OrdersUnavailableException extends OrdersException {
+  constructor(options: { cause?: unknown } = {}) {
+    super("Orders are unavailable", options);
+  }
+}
+export class DomainException extends Error {
+  constructor(message: string, options: { cause?: unknown } = {}) {
+    super(message, options);
+    this.name = new.target.name;
+  }
+}
+import { DomainException } from "./domain.exceptions";
+export class ValidationException extends DomainException {
+  constructor(public readonly source: string, cause: unknown) {
+    super(`${source} rejected its props`, { cause });
+  }
+}
+import { describe, expect, test } from "vitest";
+import { validateOrder, type OrderProps } from "../src/orders/domain/schemas/order.schema";
+import { ValidationException } from "../src/shared/domain/exceptions/validation.exceptions";
+import { DomainException } from "../src/shared/domain/exceptions/domain.exceptions";
+import { OrdersException, OrdersUnavailableException } from "../src/orders/domain/exceptions/orders.exceptions";
+
+const order: OrderProps = {
+  id: "order-1",
+  customerId: "customer-a",
+  totalCents: 1234,
+  placedAt: "2026-01-03T10:00:00Z",
+};
+
+describe("Order props validation", () => {
+  test("resource exceptions retain their cause and domain exception family", () => {
+    const cause = new Error("Orders service unavailable");
+    const error = new OrdersUnavailableException({ cause });
+    expect(error).toBeInstanceOf(OrdersException);
+    expect(error).toBeInstanceOf(DomainException);
+    expect(error.cause).toBe(cause);
+    expect(error.name).toBe("OrdersUnavailableException");
+    expect(new OrdersUnavailableException().cause).toBeUndefined();
+  });
+
+  test.each([0, -1234, Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER])(
+    "preserves safe integer cents: %s",
+    (totalCents) => {
+      const props = { ...order, totalCents, placedAt: "2026-01-03T11:00:00+01:00" };
+      expect(validateOrder(props)).toEqual(props);
+    },
+  );
+
+  test.each([1.5, Number.MAX_SAFE_INTEGER + 1, Number.MIN_SAFE_INTEGER - 1, NaN, Infinity])(
+    "rejects invalid cents: %s",
+    (totalCents) => {
+      expect(() => validateOrder({ ...order, totalCents })).toThrow(ValidationException);
+    },
+  );
+
+  test.each([
+    "not-a-date",
+    "2026-02-30T10:00:00Z",
+    "2026-01-03",
+    "2026-01-03T10:00:00",
+    "2026-01-03T25:00:00Z",
+    "2026-01-03T10:00:00+25:00",
+  ])("rejects invalid or offset-free timestamps: %s", (placedAt) => {
+    expect(() => validateOrder({ ...order, placedAt })).toThrow(ValidationException);
+  });
+
+  test.each(["id", "customerId"] as const)("rejects empty %s and retains the validation cause", (field) => {
+    try {
+      validateOrder({ ...order, [field]: "" });
+      expect.fail("Expected invalid order props to be rejected");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ValidationException);
+      expect(error).toMatchObject({ source: "Order", cause: expect.any(Error) });
+    }
+  });
+});
+
+codex
+Fase 2 iniciada: ACL, repositorio, adaptadores y entrada. `doctor` no detectó faltantes; recuerda revisar confianza y `/hooks` en Codex.
+
+exec
+/bin/bash -lc "cat .agents/skills/implement/references/workstreams/adapters/SKILL.md; sed -n '1,130p' .agents/skills/implement/references/workstreams/adapters/adapters.examples.md; cat .agents/skills/implement/references/workstreams/clean-architecture/SKILL.md .agents/skills/implement/references/workstreams/integrate/SKILL.md; ls .agents/skills/implement/references/workstreams/{adapters,clean-architecture,integrate}" in <scratch>/g8/shop
+ succeeded in 0ms:
+---
+name: adapters
+description: Build the adapters workstream of the implementer: the resource adapters behind each anti-corruption layer, the only place where the environment lives. Read from the implement skill.
+---
+
+# adapters
+
+**Owns:** `src/<module>/infrastructure/adapters/` and `src/shared/infrastructure/adapters/` (the base adapters every module composes, such as `http-api.adapter.ts`).
+
+**Receives:** the ACLs of `infrastructure` (`acl/<name>.acl.ts`: `interface <Name>Acl` and the schemas of its records), fixed before this workstream starts, and the domain exceptions an adapter throws. The ACL is the seam: a repository implementation receives an adapter typed by it and never imports or constructs one, so this workstream and `infrastructure` are built apart.
+
+**Fakes:** nothing. Adapters are the edge; behind them is the real resource.
+
+## How
+
+1. Read the `## reference` of `adapters.examples.md`.
+2. Per ACL: one adapter per backend (`http-<name>.adapter.ts`, `in-memory-<name>.adapter.ts`), each a class that `implements <Name>Acl`, and `<name>.adapter.ts`, which picks one by environment and exports the ACL-typed instance (`export const <name>Adapter: <Name>Acl`). Every ACL needs at least one adapter.
+3. Speak the resource's shape: parse through the ACL's record schemas, never a domain schema. Translate the resource's failures into domain exceptions with the caught error as `cause`.
+
+No product tests for now: the rules are the check. Contract tests against the real services (testcontainers or similar) are a later decision; when they come, they belong here.
+
+**Check:** `pnpm exec factory check --workstream adapters [--module <module>]`.
+# adapters
+
+## reference
+
+```ts src/module/infrastructure/acl/invoice.acl.ts
+import type { z } from "zod";
+import { InvoiceSchema } from "../../domain/schemas/invoice.schema";
+export const InvoiceRecordSchema = InvoiceSchema;
+export type InvoiceRecord = z.infer<typeof InvoiceRecordSchema>;
+export interface InvoiceAcl {
+  listInvoices(): Promise<InvoiceRecord[]>;
+  findInvoice(invoiceId: string): Promise<InvoiceRecord | null>;
+}
+```
+
+```ts src/module/infrastructure/acl/client.acl.ts
+export interface ClientAcl {
+  listClients(segment: string): Promise<string[]>;
+}
+```
+
+```ts src/shared/infrastructure/adapters/http-api.adapter.ts
+import type { z } from "zod";
+import type { DomainException } from "../../domain/exceptions/domain.exceptions";
+export class HttpApiAdapter {
+  constructor(private readonly baseUrl: string) {}
+  async get<S extends z.ZodType>(
+    path: string,
+    schema: S,
+    fail: (response: Response) => DomainException,
+  ): Promise<z.output<S>> {
+    const response = await fetch(`${this.baseUrl}${path}`);
+    if (!response.ok) throw fail(response);
+    return schema.parse(await response.json());
+  }
+  async find<S extends z.ZodType>(
+    path: string,
+    schema: S,
+    fail: (response: Response) => DomainException,
+  ): Promise<z.output<S> | null> {
+    const response = await fetch(`${this.baseUrl}${path}`);
+    if (response.status === 404) return null;
+    if (!response.ok) throw fail(response);
+    return schema.parse(await response.json());
+  }
+}
+```
+
+```ts src/module/infrastructure/adapters/http-invoice.adapter.ts
+import { InvoiceUnavailableException } from "../../domain/exceptions/invoice.exceptions";
+import { HttpApiAdapter } from "../../../shared/infrastructure/adapters/http-api.adapter";
+import { InvoiceRecordSchema, type InvoiceAcl, type InvoiceRecord } from "../acl/invoice.acl";
+const unavailable = (response: Response) => new InvoiceUnavailableException({ cause: response });
+export class HttpInvoiceAdapter implements InvoiceAcl {
+  constructor(private readonly api = new HttpApiAdapter("/api")) {}
+  listInvoices(): Promise<InvoiceRecord[]> {
+    return this.api.get("/invoices", InvoiceRecordSchema.array(), unavailable);
+  }
+  findInvoice(invoiceId: string): Promise<InvoiceRecord | null> {
+    return this.api.find(`/invoices/${invoiceId}`, InvoiceRecordSchema, unavailable);
+  }
+}
+```
+
+```ts src/module/infrastructure/adapters/in-memory-invoice.adapter.ts
+import { InvoiceRecordSchema, type InvoiceAcl, type InvoiceRecord } from "../acl/invoice.acl";
+const SEED: InvoiceRecord[] = InvoiceRecordSchema.array().parse([
+  { id: "1", total: 10, status: "paid" },
+]);
+export class InMemoryInvoiceAdapter implements InvoiceAcl {
+  async listInvoices(): Promise<InvoiceRecord[]> {
+    return SEED;
+  }
+  async findInvoice(invoiceId: string): Promise<InvoiceRecord | null> {
+    return SEED.find((row) => row.id === invoiceId) ?? null;
+  }
+}
+```
+
+```ts src/module/infrastructure/adapters/invoice.adapter.ts
+import type { InvoiceAcl } from "../acl/invoice.acl";
+import { HttpInvoiceAdapter } from "./http-invoice.adapter";
+import { InMemoryInvoiceAdapter } from "./in-memory-invoice.adapter";
+export const invoiceAdapter: InvoiceAcl = process.env.NODE_ENV === "development"
+  ? new InMemoryInvoiceAdapter()
+  : new HttpInvoiceAdapter();
+```
+
+```ts src/module/infrastructure/adapters/http-client.adapter.ts
+import { ClientsUnavailableException } from "../../domain/exceptions/invoice.exceptions";
+import { HttpApiAdapter } from "../../../shared/infrastructure/adapters/http-api.adapter";
+import type { ClientAcl } from "../acl/client.acl";
+export class HttpClientAdapter implements ClientAcl {
+  constructor(private readonly api = new HttpApiAdapter("/api")) {}
+  listClients(segment: string): Promise<string[]> {
+    return this.api.get(
+      `/clients/${segment}`,
+      { parse: (raw: unknown) => raw as string[] },
+      (response) => new ClientsUnavailableException({ cause: response }),
+    );
+  }
+}
+```
+
+```ts src/module/infrastructure/adapters/client.adapter.ts
+import type { ClientAcl } from "../acl/client.acl";
+import { HttpClientAdapter } from "./http-client.adapter";
+export const clientAdapter: ClientAcl = new HttpClientAdapter();
+```
+
+## infrastructure-vocabulary
+
+### wrong-suffix
+
+```ts src/module/infrastructure/adapters/http.ts
+export class HttpAdapter {}
+```
+
+```expect
+- src/module/infrastructure/adapters/http.ts (archunit)
+```
+
+## acl-adapter-paired
+
+### acl-without-adapter
+
+```ts src/module/infrastructure/acl/invoice.acl.ts
+export interface InvoiceAcl {
+  listInvoices(): Promise<string[]>;
+}
+---
+name: clean-architecture
+description: Run the clean-architecture reduce workstream of the implementer: merge app-domain, infrastructure and adapters, resolve conflicts at their seams and pass the cross-module rules. Read from the implement skill.
+---
+
+# clean-architecture
+
+**Reduces:** the workstreams the topology lists under it (by default `app-domain`, `infrastructure` and `adapters`).
+
+**Owns:** the cross-module rules (`modules.rules.ts`): modules do not import one another, `shared` imports no module, no cycles, every file in a zone, no tests in `src`, no `any` and no raw errors in the core, and no escape from the harness (a lint rule disabled, a type error suppressed or expected, a cast through `unknown`). It also owns the entry (`src/main.ts` by default), the composition root: the only place that builds adapters, repositories and use cases together.
+
+## How
+
+1. Merge the upstream workstreams' work. A conflict can only be at a seam: if both sides changed a repository interface or an ACL, the seam was not fixed first; settle it on what the consumer needs (the use case for a repository interface, the repository implementation for an ACL) and adapt the other side.
+2. Run the check. This is where it shows whether each map workstream built what its spec, its skill and its seams asked for. A failure names the workstream: go back to it and fix it there, keeping the seams and the artifacts as they are, then run this check again. A decision the artifacts do not settle and you cannot take goes to the person, as the implement skill says.
+3. Fix what crosses modules: move what two modules share into `shared`, break cycles.
+
+**Check:** `pnpm exec factory check --workstream clean-architecture [--module <module>]`, which includes every upstream workstream's check.
+---
+name: integrate
+description: Run the integrate reduce workstream of the implementer: join the workstreams under it into the whole product and pass dead code and duplication. Read from the implement skill.
+---
+
+# integrate
+
+**Reduces:** the workstreams the topology lists under it (by default `clean-architecture`).
+
+**Owns:** the checks that only make sense once everything is wired:
+
+- `no-unused-files`: no file of the product is left unused. Everything is reached from the entry or from a test; the HTTP and in-memory adapters are both reachable because `x.adapter.ts` picks one by environment.
+- `duplication-below-threshold`: global duplication under 4 %. A block repeated in two modules is a candidate for `shared`. The generated acceptance tests are skipped: they repeat by design.
+
+## How
+
+1. Merge the upstream work; the entry is where the use cases, the repositories and the adapters meet.
+2. Run the check. It is the full pipeline: every workstream's rules, these two checks and the freshness of the generated tests. End-to-end tests will live here once `test/e2e` has them.
+
+**Check:** `pnpm exec factory check --workstream integrate`; `pnpm exec factory check` adds the freshness of the generated tests.
+.agents/skills/implement/references/workstreams/adapters:
+SKILL.md
+adapters.examples.md
+
+.agents/skills/implement/references/workstreams/clean-architecture:
+SKILL.md
+modules.examples.md
+
+.agents/skills/implement/references/workstreams/integrate:
+SKILL.md
+
+exec
+/bin/bash -lc "mkdir -p src/orders/infrastructure/{acl,repository-implementations,adapters}; cat > src/orders/infrastructure/acl/orders.acl.ts <<'EOF'
+import { z } from \"zod\";
+export const orderRecordSchema = z.object({
+  id: z.string().min(1),
+  customer_id: z.string().min(1),
+  total_cents: z.number().int().refine(Number.isSafeInteger),
+  placed_at: z.iso.datetime({ offset: true }),
+});
+export const orderRecordsSchema = orderRecordSchema.array();
+export type OrderRecord = z.infer<typeof orderRecordSchema>;
+export interface OrdersAcl {
+  listCustomerOrders(customerId: string): Promise<OrderRecord[]>;
+}
+EOF
+cat > src/orders/infrastructure/repository-implementations/order.repository-implementation.ts <<'EOF'
+import type { OrderRepositoryInterface } from \"../../application/repository-interfaces/order.repository-interface\";
+import { validateOrder, type OrderProps } from \"../../domain/schemas/order.schema\";
+import { OrdersException, OrdersUnavailableException } from \"../../domain/exceptions/orders.exceptions\";
+import { ValidationException } from \"../../../shared/domain/exceptions/validation.exceptions\";
+import { orderRecordsSchema, type OrdersAcl } from \"../acl/orders.acl\";
+export class OrderRepositoryImplementation implements OrderRepositoryInterface {
+  constructor(private readonly orders: OrdersAcl) {}
+  async listByCustomerId(customerId: string): Promise<OrderProps[]> {
+    let raw: unknown;
+    try {
+      raw = await this.orders.listCustomerOrders(customerId);
+    } catch (cause) {
+      if (cause instanceof OrdersException || cause instanceof ValidationException) throw cause;
+      throw new OrdersUnavailableException({ cause });
+    }
+    const result = orderRecordsSchema.safeParse(raw);
+    if ("'!result.success) throw new ValidationException("Orders", result.error);
+    return result.data.filter((record) => record.customer_id === customerId).map((record) => validateOrder({
+      id: record.id,
+      customerId: record.customer_id,
+      totalCents: record.total_cents,
+      placedAt: record.placed_at,
+    }));
+  }
+}
+EOF
+cat > src/orders/infrastructure/adapters/http-orders.adapter.ts <<'"'EOF'
+import type { OrdersAcl, OrderRecord } from \"../acl/orders.acl\";
+import { OrdersUnavailableException } from \"../../domain/exceptions/orders.exceptions\";
+export class HttpOrdersAdapter implements OrdersAcl {
+  constructor(private readonly baseUrl: string) {}
+  async listCustomerOrders(customerId: string): Promise<OrderRecord[]> {
+    throw new OrdersUnavailableException({ cause: { baseUrl: this.baseUrl, customerId } });
+  }
+}
+EOF
+cat > src/orders/infrastructure/adapters/in-memory-orders.adapter.ts <<'EOF'
+import type { OrdersAcl, OrderRecord } from \"../acl/orders.acl\";
+export class InMemoryOrdersAdapter implements OrdersAcl {
+  constructor(private readonly records: OrderRecord[] = []) {}
+  async listCustomerOrders(customerId: string): Promise<OrderRecord[]> {
+    return this.records.filter((record) => record.customer_id === customerId);
+  }
+}
+EOF
+cat > src/orders/infrastructure/adapters/orders.adapter.ts <<'EOF'
+import type { OrdersAcl } from \"../acl/orders.acl\";
+import { HttpOrdersAdapter } from \"./http-orders.adapter\";
+import { InMemoryOrdersAdapter } from \"./in-memory-orders.adapter\";
+export const ordersAdapter: OrdersAcl = process.env.NODE_ENV === \"development\"
+  ? new InMemoryOrdersAdapter()
+  : new HttpOrdersAdapter(process.env.ORDERS_API_URL ?? \"\");
+EOF
+cat > src/main.ts <<'EOF'
+import { ListCustomerOrdersUseCase } from \"./orders/application/use-cases/list-customer-orders.use-case\";
+import type { OrderProps } from \"./orders/domain/schemas/order.schema\";
+import { OrderRepositoryImplementation } from \"./orders/infrastructure/repository-implementations/order.repository-implementation\";
+import { ordersAdapter } from \"./orders/infrastructure/adapters/orders.adapter\";
+export { ListCustomerOrdersUseCase };
+const useCase = new ListCustomerOrdersUseCase(new OrderRepositoryImplementation(ordersAdapter));
+export const listCustomerOrders: (customerId: string) => Promise<OrderProps[]> = (customerId) => useCase.execute(customerId);
+EOF
+pnpm exec factory check --workstream infrastructure --module orders" in <scratch>/g8/shop
+ exited 1 in 1265ms:
+pyenv: cannot rehash: ~/.pyenv/shims isn't writable
+
+▶ fallow (imports, calls, coverage) in zones infrastructure, integration
+  no violations
+
+▶ oxlint (packages and globals) over 2 files
+
+▶ archunit (names and shape)
+  infrastructure-throws-domain-exceptions · every `throw new X(` in infrastructure constructs an exception of its own module (or ValidationException from shared) and passes `cause`
+    src/orders/infrastructure/repository-implementations/order.repository-implementation.ts: [infrastructure-throws-domain-exceptions] throw an exception of this module's family (imported from its domain/exceptions; from shared only ValidationException) with the caught error as `cause`
+
+exec
+/bin/bash -lc "rg -n 'infrastructure-throws-domain-exceptions|caught error|ValidationException' .factory .claude/skills/setup node_modules/factory -g '*.ts' -g '*.js' | head -45" in <scratch>/g8/shop
+ succeeded in 0ms:
+pyenv: cannot rehash: ~/.pyenv/shims isn't writable
+rg: .factory: No such file or directory (os error 2)
+node_modules/factory/toolkit/archunit.js:182:/** infrastructure-throws-domain-exceptions over `${modules}/${folder}`, leaving out `skip`. */
+node_modules/factory/toolkit/archunit.js:184:    id: "infrastructure-throws-domain-exceptions",
+node_modules/factory/toolkit/archunit.js:185:    title: `every \`throw new X(\` in ${folder} constructs an exception of its own module (or ValidationException from shared) and passes \`cause\``,
+node_modules/factory/toolkit/archunit.js:198:                ? i.names.filter((n) => n === "ValidationException")
+node_modules/factory/toolkit/archunit.js:201:    }), "[infrastructure-throws-domain-exceptions] throw an exception of this module's family (imported from its domain/exceptions; from shared only ValidationException) with the caught error as `cause`")
+
+exec
+/bin/bash -lc "sed -n '175,210p' node_modules/factory/toolkit/archunit.js; rg -n 'cause|throwNew' node_modules/factory/toolkit/archunit.js | head -25; sed -n '1,90p' .agents/skills/implement/references/workstreams/clean-architecture/modules.examples.md" in <scratch>/g8/shop
+ succeeded in 0ms:
+pyenv: cannot rehash: ~/.pyenv/shims isn't writable
+        .should()
+        .adhereTo(outside(skip, (f) => !ROLELESS_FILE.test(f.name) &&
+        classesOf(f.content)
+            .filter((c) => c.exported)
+            .every((c) => !ROLELESS_CLASS.test(c.name))), "[infrastructure-names-the-role] name the object by what it does (Paginator, Retrier) in the folder the configuration declares for its role")
+        .check(ctx.opts),
+});
+/** infrastructure-throws-domain-exceptions over `${modules}/${folder}`, leaving out `skip`. */
+export const throwsDomainExceptionsRule = (folder, modules, skip) => (ctx) => ({
+    id: "infrastructure-throws-domain-exceptions",
+    title: `every \`throw new X(\` in ${folder} constructs an exception of its own module (or ValidationException from shared) and passes \`cause\``,
+    check: () => ctx
+        .files()
+        .inFolder(`${modules}/${folder}/**`)
+        .should()
+        .adhereTo(outside(skip, (f) => {
+        const root = modules.replace(/\/\*$/, "");
+        const module = f.path.slice(root.length + 1).split("/")[0];
+        const own = new RegExp(`^${root}/${module}/domain/exceptions/[\\w-]+\\.exceptions$`);
+        const shared = new RegExp(`^${root}/shared/domain/exceptions/[\\w-]+\\.exceptions$`);
+        const domainExceptions = new Set(importsOf(f).flatMap((i) => own.test(i.resolved)
+            ? i.names
+            : shared.test(i.resolved)
+                ? i.names.filter((n) => n === "ValidationException")
+                : []));
+        return throws(f.content).every((t) => domainExceptions.has(t.name) && /\bcause\b/.test(t.args));
+    }), "[infrastructure-throws-domain-exceptions] throw an exception of this module's family (imported from its domain/exceptions; from shared only ValidationException) with the caught error as `cause`")
+        .check(ctx.opts),
+});
+185:    title: `every \`throw new X(\` in ${folder} constructs an exception of its own module (or ValidationException from shared) and passes \`cause\``,
+200:        return throws(f.content).every((t) => domainExceptions.has(t.name) && /\bcause\b/.test(t.args));
+201:    }), "[infrastructure-throws-domain-exceptions] throw an exception of this module's family (imported from its domain/exceptions; from shared only ValidationException) with the caught error as `cause`")
+# modules
+
+## modules-are-isolated
+
+### imports-another-module
+
+```ts src/module/domain/entities/invoice.entity.ts
+import { OrderEntity } from "../../../other/domain/entities/order.entity";
+export class InvoiceEntity {
+  order = new OrderEntity();
+}
+```
+
+```ts src/other/domain/entities/order.entity.ts
+export class OrderEntity {}
+```
+
+```expect
+- src/module/domain/entities/invoice.entity.ts (archunit)
+```
+
+## shared-imports-no-module
+
+### shared-imports-module
+
+```ts src/module/domain/entities/invoice.entity.ts
+export class InvoiceEntity {}
+```
+
+```ts src/shared/domain/entities/audit.entity.ts
+import { InvoiceEntity } from "../../../module/domain/entities/invoice.entity";
+export class AuditEntity {
+  subject = InvoiceEntity;
+}
+```
+
+```expect
+- src/shared/domain/entities/audit.entity.ts (archunit)
+```
+
+## no-import-cycles
+
+### import-cycle
+
+```ts src/module/application/use-cases/get-invoice.use-case.ts
+import { ListInvoicesUseCase } from "./list-invoices.use-case";
+export class GetInvoiceUseCase {
+  execute() {
+    return new ListInvoicesUseCase();
+  }
+}
+```
+
+```ts src/module/application/use-cases/list-invoices.use-case.ts
+import { GetInvoiceUseCase } from "./get-invoice.use-case";
+export class ListInvoicesUseCase {
+  execute() {
+    return new GetInvoiceUseCase();
+  }
+}
+```
+
+```expect
+- src/module/application/use-cases/list-invoices.use-case.ts (archunit)
+```
+
+## every-file-in-a-zone
+
+### file-outside-every-zone
+
+```ts src/module/utils/format.ts
+export const format = (s: string) => s;
+```
+
+```expect
+- src/module/utils/format.ts (fallow)
+```
+
+## no-tests-in-src
+
+### test-inside-src
+
+```ts src/module/application/use-cases/list-invoices.use-case.test.ts
+export const test = 1;
+```
+
+```expect
+- src/module/application/use-cases/list-invoices.use-case.test.ts (archunit)
+```
+
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='src/orders/infrastructure/repository-implementations/order.repository-implementation.ts'
+s=open(p).read().replace('if ("'!result.success) throw new ValidationException("Orders", result.error);'"','if ("'!result.success) {'"\\n      const cause = result.error;\\n      throw new ValidationException(\"Orders\", cause);\\n    }')
+open(p,'w').write(s)
+PY
+pnpm exec factory check --workstream infrastructure --module orders" in <scratch>/g8/shop
+ succeeded in 1225ms:
+pyenv: cannot rehash: ~/.pyenv/shims isn't writable
+
+▶ fallow (imports, calls, coverage) in zones infrastructure, integration
+  no violations
+
+▶ oxlint (packages and globals) over 2 files
+
+▶ archunit (names and shape)
+  no violations
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='openspec/changes/list-customer-orders/plan.md'
+s=open(p).read().replace('- [ ] infrastructure: Define', '- [x] infrastructure: Define')
+open(p,'w').write(s)
+PY
+cat > src/orders/infrastructure/adapters/http-orders.adapter.ts <<'EOF'
+import { orderRecordsSchema, type OrdersAcl, type OrderRecord } from \"../acl/orders.acl\";
+import { OrdersUnavailableException } from \"../../domain/exceptions/orders.exceptions\";
+import { ValidationException } from \"../../../shared/domain/exceptions/validation.exceptions\";
+export class HttpOrdersAdapter implements OrdersAcl {
+  private readonly baseUrl: URL;
+  constructor(baseUrl: string) {
+    try {
+      const url = new URL(baseUrl);
+      if ("'!["http:", "https:"].includes(url.protocol) || url.search || url.hash || url.username || url.password) {
+        throw new OrdersUnavailableException({ cause: url });
+      }
+      url.pathname = url.pathname.replace(/'"\\/+"'$/, "") + "/";
+      this.baseUrl = url;
+    } catch (cause) {
+      if (cause instanceof OrdersUnavailableException) throw cause;
+      throw new OrdersUnavailableException({ cause });
+    }
+  }
+  async listCustomerOrders(customerId: string): Promise<OrderRecord[]> {
+    let response: Response;
+    try {
+      response = await fetch(`${this.baseUrl.href}customers/${encodeURIComponent(customerId)}/orders`, { method: "GET" });
+    } catch (cause) {
+      throw new OrdersUnavailableException({ cause });
+    }
+    if (!response.ok) throw new OrdersUnavailableException({ cause: response });
+    let raw: unknown;
+    try {
+      raw = await response.json();
+    } catch (cause) {
+      throw new ValidationException("Orders JSON", cause);
+    }
+    const result = orderRecordsSchema.safeParse(raw);
+    if (!result.success) {
+      const cause = result.error;
+      throw new ValidationException("Orders", cause);
+    }
+    return result.data;
+  }
+}
+EOF
+cat > src/orders/infrastructure/adapters/in-memory-orders.adapter.ts <<'"'EOF'
+import { orderRecordsSchema, type OrdersAcl, type OrderRecord } from \"../acl/orders.acl\";
+import { ValidationException } from \"../../../shared/domain/exceptions/validation.exceptions\";
+export class InMemoryOrdersAdapter implements OrdersAcl {
+  constructor(private readonly records: OrderRecord[] = []) {}
+  async listCustomerOrders(customerId: string): Promise<OrderRecord[]> {
+    const result = orderRecordsSchema.safeParse(this.records);
+    if ("'!result.success) {
+      const cause = result.error;
+      throw new ValidationException("Orders", cause);
+    }
+    return result.data.filter((record) => record.customer_id === customerId);
+  }
+}
+EOF
+pnpm exec factory check --workstream adapters --module orders' in <scratch>/g8/shop
+ succeeded in 1198ms:
+pyenv: cannot rehash: ~/.pyenv/shims isn't writable
+
+▶ fallow (imports, calls, coverage) in zones adapters
+  no violations
+
+▶ oxlint (packages and globals) over 3 files
+
+▶ archunit (names and shape)
+  no violations
+
+codex
+ACL, repositorio y adaptadores pasan sus checks. Añado cobertura de mapeo, aislamiento por cliente y fallos con causa; después comprobaré la integración completa.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='openspec/changes/list-customer-orders/plan.md'
+s=open(p).read().replace('- [ ] adapters: Implement', '- [x] adapters: Implement')
+open(p,'w').write(s)
+PY
+mkdir -p test/integration/orders
+cat > test/integration/orders/order-repository.test.ts <<'EOF'
+import { describe, expect, test } from \"vitest\";
+import { orderRecordsSchema, type OrdersAcl, type OrderRecord } from \"../../../src/orders/infrastructure/acl/orders.acl\";
+import { InMemoryOrdersAdapter } from \"../../../src/orders/infrastructure/adapters/in-memory-orders.adapter\";
+import { OrderRepositoryImplementation } from \"../../../src/orders/infrastructure/repository-implementations/order.repository-implementation\";
+import { OrdersUnavailableException } from \"../../../src/orders/domain/exceptions/orders.exceptions\";
+import { ValidationException } from \"../../../src/shared/domain/exceptions/validation.exceptions\";
+
+const record: OrderRecord = {
+  id: \"purchase-1\", customer_id: \"alice\", total_cents: 2501,
+  placed_at: \"2026-05-11T12:30:00+02:00\",
+};
+class FailingOrdersAdapter implements OrdersAcl {
+  constructor(private readonly cause: Error) {}
+  async listCustomerOrders(): Promise<OrderRecord[]> { throw this.cause; }
+}
+
+describe(\"Order repository over the Orders ACL\", () => {
+  test(\"maps every field unchanged and excludes other customers\", async () => {
+    const repository = new OrderRepositoryImplementation(new InMemoryOrdersAdapter([
+      record, { ...record, id: \"purchase-2\", customer_id: \"bob\" },
+      { ...record, id: \"purchase-3\", total_cents: -100 },
+    ]));
+    expect(await repository.listByCustomerId(\"alice\")).toEqual([
+      { id: \"purchase-1\", customerId: \"alice\", totalCents: 2501, placedAt: record.placed_at },
+      { id: \"purchase-3\", customerId: \"alice\", totalCents: -100, placedAt: record.placed_at },
+    ]);
+    expect(await repository.listByCustomerId(\"missing\")).toEqual([]);
+  });
+
+  test(\"also isolates customers when the resource returns unrelated records\", async () => {
+    const acl: OrdersAcl = { listCustomerOrders: async () => [record, { ...record, customer_id: \"bob\" }] };
+    expect(await new OrderRepositoryImplementation(acl).listByCustomerId(\"alice\")).toHaveLength(1);
+  });
+
+  test(\"empty resource records produce an empty history\", async () => {
+    expect(await new OrderRepositoryImplementation(new InMemoryOrdersAdapter()).listByCustomerId(\"alice\")).toEqual([]);
+  });
+
+  test.each([0, Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER])(\"preserves exact integer cents %s\", async (total_cents) => {
+    const repository = new OrderRepositoryImplementation(new InMemoryOrdersAdapter([{ ...record, total_cents }]));
+    expect((await repository.listByCustomerId(\"alice\"))[0].totalCents).toBe(total_cents);
+  });
+
+  test.each([
+    { id: \"\" }, { customer_id: \"\" }, { total_cents: 0.1 },
+    { total_cents: Number.MAX_SAFE_INTEGER + 1 }, { placed_at: \"2026-02-30T00:00:00Z\" },
+    { placed_at: \"2026-01-01T10:00:00\" },
+  ])(\"rejects invalid seeded resource fields: %j\", async (invalid) => {
+    const repository = new OrderRepositoryImplementation(new InMemoryOrdersAdapter([{ ...record, ...invalid }]));
+    await expect(repository.listByCustomerId(\"alice\")).rejects.toMatchObject({
+      name: \"ValidationException\", cause: expect.any(Error),
+    });
+  });
+
+  test(\"repository validates ACL output independently\", async () => {
+    const acl: OrdersAcl = { listCustomerOrders: async () => [{ ...record, total_cents: 1.5 }] };
+    await expect(new OrderRepositoryImplementation(acl).listByCustomerId(\"alice\")).rejects.toBeInstanceOf(ValidationException);
+  });
+
+  test.each([null, {}, [null], [{ id: \"incomplete\" }]])(\"ACL rejects malformed arrays %j\", (raw) => {
+    expect(orderRecordsSchema.safeParse(raw).success).toBe(false);
+  });
+
+  test.each([\"network\", \"HTTP status\", \"configuration\"])(\"propagates module resource failure: %s\", async (category) => {
+    const cause = new Error(category);
+    const error = new OrdersUnavailableException({ cause });
+    const repository = new OrderRepositoryImplementation(new FailingOrdersAdapter(error));
+    await expect(repository.listByCustomerId(\"alice\")).rejects.toBe(error);
+    expect(error.cause).toBe(cause);
+  });
+
+  test(\"propagates JSON decoding validation failure with its cause\", async () => {
+    const cause = new SyntaxError(\"Invalid JSON\");
+    const error = new ValidationException(\"Orders JSON\", cause);
+    const repository = new OrderRepositoryImplementation(new FailingOrdersAdapter(error));
+    await expect(repository.listByCustomerId(\"alice\")).rejects.toBe(error);
+    expect(error.cause).toBe(cause);
+  });
+
+  test(\"translates unexpected resource errors and retains the original cause\", async () => {
+    const cause = new Error(\"resource failed\");
+    const repository = new OrderRepositoryImplementation(new FailingOrdersAdapter(cause));
+    await expect(repository.listByCustomerId(\"alice\")).rejects.toMatchObject({ name: \"OrdersUnavailableException\", cause });
+  });
+});
+EOF
+pnpm exec factory check --workstream infrastructure --module orders
+pnpm exec factory test integration" in <scratch>/g8/shop
+ succeeded in 1932ms:
+pyenv: cannot rehash: ~/.pyenv/shims isn't writable
+
+▶ fallow (imports, calls, coverage) in zones infrastructure, integration
+  no violations
+
+▶ oxlint (packages and globals) over 3 files
+
+▶ archunit (names and shape)
+  no violations
+
+ RUN  v5.0.5 <scratch>/g8/shop
+
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  11:29:55
+   Duration  214ms (import 45%, transform 42%, tests 10%, worker 2%)
+
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='openspec/changes/list-customer-orders/plan.md'
+s=open(p).read().replace('- [ ] infrastructure: Add', '- [x] infrastructure: Add')
+open(p,'w').write(s)
+PY
+pnpm exec factory check --workstream clean-architecture" in <scratch>/g8/shop
+ succeeded in 1275ms:
+pyenv: cannot rehash: ~/.pyenv/shims isn't writable
+
+▶ fallow (imports, calls, coverage) in zones acceptance, domain, application, infrastructure, integration, adapters, entry
+  no violations
+
+▶ oxlint (packages and globals) over 15 files
+
+▶ archunit (names and shape)
+  no violations
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='openspec/changes/list-customer-orders/plan.md'
+s=open(p).read().replace('- [ ] clean-architecture: Wire', '- [x] clean-architecture: Wire')
+open(p,'w').write(s)
+PY
+pnpm exec factory check" in <scratch>/g8/shop
+ succeeded in 2298ms:
+pyenv: cannot rehash: ~/.pyenv/shims isn't writable
+
+▶ fallow (imports, calls, coverage) in zones acceptance, domain, application, infrastructure, integration, adapters, entry
+  no violations
+
+▶ oxlint (packages and globals) over 15 files
+
+▶ archunit (names and shape)
+  no violations
+
+▶ no-unused-files (whole product)
+   0.058183718s  WARN Graph cache decoded but not reused: resolver, entry points, or plugins changed
+
+▶ duplication-below-threshold (whole product)
+
+▶ generated tests are fresh
+Checked 1 Features · 3 scenarios · 4 steps (vitest)
+
+exec
+/bin/bash -lc 'pnpm exec tsc --noEmit' in <scratch>/g8/shop
+exec
+/bin/bash -lc 'pnpm exec vitest run test/order.schema.test.ts' in <scratch>/g8/shop
+exec
+/bin/bash -lc 'pnpm exec factory test acceptance' in <scratch>/g8/shop
+ exited 1 in 276ms:
+pyenv: cannot rehash: ~/.pyenv/shims isn't writable
+src/orders/infrastructure/adapters/orders.adapter.ts(4,41): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/orders/infrastructure/adapters/orders.adapter.ts(6,27): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+
+ succeeded in 601ms:
+pyenv: cannot rehash: ~/.pyenv/shims isn't writable
+
+ RUN  v5.0.5 <scratch>/g8/shop
+
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  11:30:09
+   Duration  178ms (import 65%, transform 17%, tests 14%, worker 4%)
+
+
+ succeeded in 657ms:
+pyenv: cannot rehash: ~/.pyenv/shims isn't writable
+
+ RUN  v5.0.5 <scratch>/g8/shop
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  11:30:09
+   Duration  173ms (import 71%, transform 14%, tests 9%, worker 7%)
+
+
+exec
+/bin/bash -lc "pnpm why @types/node; ls node_modules/@types; rg --files node_modules/.pnpm -g 'package.json' | head" in <scratch>/g8/shop
+ succeeded in 141ms:
+pyenv: cannot rehash: ~/.pyenv/shims isn't writable
+ls: cannot access 'node_modules/@types': No such file or directory
+
+exec
+/bin/bash -lc 'pnpm add -D @types/node --offline' in <scratch>/g8/shop
+ exited 1 in 126ms:
+pyenv: cannot rehash: ~/.pyenv/shims isn't writable
+Error: ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK
+
+  × adding a new package
+  ╰─▶ Failed to open the store operation lock at "pnpm-store-operation-locks":
+      Read-only file system (os error 30)
+
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='src/orders/infrastructure/adapters/orders.adapter.ts'
+s=open(p).read().replace('export const ordersAdapter', 'declare const process: { env: Record<string, string | undefined> };\\nexport const ordersAdapter')
+open(p,'w').write(s)
+PY
+pnpm exec tsc --noEmit
+pnpm exec factory check" in <scratch>/g8/shop
+ succeeded in 2499ms:
+pyenv: cannot rehash: ~/.pyenv/shims isn't writable
+
+▶ fallow (imports, calls, coverage) in zones acceptance, domain, application, infrastructure, integration, adapters, entry
+  no violations
+
+▶ oxlint (packages and globals) over 15 files
+
+▶ archunit (names and shape)
+  no violations
+
+▶ no-unused-files (whole product)
+   0.055925529s  WARN Graph cache decoded but not reused: resolver, entry points, or plugins changed
+
+▶ duplication-below-threshold (whole product)
+
+▶ generated tests are fresh
+Checked 1 Features · 3 scenarios · 4 steps (vitest)
+
+codex
+Pasan los checks completos, TypeScript y 43 pruebas: 22 integración, 3 aceptación, 18 dominio. HTTP real sigue pendiente, según el plan.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='openspec/changes/list-customer-orders/plan.md'
+s=open(p).read().replace('- [ ] integrate: Ensure', '- [x] integrate: Ensure')
+pos=s.index('## Next step')
+s=s[:pos]+'''## Next step
+
+Phase 2 is complete: Orders ACL schemas, injected repository with explicit field mapping and customer isolation, HTTP and constructor-seeded in-memory adapters, environment selection, and the callable "'`listCustomerOrders` entry are connected. Development uses an empty in-memory backend; other environments require a valid HTTP(S) `ORDERS_API_URL`.
+
+All workstream and full factory checks pass, including generated-test freshness. Integration passes 22/22, acceptance 3/3, domain tests 18/18, and `pnpm exec tsc --noEmit` passes. Repository tests cover field mapping, exact cents, customer isolation, invalid records and propagated failures with causes. Real HTTP contract tests remain deferred as planned. No generated tests or harness files were edited.
+
+No implementation tasks remain. The change is ready for the separate verify skill.
+'"'''
+open(p,'w').write(s)
+PY
+pnpm exec factory validate list-customer-orders
+cat openspec/changes/list-customer-orders/gate.json
+ git diff --stat
+ git status --short" in <scratch>/g8/shop
+ succeeded in 204ms:
+pyenv: cannot rehash: ~/.pyenv/shims isn't writable
+ready: list-customer-orders (clean-backend)
+{
+  "phase": "Phase 2: The query is connected to HTTP and development backends",
+  "failures": 0,
+  "waitingFor": "the agent",
+  "findings": []
+}
+ openspec/changes/list-customer-orders/plan.md | 16 +++++++++-------
+ src/main.ts                                   |  8 +++++++-
+ 2 files changed, 16 insertions(+), 8 deletions(-)
+ M openspec/changes/list-customer-orders/plan.md
+ M src/main.ts
+?? openspec/changes/list-customer-orders/gate.json
+?? src/orders/infrastructure/
+?? test/integration/
+
+codex
+Fase 2 completada: ACL, repositorio, adaptadores HTTP/memoria y entrada `listCustomerOrders`.
+
+Checks y TypeScript pasan. 43 pruebas pasan. HTTP real pendiente, según plan.
+
+Lista para `$verify list-customer-orders`.
+hook: Stop
+hook: Stop Completed
+tokens used
+36,742
+Fase 2 completada: ACL, repositorio, adaptadores HTTP/memoria y entrada `listCustomerOrders`.
+
+Checks y TypeScript pasan. 43 pruebas pasan. HTTP real pendiente, según plan.
+
+Lista para `$verify list-customer-orders`.
+codex exit=0

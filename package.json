@@ -1,0 +1,37 @@
+{
+  "name": "openspec-schemas",
+  "version": "0.1.2",
+  "private": true,
+  "description": "OpenSpec schemas, the resources they are built from and the packages built from them.",
+  "type": "module",
+  "bin": {
+    "factory": "./toolkit/cli.ts"
+  },
+  "exports": {
+    ".": "./toolkit/config.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "pnpm run typecheck && pnpm exec factory generate --check && pnpm run test"
+  },
+  "dependencies": {
+    "@fission-ai/openspec": "2.0.0",
+    "archunit": "2.5.4",
+    "fallow": "3.34.1",
+    "feat2test": "4.0.0",
+    "opsx-gherkin": "1.0.1",
+    "oxlint": "1.93.0",
+    "typescript": "6.0.3",
+    "yaml": "2.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "factory": "link:.",
+    "vitest": "5.0.5"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}

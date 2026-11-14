@@ -1,0 +1,135 @@
+Reading additional input from stdin...
+OpenAI Codex v0.166.0
+--------
+workdir: <scratch>/g8/shop
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a1d9a1-a5b7-75d1-ad86-bbd43f5021a9
+--------
+user
+$verify diagnose-orders-outage
+warning: `--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.
+warning: `--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.
+codex
+Usaré `verify` para comprobar `diagnose-orders-outage` y registrar la evidencia.
+
+exec
+/bin/bash -lc 'pnpm exec factory doctor' in <scratch>/g8/shop
+ succeeded in 204ms:
+nothing is lacking
+note: codex runs the guards only in a project it trusts and after each hook is reviewed with /hooks; review them again after every update that changes them
+
+exec
+/bin/bash -lc 'cat .agents/skills/verify/SKILL.md; rg --files openspec/changes/diagnose-orders-outage' in <scratch>/g8/shop
+ succeeded in 0ms:
+---
+name: verify
+description: Verify a change. Writes the evidence that matches every scenario of the change to the test that proves it and runs every check, raising feedback instead of fixing. Use when a change has no unchecked task left.
+---
+
+# verify
+
+Verifying judges and records. What fails becomes feedback; the product stays as it is.
+
+1. `pnpm exec factory doctor`. When it prints anything as `missing` or `drift`, follow the `setup` skill first. A `note` is for the person: relay it once and go on.
+2. For each procedure in the plan, read its `@env` tag. Where it is tagged `local` or `sandbox`, carry its steps out there and note whether its Verification holds. Any other environment is reviewed by reading only.
+3. `pnpm exec factory verify <change>`, with one `--procedure <slug>@<environment>=passed` or `=failed` for each execution of step 2. It runs every check and every test, matches each scenario to the test that proves it, runs the rubric review when the project configures its key, and writes `openspec/changes/<change>/evidence.md`.
+4. Relay what it printed. `verified`: the `archive` skill is next. `not verified`: it raised feedback naming what failed; follow the `feedback` skill.
+openspec/changes/diagnose-orders-outage/plan.md
+
+exec
+/bin/bash -lc 'cat openspec/changes/diagnose-orders-outage/plan.md; cat package.json; git status --short' in <scratch>/g8/shop
+ succeeded in 0ms:
+---
+name: diagnose-orders-outage
+description: Record the production diagnostic procedure for customer order listing failures.
+created_at: 2026-11-14
+created_by: user
+schema: clean-backend
+---
+
+# Diagnose an orders service outage
+
+## Goal
+
+Preserve a repeatable procedure for diagnosing customer order listing errors during an orders service outage. The user reports that last night's outage caused twenty minutes of errors; this is incident context, not a newly verified finding. On archive, the procedure is available under `openspec/runbooks/diagnose`.
+
+## Decisions
+
+- Record a diagnostic procedure only; discard code changes and behavioural delta specs because the requested change affects operational documentation alone.
+- Use the reported incident as context; discard reconstructing exact incident timestamps or performing a live production investigation in this change.
+
+## Open questions
+
+## Architecture decisions
+
+## Procedures
+
+### Procedure: orders-service-outage · Diagnose customer order listing errors
+
+@adds @purpose:diagnose @topic:orders @env:prod
+
+**When** Customers report errors listing their orders, particularly when the orders service may be unavailable.
+
+**Requires** AWS CLI and authorized read access to the prod account through profile `shop-readonly`. Credentials are kept in the team vault at `shop/aws-readonly`; obtain them through the team's vault access process and configure the local profile without putting secret values in repository files or incident notes. The orders service log group is `/shop/orders-api`. Access to our application's logs is also required. Confirm the prod region and our application's log location from the existing environment configuration; neither is specified here.
+
+**Steps**
+
+1. Establish the time window from customer reports, recording timezone and converting the interval to UTC. Include a margin before and after the reports; do not assume every recurrence lasts twenty minutes.
+2. Confirm that AWS CLI profile `shop-readonly` targets the prod account and the configured region contains `/shop/orders-api`. If access or configuration is missing, resolve it through the team vault and existing environment configuration before interpreting missing results.
+3. Use the AWS CLI with `--profile shop-readonly` to read `/shop/orders-api` over the report window. Look for HTTP 5xx responses; record timestamps, response status and any available request or correlation identifiers.
+4. Search our application's logs over the same interval for `OrdersUnavailableException`. Record timestamps and any available request or correlation identifiers.
+5. Correlate both sets of evidence with the customer reports. Record the observed failure interval, matching requests where identifiers exist, and gaps or conflicting evidence. No matching entries alone does not establish service health; check account, region, log source and time window before drawing a conclusion.
+
+**Verification** The incident notes identify the inspected time window and timezone, prod account/profile, service log group and application log source, and the presence or absence of 5xx responses and `OrdersUnavailableException`. Any conclusion is supported by timestamped evidence; unresolved access or evidence gaps remain explicit. No live production diagnosis was performed while planning this procedure.
+
+## Phases
+
+No implementation phases: this change builds nothing and changes no product behaviour.
+
+## Feedback
+
+## Next step
+
+Validate planning readiness. Subsequent verification and archive publish this procedure to the durable runbooks; no code implementation is required.
+{"name":"shop","private":true,"type":"module","devDependencies":{"factory":"file:.claude/skills/setup/assets/factory-0.1.2.tgz","typescript":"7.0.2","vitest":"5.0.5","zod":"^4.6.7"}}
+
+codex
+El procedimiento es `@env:prod`: revisión por lectura, sin ejecutarlo. `doctor` no detectó carencias; recuerda revisar los hooks con `/hooks` en un proyecto de confianza y tras actualizarlos.
+
+exec
+/bin/bash -lc 'pnpm exec factory verify diagnose-orders-outage' in <scratch>/g8/shop
+ succeeded in 6907ms:
+verified: diagnose-orders-outage
+- scenarios: 0 of 0 matched to a passing test
+- checks: every check passes
+- review: skipped (the project configures no OPENAI_API_KEY)
+- procedure orders-service-outage in prod: reviewed only
+- evidence: openspec/changes/diagnose-orders-outage/evidence.md
+
+codex
+`diagnose-orders-outage`: verificado.
+
+- Todos los checks pasan; 0 escenarios.
+- Procedimiento prod revisado, sin ejecutarlo.
+- Revisión rubric omitida: falta `OPENAI_API_KEY`.
+- Evidencia: [evidence.md](openspec/changes/diagnose-orders-outage/evidence.md).
+
+Siguiente paso: `archive`.
+hook: Stop
+hook: Stop Completed
+tokens used
+14,475
+`diagnose-orders-outage`: verificado.
+
+- Todos los checks pasan; 0 escenarios.
+- Procedimiento prod revisado, sin ejecutarlo.
+- Revisión rubric omitida: falta `OPENAI_API_KEY`.
+- Evidencia: [evidence.md](openspec/changes/diagnose-orders-outage/evidence.md).
+
+Siguiente paso: `archive`.
+codex exit=0
