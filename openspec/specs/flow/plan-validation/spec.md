@@ -167,15 +167,15 @@ Every checkbox in a plan is a task, and every task SHALL sit inside a phase. Whe
 
 ##### Examples:
 
-  | workstreams                                                         | workstream | placement       | readiness |
-  | ------------------------------------------------------------------- | ---------- | --------------- | --------- |
-  | app-domain, infrastructure, adapters, clean-architecture, integrate | app-domain | inside a phase  | ready     |
-  | app-domain, infrastructure, adapters, clean-architecture, integrate | react-ui   | inside a phase  | not ready |
-  | app-domain, infrastructure, adapters, clean-architecture, integrate | app-domain | outside a phase | not ready |
-  | app-domain, infrastructure, adapters, clean-architecture, integrate | none       | inside a phase  | not ready |
-  | none                                                                | none       | inside a phase  | ready     |
-  | none                                                                | app-domain | inside a phase  | not ready |
-  | none                                                                | none       | outside a phase | not ready |
+  | workstreams                                              | workstream | placement       | readiness |
+  | -------------------------------------------------------- | ---------- | --------------- | --------- |
+  | app-domain, infrastructure, adapters, modules, integrate | app-domain | inside a phase  | ready     |
+  | app-domain, infrastructure, adapters, modules, integrate | react-ui   | inside a phase  | not ready |
+  | app-domain, infrastructure, adapters, modules, integrate | app-domain | outside a phase | not ready |
+  | app-domain, infrastructure, adapters, modules, integrate | none       | inside a phase  | not ready |
+  | none                                                     | none       | inside a phase  | ready     |
+  | none                                                     | app-domain | inside a phase  | not ready |
+  | none                                                     | none       | outside a phase | not ready |
 
 ### Requirement: A change without delta specs says so
 

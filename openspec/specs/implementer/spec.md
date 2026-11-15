@@ -8,7 +8,7 @@ The implementer of a schema: the phase that generates the product's code and che
 
 ### Requirement: The implementer declares its workstreams and their dependencies
 
-Every workstream SHALL declare its layers in `schemas/<schema>/workstreams/<workstream>/workstream.ts`, and the configuration's `workstreams` section SHALL list every workstream with the workstreams it depends on. Loading the implementer SHALL fail, naming the workstreams involved, when the configuration and the folders disagree, when a dependency names no declared workstream, or when the dependencies form a cycle.
+Every workstream SHALL declare its layers in the `workstream.ts` of its folder, `workstreams/<workstream>/` under the schema that names it or under the core that lists it, and the configuration's `workstreams` section SHALL list every workstream with the workstreams it depends on. Loading the implementer SHALL fail, naming the workstreams involved, when the configuration and the folders disagree, when a dependency names no declared workstream, or when the dependencies form a cycle.
 
 #### Scenario Outline: a dependency on the unknown workstream `<dependency>` is rejected
 
@@ -19,9 +19,9 @@ Every workstream SHALL declare its layers in `schemas/<schema>/workstreams/<work
 
 ##### Examples:
 
-  | workstream | dependency         |
-  | ---------- | ------------------ |
-  | integrate  | clean-architecure  |
+  | workstream | dependency |
+  | ---------- | ---------- |
+  | integrate  | moduls     |
 
 #### Scenario Outline: the workstream folder `<workstream>` missing from the configuration is rejected
 
@@ -44,9 +44,9 @@ Every workstream SHALL declare its layers in `schemas/<schema>/workstreams/<work
 
 ##### Examples:
 
-  | workstream         | dependency | cycle                                                 |
-  | ------------------ | ---------- | ----------------------------------------------------- |
-  | clean-architecture | integrate  | clean-architecture → integrate → clean-architecture   |
+  | workstream | dependency | cycle                         |
+  | ---------- | ---------- | ----------------------------- |
+  | modules    | integrate  | modules → integrate → modules |
 
 ### Requirement: Workstreams run in dependency order
 
@@ -60,12 +60,12 @@ A workstream SHALL start only after every workstream it depends on in the config
 
 ##### Examples:
 
-  | workstream         | dependency         |
-  | ------------------ | ------------------ |
-  | clean-architecture | app-domain         |
-  | clean-architecture | infrastructure     |
-  | clean-architecture | adapters           |
-  | integrate          | clean-architecture |
+  | workstream | dependency     |
+  | ---------- | -------------- |
+  | modules    | app-domain     |
+  | modules    | infrastructure |
+  | modules    | adapters       |
+  | integrate  | modules        |
 
 #### Scenario Outline: `<workstream>` and `<other>` may run at the same time
 
@@ -75,10 +75,10 @@ A workstream SHALL start only after every workstream it depends on in the config
 
 ##### Examples:
 
-  | workstream         | other          |
-  | ------------------ | -------------- |
-  | app-domain         | infrastructure |
-  | infrastructure     | adapters       |
+  | workstream     | other          |
+  | -------------- | -------------- |
+  | app-domain     | infrastructure |
+  | infrastructure | adapters       |
 
 #### Scenario Outline: a project configuration in sequence makes `<workstream>` wait for `<dependency>`
 
@@ -88,10 +88,10 @@ A workstream SHALL start only after every workstream it depends on in the config
 
 ##### Examples:
 
-  | sequence                                                                                        | workstream     | dependency         |
-  | ----------------------------------------------------------------------------------------------- | -------------- | ------------------ |
-  | app-domain, infrastructure, adapters, clean-architecture, integrate      | infrastructure | app-domain         |
-  | app-domain, infrastructure, adapters, clean-architecture, integrate      | adapters       | infrastructure     |
+  | sequence                                                 | workstream     | dependency     |
+  | -------------------------------------------------------- | -------------- | -------------- |
+  | app-domain, infrastructure, adapters, modules, integrate | infrastructure | app-domain     |
+  | app-domain, infrastructure, adapters, modules, integrate | adapters       | infrastructure |
 
 ### Requirement: Every layer belongs to exactly one workstream
 
@@ -118,18 +118,18 @@ Every layer of the architecture SHALL be owned by exactly one workstream. Loadin
 
 ##### Examples:
 
-  | layer          | workstream         |
-  | -------------- | ------------------ |
-  | acceptance     | app-domain         |
-  | application    | app-domain         |
-  | domain         | app-domain         |
-  | infrastructure | infrastructure     |
-  | adapters       | adapters           |
-  | modules        | clean-architecture |
+  | layer          | workstream     |
+  | -------------- | -------------- |
+  | acceptance     | app-domain     |
+  | application    | app-domain     |
+  | domain         | app-domain     |
+  | infrastructure | infrastructure |
+  | adapters       | adapters       |
+  | modules        | modules        |
 
 ### Requirement: A workstream folder holds everything its agent reads
 
-For every layer a workstream owns, the folder `schemas/<schema>/workstreams/<workstream>/` SHALL hold that layer's rules (`<layer>.rules.ts`), examples (`<layer>.examples.md`), step adapter (`<layer>.feature.steps.ts`) and generated tests (`<layer>.feature.test.ts`). Every workstream folder SHALL hold the workstream's declaration (`workstream.ts`) and its skill (`SKILL.md`). This repository's tests SHALL fail naming the path of a missing file.
+For every layer a workstream owns, the workstream's folder (`workstreams/<workstream>/` under its schema or under its core) SHALL hold that layer's rules (`<layer>.rules.ts`), examples (`<layer>.examples.md`), step adapter (`<layer>.feature.steps.ts`) and generated tests (`<layer>.feature.test.ts`). Every workstream folder SHALL hold the workstream's declaration (`workstream.ts`) and its skill (`SKILL.md`). This repository's tests SHALL fail naming the path of a missing file.
 
 #### Scenario Outline: `<path>` is missing
 
@@ -140,9 +140,9 @@ For every layer a workstream owns, the folder `schemas/<schema>/workstreams/<wor
 
 ##### Examples:
 
-  | workstream  | layer     | file                        | path                                                                     |
-  | ----------- | --------- | --------------------------- | ------------------------------------------------------------------------ |
-  | app-domain  | domain    | domain.examples.md          | schemas/clean-backend/workstreams/app-domain/domain.examples.md           |
+  | workstream | layer  | file               | path                                                                      |
+  | ---------- | ------ | ------------------ | ------------------------------------------------------------------------- |
+  | app-domain | domain | domain.examples.md | schemas/shared/cores/clean-core/workstreams/app-domain/domain.examples.md |
 
 #### Scenario Outline: workstream `<workstream>` without a skill
 
@@ -152,9 +152,9 @@ For every layer a workstream owns, the folder `schemas/<schema>/workstreams/<wor
 
 ##### Examples:
 
-  | workstream | path                                              |
-  | ---------- | ------------------------------------------------- |
-  | integrate  | schemas/clean-backend/workstreams/integrate/SKILL.md |
+  | workstream | path                                                           |
+  | ---------- | -------------------------------------------------------------- |
+  | integrate  | schemas/shared/cores/clean-core/workstreams/integrate/SKILL.md |
 
 ### Requirement: A workstream can be checked alone
 
@@ -168,14 +168,14 @@ For every layer a workstream owns, the folder `schemas/<schema>/workstreams/<wor
 
 ##### Examples:
 
-  | workstream         | rule                                |
-  | ------------------ | ----------------------------------- |
-  | app-domain         | entity-validates-with-schema        |
-  | infrastructure     | repository-depends-on-acl           |
-  | adapters           | adapter-implements-acl              |
-  | clean-architecture | modules-are-isolated                |
-  | clean-architecture | entity-validates-with-schema        |
-  | integrate          | no-unused-files                     |
+  | workstream     | rule                         |
+  | -------------- | ---------------------------- |
+  | app-domain     | entity-validates-with-schema |
+  | infrastructure | repository-depends-on-acl    |
+  | adapters       | adapter-implements-acl       |
+  | modules        | modules-are-isolated         |
+  | modules        | entity-validates-with-schema |
+  | integrate      | no-unused-files              |
 
 #### Scenario Outline: `<workstream>` leaves `<rule>` out
 
@@ -185,12 +185,12 @@ For every layer a workstream owns, the folder `schemas/<schema>/workstreams/<wor
 
 ##### Examples:
 
-  | workstream         | rule                            |
-  | ------------------ | ------------------------------- |
-  | app-domain         | repository-implements-interface |
-  | infrastructure     | use-case-is-class-with-execute  |
-  | infrastructure     | adapter-implements-acl          |
-  | adapters           | repository-depends-on-acl       |
+  | workstream     | rule                            |
+  | -------------- | ------------------------------- |
+  | app-domain     | repository-implements-interface |
+  | infrastructure | use-case-is-class-with-execute  |
+  | infrastructure | adapter-implements-acl          |
+  | adapters       | repository-depends-on-acl       |
 
 #### Scenario Outline: `<workstream>` checked on module `<module>`
 
@@ -210,9 +210,9 @@ For every layer a workstream owns, the folder `schemas/<schema>/workstreams/<wor
 
 ##### Examples:
 
-  | workstream | status | declared                                                                                      |
-  | ---------- | ------ | --------------------------------------------------------------------------------------------- |
-  | nothing    | 2      | app-domain, infrastructure, adapters, clean-architecture, integrate    |
+  | workstream | status | declared                                                 |
+  | ---------- | ------ | -------------------------------------------------------- |
+  | nothing    | 2      | app-domain, infrastructure, adapters, modules, integrate |
 
 ### Requirement: Project configuration overrides the implementer's defaults
 
@@ -471,3 +471,22 @@ In a project with products, the product specs root of a product SHALL default to
   | ----------- | ------ | ------- |
   | api, worker | api    | api     |
   | api, worker | worker | worker  |
+
+### Requirement: A schema picks the platform whose globals are the environment
+
+The defaults of a schema SHALL name one platform, and the globals that platform lists SHALL be the environment the rules keep out of every layer that may not reach it. The command SHALL know the platforms `node` and `web`, and a project configuration MAY name either.
+
+#### Scenario Outline: on the platform `<platform>` the global `<global>` is `<environment>`
+
+- **GIVEN** a schema whose platform is `<platform>` <!-- schemaPlatform -->
+- **WHEN** the environment rules are composed <!-- environmentRulesComposed -->
+- **THEN** the global `<global>` is `<environment>` <!-- globalIsEnvironment -->
+
+##### Examples:
+
+  | platform | global   | environment                 |
+  | -------- | -------- | --------------------------- |
+  | node     | process  | part of the environment     |
+  | web      | document | part of the environment     |
+  | web      | process  | not part of the environment |
+  | node     | document | not part of the environment |
