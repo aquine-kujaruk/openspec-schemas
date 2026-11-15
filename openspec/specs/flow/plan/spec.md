@@ -153,12 +153,12 @@ The plan phase SHALL open each change with one of the schemas the project has: t
 
 ##### Examples:
 
-  | schemas                                 | intention                                              | opened                        |
-  | --------------------------------------- | ------------------------------------------------------ | ----------------------------- |
-  | spec-plan, clean-backend                | add a behaviour to the service                         | clean-backend                 |
-  | spec-plan, clean-backend                | record how to diagnose an outage                       | spec-plan                     |
-  | spec-plan, clean-backend, clean-frontend | add a behaviour to the service and to the application | clean-backend, clean-frontend |
-  | legacy-to-specs                         | add a behaviour to the service                         | none                          |
+  | schemas                               | intention                                             | opened                     |
+  | ------------------------------------- | ----------------------------------------------------- | -------------------------- |
+  | spec-plan, clean-backend              | add a behaviour to the service                        | clean-backend              |
+  | spec-plan, clean-backend              | record how to diagnose an outage                      | spec-plan                  |
+  | spec-plan, clean-backend, clean-react | add a behaviour to the service and to the application | clean-backend, clean-react |
+  | legacy-to-specs                       | add a behaviour to the service                        | none                       |
 
 #### Scenario Outline: an intention to `<intention>` opens linked changes for the products `<opened>`
 
@@ -168,7 +168,7 @@ The plan phase SHALL open each change with one of the schemas the project has: t
 
 ##### Examples:
 
-  | products                                                                  | intention                                                    | opened                |
-  | ------------------------------------------------------------------------- | ------------------------------------------------------------ | --------------------- |
-  | api with clean-backend, worker with clean-backend                         | add a behaviour to the api                                   | api                   |
-  | api with clean-backend, worker with clean-backend, contracts with spec-plan | add a field the api returns and the worker reads            | contracts, api, worker |
+  | products                                                                    | intention                                        | opened                 |
+  | --------------------------------------------------------------------------- | ------------------------------------------------ | ---------------------- |
+  | api with clean-backend, worker with clean-backend                           | add a behaviour to the api                       | api                    |
+  | api with clean-backend, worker with clean-backend, contracts with spec-plan | add a field the api returns and the worker reads | contracts, api, worker |
