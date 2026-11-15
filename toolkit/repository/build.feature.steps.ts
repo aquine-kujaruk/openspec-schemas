@@ -23,20 +23,23 @@ import { PACKAGE_ROOT } from "../core/paths.ts";
  * Each scenario builds from a repository of its own: this repository's command over a handful of
  * resources written for the scenario, laid out as this repository is. Three schemas are defined:
  * `spec-plan`, and `clean-backend` and `legacy-to-specs` extending it; a manifest lists what the
- * scenario says.
+ * scenario says. A core, when a scenario writes one, sits in `schemas/shared/cores/<core>`.
  */
+const CORE_RELATION = "the core they both name lists it";
 const PHASES = ["plan", "implement", "verify", "archive", "feedback"];
 const TOOLS: Record<string, string> = {
   "specification tool": "@fission-ai/openspec",
   linter: "oxlint",
 };
-const FIELD: Record<string, "workstreams" | "validator" | "questions"> = {
+const FIELD: Record<string, "workstreams" | "validator" | "questions" | "core"> = {
+  core: "core",
   workstream: "workstreams",
   validator: "validator",
   "question policy": "questions",
 };
 /** What holds a resource inside the folder of a schema: a folder, or one file. */
 const PLACE: Record<string, (name: string) => string> = {
+  core: (name) => `cores/${name}`,
   workstream: (name) => `workstreams/${name}`,
   validator: (name) => `validators/${name}`,
   "question policy": (name) => `questions/${name}.md`,
@@ -159,6 +162,33 @@ export function createSteps() {
     mkdirSync(join(root, "schemas", name), { recursive: true });
     writeFileSync(join(root, "schemas", name, "schema.ts"), module(value));
   };
+  /** Where the workstream `name` is held now, in a schema, in the shared folder or in a core. */
+  const heldNow = (name: string): string | undefined =>
+    [
+      ...globSync(join(root, "schemas/*", PLACE.workstream!(name))),
+      ...globSync(join(root, "schemas/shared/cores/*", PLACE.workstream!(name))),
+    ][0];
+  /** Puts the workstream `name` in `folder` (a folder of `schemas/`), writing it when it is held nowhere. */
+  const holdWorkstream = (name: string, folder: string): void => {
+    const to = join(root, "schemas", folder, PLACE.workstream!(name));
+    const now = heldNow(name);
+    if (now) return move(now, to);
+    mkdirSync(to, { recursive: true });
+    writeFileSync(join(to, "workstream.ts"), "export default { layers: () => [] };\n");
+    writeFileSync(join(to, "SKILL.md"), skillText(name));
+  };
+  const writeCore = (core: string, workstreams: string[]): void => {
+    mkdirSync(join(root, "schemas/shared/cores", core), { recursive: true });
+    writeFileSync(
+      join(root, "schemas/shared/cores", core, "core.ts"),
+      module({
+        name: core,
+        description: `The ${core} core`,
+        workstreams,
+        topology: Object.fromEntries(workstreams.map((w) => [w, { dependsOn: [] }])),
+      }),
+    );
+  };
 
   return {
     // Context
@@ -205,7 +235,12 @@ export function createSteps() {
       relation: string,
     ): Promise<void> {
       for (const file of globSync(join(root, "schemas/*/schema.ts"))) rmSync(file);
-      const naming = { [FIELD[kind]!]: kind === "workstream" ? [name] : name };
+      const throughCore = relation === CORE_RELATION;
+      if (throughCore) writeCore("clean-core", [name]);
+      if (kind === "workstream" && !heldNow(name)) holdWorkstream(name, "clean-backend");
+      const naming = throughCore
+        ? { core: "clean-core" }
+        : { [FIELD[kind]!]: kind === "workstream" ? [name] : name };
       const [, extending, base] = /^(\S+) extends (\S+)$/.exec(relation) ?? [];
       for (const schema of listed.split(", "))
         writeDefinition(
@@ -230,7 +265,10 @@ export function createSteps() {
       }
     },
     async resourceHeldIn(kind: string, name: string, held: string): Promise<void> {
-      const [now] = globSync(join(root, "schemas/*", PLACE[kind]!(name)));
+      const [now] = [
+        ...globSync(join(root, "schemas/*", PLACE[kind]!(name))),
+        ...globSync(join(root, "schemas/shared/cores/*", PLACE[kind]!(name))),
+      ];
       move(now!, place(held, kind, name));
     },
     async manifestTakesSkillFromTool(skill: string, tool: string, repository: string): Promise<void> {
@@ -249,6 +287,33 @@ export function createSteps() {
       );
       skills.push({ tool: TOOLS[tool]!, path: `skills/${skill}` });
       for (const file of readdirSync(join(root, "packages"))) writeManifest(file.slice(0, -3));
+    },
+    async coreListsWorkstreams(core: string, coreWorkstreams: string): Promise<void> {
+      const listed = coreWorkstreams.split(", ");
+      writeCore(core, listed);
+      for (const workstream of listed) holdWorkstream(workstream, `shared/cores/${core}`);
+      // The fixture's backend now builds through the core instead of naming its workstream.
+      writeDefinition("clean-backend", {
+        name: "clean-backend",
+        extends: "spec-plan",
+        description: "The clean-backend schema",
+        core,
+      });
+    },
+    async definitionNamesCoreAndWorkstreams(listed: string, core: string, own: string): Promise<void> {
+      const workstreams = own === "none" ? [] : own.split(", ");
+      const ofCore = JSON.parse(
+        readFileSync(join(root, "schemas/shared/cores", core, "core.ts"), "utf8").replace(/^export default |;\n$/g, ""),
+      ) as { workstreams: string[] };
+      for (const workstream of workstreams)
+        if (!ofCore.workstreams.includes(workstream)) holdWorkstream(workstream, listed);
+      writeDefinition(listed, {
+        name: listed,
+        extends: "spec-plan",
+        description: `The ${listed} schema`,
+        core,
+        workstreams,
+      });
     },
 
     // Action
@@ -327,6 +392,16 @@ export function createSteps() {
       const files = readdirSync(built!.dir, { recursive: true }) as string[];
       expect(files.filter((f) => f.endsWith(join("skills", skill, "SKILL.md")))).toHaveLength(
         Number(copies),
+      );
+    },
+    async builtSchemaLetsTaskName(listed: string, workstreams: string): Promise<void> {
+      expect(failure?.message).toBeUndefined();
+      expect(built!.record.schemas[listed]!.workstreams.join(", ")).toBe(workstreams);
+      expect(shipped(`openspec/schemas/${listed}/schema.yaml`)).toContain(
+        `Workstreams a task may name: ${workstreams
+          .split(", ")
+          .map((w) => `\`${w}\``)
+          .join(", ")}.`,
       );
     },
   };

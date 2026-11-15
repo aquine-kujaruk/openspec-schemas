@@ -101,10 +101,28 @@ describe('Feature: repository/build Specification', () => {
       // And `0` built package(s) called `backend` exist
       await steps.builtPackagesCalled('0', 'backend')
     })
+
+    // Line 25
+    test('a definition naming the missing `core` `onion` stops the build', async () => {
+      const steps = createSteps()
+
+      // Given a package manifest `backend` listing the schemas `clean-backend`
+      await steps.manifestListingSchemas('backend', 'clean-backend')
+      // And the definition of `clean-backend` names the `core` `onion`
+      await steps.definitionNamesResource('clean-backend', 'core', 'onion')
+      // And no `core` called `onion` exists
+      await steps.resourceDoesNotExist('core', 'onion')
+      // When the package `backend` is built
+      await steps.buildPackage('backend')
+      // Then the build fails naming `onion`
+      await steps.buildFailsNaming('onion')
+      // And `0` built package(s) called `backend` exist
+      await steps.builtPackagesCalled('0', 'backend')
+    })
   })
 
   describe('Rule: A variant differs only in what it overrides', () => {
-    // Line 43
+    // Line 44
     test('`clean-backend-strict` overrides the `validator` of `clean-backend` and keeps its `question policy`', async () => {
       const steps = createSteps()
 
@@ -120,7 +138,7 @@ describe('Feature: repository/build Specification', () => {
       await steps.builtSchemaKeeps('clean-backend-strict', 'question policy', 'clean-backend')
     })
 
-    // Line 43
+    // Line 44
     test('`clean-backend-quiet` overrides the `question policy` of `clean-backend` and keeps its `validator`', async () => {
       const steps = createSteps()
 
@@ -138,7 +156,7 @@ describe('Feature: repository/build Specification', () => {
   })
 
   describe('Rule: A built package is known to be fresh or stale', () => {
-    // Line 59
+    // Line 60
     test('`backend` is reported `fresh` when `schemas/clean-backend/workstreams/app-domain/SKILL.md` is `unchanged`', async () => {
       const steps = createSteps()
 
@@ -152,7 +170,7 @@ describe('Feature: repository/build Specification', () => {
       await steps.packageReportedAs('fresh')
     })
 
-    // Line 59
+    // Line 60
     test('`backend` is reported `stale` when `schemas/clean-backend/workstreams/app-domain/SKILL.md` is `edited`', async () => {
       const steps = createSteps()
 
@@ -166,7 +184,7 @@ describe('Feature: repository/build Specification', () => {
       await steps.packageReportedAs('stale')
     })
 
-    // Line 59
+    // Line 60
     test('`backend` is reported `stale` when `schemas/spec-plan/questions/ask-on-commitment.md` is `edited`', async () => {
       const steps = createSteps()
 
@@ -180,7 +198,7 @@ describe('Feature: repository/build Specification', () => {
       await steps.packageReportedAs('stale')
     })
 
-    // Line 59
+    // Line 60
     test('`backend` is reported `stale` when `schemas/shared/phases/plan/SKILL.md` is `edited`', async () => {
       const steps = createSteps()
 
@@ -196,7 +214,7 @@ describe('Feature: repository/build Specification', () => {
   })
 
   describe('Rule: A built package pins every tool it runs', () => {
-    // Line 76
+    // Line 77
     test('the built `backend` runs `specification tool` at exactly `2.0.0`', async () => {
       const steps = createSteps()
 
@@ -210,7 +228,7 @@ describe('Feature: repository/build Specification', () => {
       await steps.builtToolVersion('specification tool', '2.0.0')
     })
 
-    // Line 76
+    // Line 77
     test('the built `backend` runs `linter` at exactly `1.93.0`', async () => {
       const steps = createSteps()
 
@@ -226,7 +244,7 @@ describe('Feature: repository/build Specification', () => {
   })
 
   describe('Rule: A resource is held where the definitions naming it put it', () => {
-    // Line 91
+    // Line 92
     test('the `validator` `standard` held in `spec-plan` is accepted when `clean-backend extends spec-plan`', async () => {
       const steps = createSteps()
 
@@ -242,39 +260,55 @@ describe('Feature: repository/build Specification', () => {
       await steps.builtPackagesCalled('1', 'backend')
     })
 
-    // Line 91
-    test('the `workstream` `app-domain` held in `clean-backend` is accepted when `no other definition names it`', async () => {
+    // Line 92
+    test('the `workstream` `delivery` held in `clean-backend` is accepted when `no other definition names it`', async () => {
       const steps = createSteps()
 
       // Given a package manifest `backend` listing the schemas `clean-backend`
       await steps.manifestListingSchemas('backend', 'clean-backend')
-      // And the definitions `clean-backend` name the `workstream` `app-domain`, and `no other definition names it`
-      await steps.definitionsNameResourceAnd('clean-backend', 'workstream', 'app-domain', 'no other definition names it')
-      // And the `workstream` `app-domain` is held in the folder `clean-backend`
-      await steps.resourceHeldIn('workstream', 'app-domain', 'clean-backend')
+      // And the definitions `clean-backend` name the `workstream` `delivery`, and `no other definition names it`
+      await steps.definitionsNameResourceAnd('clean-backend', 'workstream', 'delivery', 'no other definition names it')
+      // And the `workstream` `delivery` is held in the folder `clean-backend`
+      await steps.resourceHeldIn('workstream', 'delivery', 'clean-backend')
       // When the package `backend` is built
       await steps.buildPackage('backend')
       // Then `1` built package(s) called `backend` exist
       await steps.builtPackagesCalled('1', 'backend')
     })
 
-    // Line 91
-    test('the `workstream` `app-domain` held in `shared` is accepted when `neither extends the other`', async () => {
+    // Line 92
+    test('the `workstream` `reporting` held in `shared` is accepted when `neither extends the other`', async () => {
       const steps = createSteps()
 
-      // Given a package manifest `both` listing the schemas `clean-backend, clean-frontend`
-      await steps.manifestListingSchemas('both', 'clean-backend, clean-frontend')
-      // And the definitions `clean-backend, clean-frontend` name the `workstream` `app-domain`, and `neither extends the other`
-      await steps.definitionsNameResourceAnd('clean-backend, clean-frontend', 'workstream', 'app-domain', 'neither extends the other')
-      // And the `workstream` `app-domain` is held in the folder `shared`
-      await steps.resourceHeldIn('workstream', 'app-domain', 'shared')
+      // Given a package manifest `both` listing the schemas `clean-backend, clean-react`
+      await steps.manifestListingSchemas('both', 'clean-backend, clean-react')
+      // And the definitions `clean-backend, clean-react` name the `workstream` `reporting`, and `neither extends the other`
+      await steps.definitionsNameResourceAnd('clean-backend, clean-react', 'workstream', 'reporting', 'neither extends the other')
+      // And the `workstream` `reporting` is held in the folder `shared`
+      await steps.resourceHeldIn('workstream', 'reporting', 'shared')
       // When the package `both` is built
       await steps.buildPackage('both')
       // Then `1` built package(s) called `both` exist
       await steps.builtPackagesCalled('1', 'both')
     })
 
-    // Line 104
+    // Line 92
+    test('the `workstream` `app-domain` held in `shared/cores/clean-core` is accepted when `the core they both name lists it`', async () => {
+      const steps = createSteps()
+
+      // Given a package manifest `both` listing the schemas `clean-backend, clean-react`
+      await steps.manifestListingSchemas('both', 'clean-backend, clean-react')
+      // And the definitions `clean-backend, clean-react` name the `workstream` `app-domain`, and `the core they both name lists it`
+      await steps.definitionsNameResourceAnd('clean-backend, clean-react', 'workstream', 'app-domain', 'the core they both name lists it')
+      // And the `workstream` `app-domain` is held in the folder `shared/cores/clean-core`
+      await steps.resourceHeldIn('workstream', 'app-domain', 'shared/cores/clean-core')
+      // When the package `both` is built
+      await steps.buildPackage('both')
+      // Then `1` built package(s) called `both` exist
+      await steps.builtPackagesCalled('1', 'both')
+    })
+
+    // Line 106
     test('the `validator` `standard` held in `shared` is refused when `clean-backend extends spec-plan`', async () => {
       const steps = createSteps()
 
@@ -292,27 +326,63 @@ describe('Feature: repository/build Specification', () => {
       await steps.failureSaysBelongsIn('spec-plan')
     })
 
-    // Line 104
-    test('the `workstream` `app-domain` held in `clean-backend` is refused when `neither extends the other`', async () => {
+    // Line 106
+    test('the `workstream` `reporting` held in `clean-backend` is refused when `neither extends the other`', async () => {
       const steps = createSteps()
 
-      // Given a package manifest `both` listing the schemas `clean-backend, clean-frontend`
-      await steps.manifestListingSchemas('both', 'clean-backend, clean-frontend')
-      // And the definitions `clean-backend, clean-frontend` name the `workstream` `app-domain`, and `neither extends the other`
-      await steps.definitionsNameResourceAnd('clean-backend, clean-frontend', 'workstream', 'app-domain', 'neither extends the other')
+      // Given a package manifest `both` listing the schemas `clean-backend, clean-react`
+      await steps.manifestListingSchemas('both', 'clean-backend, clean-react')
+      // And the definitions `clean-backend, clean-react` name the `workstream` `reporting`, and `neither extends the other`
+      await steps.definitionsNameResourceAnd('clean-backend, clean-react', 'workstream', 'reporting', 'neither extends the other')
+      // And the `workstream` `reporting` is held in the folder `clean-backend`
+      await steps.resourceHeldIn('workstream', 'reporting', 'clean-backend')
+      // When the package `both` is built
+      await steps.buildPackage('both')
+      // Then the build fails naming `reporting`
+      await steps.buildFailsNaming('reporting')
+      // And the failure says it belongs in the folder `shared`
+      await steps.failureSaysBelongsIn('shared')
+    })
+
+    // Line 106
+    test('the `workstream` `app-domain` held in `clean-backend` is refused when `the core they both name lists it`', async () => {
+      const steps = createSteps()
+
+      // Given a package manifest `both` listing the schemas `clean-backend, clean-react`
+      await steps.manifestListingSchemas('both', 'clean-backend, clean-react')
+      // And the definitions `clean-backend, clean-react` name the `workstream` `app-domain`, and `the core they both name lists it`
+      await steps.definitionsNameResourceAnd('clean-backend, clean-react', 'workstream', 'app-domain', 'the core they both name lists it')
       // And the `workstream` `app-domain` is held in the folder `clean-backend`
       await steps.resourceHeldIn('workstream', 'app-domain', 'clean-backend')
       // When the package `both` is built
       await steps.buildPackage('both')
       // Then the build fails naming `app-domain`
       await steps.buildFailsNaming('app-domain')
-      // And the failure says it belongs in the folder `shared`
-      await steps.failureSaysBelongsIn('shared')
+      // And the failure says it belongs in the folder `shared/cores/clean-core`
+      await steps.failureSaysBelongsIn('shared/cores/clean-core')
+    })
+
+    // Line 106
+    test('the `workstream` `app-domain` held in `shared` is refused when `the core they both name lists it`', async () => {
+      const steps = createSteps()
+
+      // Given a package manifest `both` listing the schemas `clean-backend, clean-react`
+      await steps.manifestListingSchemas('both', 'clean-backend, clean-react')
+      // And the definitions `clean-backend, clean-react` name the `workstream` `app-domain`, and `the core they both name lists it`
+      await steps.definitionsNameResourceAnd('clean-backend, clean-react', 'workstream', 'app-domain', 'the core they both name lists it')
+      // And the `workstream` `app-domain` is held in the folder `shared`
+      await steps.resourceHeldIn('workstream', 'app-domain', 'shared')
+      // When the package `both` is built
+      await steps.buildPackage('both')
+      // Then the build fails naming `app-domain`
+      await steps.buildFailsNaming('app-domain')
+      // And the failure says it belongs in the folder `shared/cores/clean-core`
+      await steps.failureSaysBelongsIn('shared/cores/clean-core')
     })
   })
 
   describe('Rule: A package declares the skills of its tools instead of carrying them', () => {
-    // Line 121
+    // Line 125
     test('the skill `spec-writing` of `specification tool` at `2.0.0` is declared as `acme/specification/skills/spec-writing#v2.0.0`', async () => {
       const steps = createSteps()
 
@@ -330,7 +400,7 @@ describe('Feature: repository/build Specification', () => {
       await steps.skillCopiesHeld('0', 'spec-writing')
     })
 
-    // Line 121
+    // Line 125
     test('the skill `lint-reading` of `linter` at `1.93.0` is declared as `acme/linter/skills/lint-reading#v1.93.0`', async () => {
       const steps = createSteps()
 
@@ -348,7 +418,7 @@ describe('Feature: repository/build Specification', () => {
       await steps.skillCopiesHeld('0', 'lint-reading')
     })
 
-    // Line 134
+    // Line 138
     test('a skill taken from `linter`, which names no repository, stops the build', async () => {
       const steps = createSteps()
 
@@ -362,6 +432,58 @@ describe('Feature: repository/build Specification', () => {
       await steps.buildPackage('backend')
       // Then the build fails naming `lint-reading`
       await steps.buildFailsNaming('lint-reading')
+      // And `0` built package(s) called `backend` exist
+      await steps.builtPackagesCalled('0', 'backend')
+    })
+  })
+
+  describe('Rule: A schema builds through the workstreams of its core and its own', () => {
+    // Line 154
+    test('`clean-backend` naming the core `clean-core` and its own `none` builds through `app-domain, infrastructure, adapters, modules, integrate`', async () => {
+      const steps = createSteps()
+
+      // Given a package manifest `backend` listing the schemas `clean-backend`
+      await steps.manifestListingSchemas('backend', 'clean-backend')
+      // And the core `clean-core` lists the workstreams `app-domain, infrastructure, adapters, modules, integrate`
+      await steps.coreListsWorkstreams('clean-core', 'app-domain, infrastructure, adapters, modules, integrate')
+      // And the definition of `clean-backend` names the core `clean-core` and the workstreams `none`
+      await steps.definitionNamesCoreAndWorkstreams('clean-backend', 'clean-core', 'none')
+      // When the package `backend` is built
+      await steps.buildPackage('backend')
+      // Then the built schema `clean-backend` lets a task name `app-domain, infrastructure, adapters, modules, integrate`
+      await steps.builtSchemaLetsTaskName('clean-backend', 'app-domain, infrastructure, adapters, modules, integrate')
+    })
+
+    // Line 154
+    test('`clean-react` naming the core `clean-core` and its own `react-ui, react-hooks` builds through `app-domain, infrastructure, adapters, modules, integrate, react-ui, react-hooks`', async () => {
+      const steps = createSteps()
+
+      // Given a package manifest `frontend` listing the schemas `clean-react`
+      await steps.manifestListingSchemas('frontend', 'clean-react')
+      // And the core `clean-core` lists the workstreams `app-domain, infrastructure, adapters, modules, integrate`
+      await steps.coreListsWorkstreams('clean-core', 'app-domain, infrastructure, adapters, modules, integrate')
+      // And the definition of `clean-react` names the core `clean-core` and the workstreams `react-ui, react-hooks`
+      await steps.definitionNamesCoreAndWorkstreams('clean-react', 'clean-core', 'react-ui, react-hooks')
+      // When the package `frontend` is built
+      await steps.buildPackage('frontend')
+      // Then the built schema `clean-react` lets a task name `app-domain, infrastructure, adapters, modules, integrate, react-ui, react-hooks`
+      await steps.builtSchemaLetsTaskName('clean-react', 'app-domain, infrastructure, adapters, modules, integrate, react-ui, react-hooks')
+    })
+
+    // Line 166
+    test('`clean-backend` naming `modules`, which its core `clean-core` already lists, stops the build', async () => {
+      const steps = createSteps()
+
+      // Given a package manifest `backend` listing the schemas `clean-backend`
+      await steps.manifestListingSchemas('backend', 'clean-backend')
+      // And the core `clean-core` lists the workstreams `app-domain, infrastructure, adapters, modules, integrate`
+      await steps.coreListsWorkstreams('clean-core', 'app-domain, infrastructure, adapters, modules, integrate')
+      // And the definition of `clean-backend` names the core `clean-core` and the workstreams `modules`
+      await steps.definitionNamesCoreAndWorkstreams('clean-backend', 'clean-core', 'modules')
+      // When the package `backend` is built
+      await steps.buildPackage('backend')
+      // Then the build fails naming `modules`
+      await steps.buildFailsNaming('modules')
       // And `0` built package(s) called `backend` exist
       await steps.builtPackagesCalled('0', 'backend')
     })

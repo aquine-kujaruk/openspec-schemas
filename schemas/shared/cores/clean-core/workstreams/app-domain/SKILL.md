@@ -33,6 +33,6 @@ description: Build the app-domain workstream of the implementer: the acceptance 
 3. `pnpm exec factory generate`: each product spec becomes `test/acceptance/<module>/<use-case>.feature.test.ts` and a step adapter `<use-case>.feature.steps.ts` with a pending method per step. Never write or edit a test file; a behavior the spec lacks goes back as feedback on the change.
 4. Write the in-memory repositories, fill the step adapter of each use case, then write the use case and the domain it needs, until `pnpm exec factory test acceptance` is green. A step method keeps its parameter names equal to the spec's placeholders, or the next generation scaffolds it again. Steps check their data with assertions (`expect`), never `throw new Error(`; the `PENDING` bodies feat2test scaffolds break that rule, so the pipeline is red until every step is written.
 5. The module's exceptions are the family the design declares: one base extending `DomainException`, one subclass per business failure.
-6. Follow the core-wide rules even though `clean-architecture` checks them: no `any` in the core, only domain exceptions (the provider error in `cause`), the schema package only in `domain/schemas`.
+6. Follow the core-wide rules even though `modules` checks them: no `any` in the core, only domain exceptions (the provider error in `cause`), the schema package only in `domain/schemas`.
 
 **Check:** `pnpm exec factory check --workstream app-domain [--module <module>]`, plus `pnpm exec factory test acceptance`.

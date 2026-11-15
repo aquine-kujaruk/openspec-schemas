@@ -1,4 +1,5 @@
-import type { FactoryConfig } from "./types.ts";
+import { PLATFORMS } from "./platform.ts";
+import type { FactoryConfig, Platform } from "./types.ts";
 
 /** Every key optional at every depth: a project configuration sets only what it changes. */
 export type DeepPartial<T> = T extends readonly unknown[]
@@ -7,14 +8,17 @@ export type DeepPartial<T> = T extends readonly unknown[]
     ? { [K in keyof T]?: DeepPartial<T[K]> }
     : T;
 
+/** What a configuration sets over the defaults; a platform may be named (`"web"`) or given whole. */
+export type Overrides = Omit<DeepPartial<FactoryConfig>, "platform"> & { platform?: string | Platform };
+
 /** One product of a project: its folder, its schema, and what it sets over the project's configuration. */
-export type ProductEntry = DeepPartial<FactoryConfig> & { root: string; schema: string };
+export type ProductEntry = Overrides & { root: string; schema: string };
 
 /**
  * What `factory.config.ts` exports: what a project sets over its schema's defaults, which schema
  * that is when it has several that build product code, and the products it declares by folder.
  */
-export type ProjectConfig = DeepPartial<FactoryConfig> & {
+export type ProjectConfig = Overrides & {
   schema?: string;
   products?: Record<string, ProductEntry>;
 };
@@ -39,6 +43,16 @@ const merge = (base: unknown, over: unknown): unknown => {
  * Without a project configuration, the defaults as they are.
  */
 export const resolveConfig = (defaults: FactoryConfig, project?: ProjectConfig): FactoryConfig => {
-  const { schema: _schema, products: _products, ...over } = project ?? {};
-  return merge(defaults, project ? over : undefined) as FactoryConfig;
+  const { schema: _schema, products: _products, platform, ...over } = project ?? {};
+  const resolved = merge(defaults, project ? over : undefined) as FactoryConfig;
+  return platform === undefined ? resolved : { ...resolved, platform: platformNamed(platform) };
+};
+
+/** The platform a configuration names, or gives whole. */
+const platformNamed = (platform: string | Platform): Platform => {
+  if (typeof platform !== "string") return platform;
+  const found = PLATFORMS[platform];
+  if (!found)
+    throw new Error(`no platform is called ${platform}; platforms: ${Object.keys(PLATFORMS).join(", ")}`);
+  return found;
 };

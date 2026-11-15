@@ -4,10 +4,10 @@ import {
   namesTheRoleRule,
   pascal,
   throwsDomainExceptionsRule,
-} from "../../../../toolkit/architecture/archunit.ts";
-import { restrictedImports } from "../../../../toolkit/architecture/oxlint.ts";
-import type { Layer } from "../../../../toolkit/core/types.ts";
-import type { Options } from "../../../../toolkit/core/types.ts";
+} from "../../../../../../toolkit/architecture/archunit.ts";
+import { restrictedImports } from "../../../../../../toolkit/architecture/oxlint.ts";
+import type { Layer } from "../../../../../../toolkit/core/types.ts";
+import type { Options } from "../../../../../../toolkit/core/types.ts";
 
 /** The folder this layer owns, inside each module's infrastructure. */
 const FOLDER = "infrastructure/adapters";

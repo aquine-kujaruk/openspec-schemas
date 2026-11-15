@@ -5,8 +5,9 @@ OpenSpec schemas, the resources they are built from, and the packages built from
 ```
 schemas/
   spec-plan/       a plan and delta specs, with no architecture: templates, validator, question policy
-  clean-backend/   extends spec-plan: Clean Architecture for a backend, its workstreams and its rubric
+  clean-backend/   extends spec-plan: Clean Architecture for a backend, the clean core with no framework
   shared/          what every package carries: the phase skills, setup, the flow instruction, the guards
+    cores/         the cores schemas build through, each with its workstreams and its rubric
 packages/          one manifest per package: the schemas it carries, the agents, the pinned tools
 toolkit/           the command, `factory`: its entry and one folder per area of the specs
   core/            what every area uses: paths, types, configuration
@@ -17,9 +18,9 @@ toolkit/           the command, `factory`: its entry and one folder per area of 
 openspec/          this repository's own specs and changes
 ```
 
-Open a schema's folder and you see what only that schema is made of. A resource lives with the definition that names it; one that extends another finds its base's resources in the base's folder; a resource named by two unrelated definitions lives in `schemas/shared/`. The build fails, naming the resource and where it belongs, when one is held anywhere else.
+Open a schema's folder and you see what only that schema is made of. A schema that builds product code names one core, a folder of `schemas/shared/cores/` that holds the workstreams of an architecture and says which waits for which, and adds the workstreams of its framework, if it has one. `clean-core` is Clean Architecture: `app-domain`, `infrastructure`, `adapters`, `modules` (the rules across modules and the entry) and `integrate`. A schema's name is its core's short name and what it adds: `clean-backend`. A resource lives with the definition that names it; one that extends another finds its base's resources in the base's folder; a resource named by two unrelated definitions lives in `schemas/shared/`. The build fails, naming the resource and where it belongs, when one is held anywhere else.
 
-`spec-plan` is for a change no architecture covers: a procedure, a decision, tooling, documents. `clean-backend` adds the workstreams a backend is built through. The package `backend` carries both for Claude and Codex.
+`spec-plan` is for a change no architecture covers: a procedure, a decision, tooling, documents. `clean-backend` builds a backend through the clean core. The package `backend` carries both for Claude and Codex.
 
 Why each thing is the way it is lives in `openspec/`: the specs under `openspec/specs`, the change in progress under `openspec/changes`.
 
@@ -48,7 +49,7 @@ The project needs Node 22.18 or later, pnpm, and the agent package manager APM 0
 2. Pin the command the skills call. The tarball came with the `setup` skill; its file name carries the version:
 
    ```bash
-   pnpm add -D ./.claude/skills/setup/assets/factory-0.3.0.tgz
+   pnpm add -D ./.claude/skills/setup/assets/factory-0.4.0.tgz
    ```
 
 3. Let setup repair what the package owns and list what the project must supply:
@@ -116,6 +117,10 @@ export default {
 
 A project with no `products` has one product at its root and works as before.
 
+### From 0.3 to 0.4
+
+The workstream `clean-architecture` is now called `modules`; it owns the same rules and the entry. A plan written before 0.4 whose tasks name `clean-architecture` is reported not ready: rename those tasks to `modules`. A project's `factory.config.ts` that sets a topology under `workstreams` renames the key the same way. A configuration can now name its platform, `platform: "web"` or `platform: "node"`.
+
 ### Codex
 
 Codex loads a project's hooks and its `AGENTS.md` only in a project it trusts, and runs a hook only after it was reviewed. Trust the project, then review each hook with `/hooks`. Do it again after every update of the package that changes a hook: Codex skips a changed hook until it is reviewed.
@@ -126,6 +131,6 @@ Codex loads a project's hooks and its `AGENTS.md` only in a project it trusts, a
 pnpm run check
 ```
 
-It type-checks, verifies that the generated tests and the schemas under `openspec/schemas` are as fresh as what they come from, and runs the tests. `pnpm exec factory generate` writes both; run it once after cloning, since `openspec/schemas` is not in git and the specification tool reads this repository's schemas from there. The repository's own changes are opened with `spec-plan`.
+It type-checks, verifies that the generated tests and the schemas under `openspec/schemas` are as fresh as what they come from, and runs the tests. The tests run as one project per holder of workstreams (every core, and every schema with workstreams of its own), each with that holder's defaults (`FACTORY_HOLDER`), so a layer's examples are verified with the defaults of whoever holds its workstream; every other test runs once. `pnpm exec factory generate` writes both; run it once after cloning, since `openspec/schemas` is not in git and the specification tool reads this repository's schemas from there. The repository's own changes are opened with `spec-plan`.
 
 A change of this repository goes through the same commands as a change of a project: `factory validate`, `factory implement`, `factory verify` and `factory archive`. While a change is ready, the tests of its delta specs are generated straight from the change, each next to the step adapter of its spec; no delta is copied into `openspec/specs` by hand, the archive merges it. Four specs have no step adapter and so no generated test (`implementer`, `architecture/linting`, `flow/plan`, `flow/implement`): when a change touches one, say it is proved with `factory verify <change> --proved <spec>`, and the evidence records it as proved by your word. The repository's own commands are `pnpm exec factory <command>`; `pnpm exec factory` with no command lists them.

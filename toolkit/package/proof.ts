@@ -1,5 +1,6 @@
 import {
   cpSync,
+  existsSync,
   globSync,
   mkdirSync,
   mkdtempSync,
@@ -12,8 +13,8 @@ import { basename, dirname, join } from "node:path";
 import { build, packageNames } from "../repository/build.ts";
 import { PLACES } from "./doctor.ts";
 import { parseExampleFile } from "../architecture/example-file.ts";
-import { capture, COMMAND, INSTALLED, PROJECT_ROOT, SETUP_ASSETS } from "../core/paths.ts";
-import { loadDefinition } from "../repository/schema.ts";
+import { capture, COMMAND, INSTALLED, PROJECT_ROOT, SETUP_ASSETS, SOURCE_EXT } from "../core/paths.ts";
+import { loadDefinition, loadSchema } from "../repository/schema.ts";
 import type { Installed } from "../core/types.ts";
 
 const TSCONFIG = {
@@ -89,6 +90,10 @@ export const run = async (args: string[]): Promise<number> => {
   for (const schema of installed.schemas)
     schemaPackages.add((await loadDefinition(schema, PROJECT_ROOT)).defaults.schemaPackage);
   const skills = PLACES[installed.agents[0]!]!.skills;
+  // The workstream that owns the cross-module layer reduces the code workstreams; its check covers them.
+  const reducer = Object.entries((await loadSchema(installed.schemas[0]!, PROJECT_ROOT)).workstreamDirs).find(
+    ([, folder]) => existsSync(join(folder, `modules.rules${SOURCE_EXT}`)),
+  )?.[0];
   const steps: Array<() => boolean> = [
     () =>
       step(
@@ -116,7 +121,7 @@ export const run = async (args: string[]): Promise<number> => {
     },
     () => factory("its tests are generated from its spec", "generate"),
     () => factory("the generated tests are fresh", "generate", "--check"),
-    () => factory("its rules hold", "check", "--workstream", "clean-architecture"),
+    () => (reducer ? factory("its rules hold", "check", "--workstream", reducer) : factory("its rules hold", "check")),
     () => factory("its acceptance tests pass", "test", "acceptance"),
     () => factory("its integration tests pass", "test", "integration"),
   ];

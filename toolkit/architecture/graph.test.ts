@@ -12,7 +12,7 @@ const DECLARATIONS = {
   "app-domain": declare("acceptance", "application", "domain"),
   infrastructure: declare("infrastructure"),
   adapters: declare("adapters"),
-  "clean-architecture": declare("modules"),
+  modules: declare("modules"),
   integrate: declare(),
 };
 const folders = (d: Record<string, WorkstreamDeclaration> = DECLARATIONS): Folders =>
@@ -25,12 +25,12 @@ const SEQUENCE: Topology = {
   "app-domain": { dependsOn: [] },
   infrastructure: { dependsOn: ["app-domain"] },
   adapters: { dependsOn: ["infrastructure"] },
-  "clean-architecture": { dependsOn: ["adapters"] },
-  integrate: { dependsOn: ["clean-architecture"] },
+  modules: { dependsOn: ["adapters"] },
+  integrate: { dependsOn: ["modules"] },
 };
 
 describe("the implementer declares its workstreams and their dependencies", () => {
-  it.each([["integrate", "clean-architecure"]])("a dependency of %s on the unknown workstream %s is rejected", (workstream, dependency) => {
+  it.each([["integrate", "moduls"]])("a dependency of %s on the unknown workstream %s is rejected", (workstream, dependency) => {
     const topology = { ...DEFAULTS.workstreams, [workstream]: { dependsOn: [dependency] } };
     expect(() => load(topology)).toThrow(new RegExp(`${workstream} depends on ${dependency}`));
   });
@@ -48,7 +48,7 @@ describe("the implementer declares its workstreams and their dependencies", () =
     expect(() => load(topology)).toThrow(/workstream e2e: configured, but it has no folder/);
   });
   it.each([
-    ["clean-architecture", "integrate", "clean-architecture → integrate → clean-architecture"],
+    ["modules", "integrate", "modules → integrate → modules"],
   ])("%s and %s depending on each other are rejected", (workstream, dependency, cycle) => {
     const topology = {
       ...DEFAULTS.workstreams,
@@ -62,10 +62,10 @@ describe("the implementer declares its workstreams and their dependencies", () =
 describe("workstreams run in dependency order", () => {
   const before = (order: string[], a: string, b: string) => order.indexOf(a) < order.indexOf(b);
   it.each([
-    ["clean-architecture", "app-domain"],
-    ["clean-architecture", "infrastructure"],
-    ["clean-architecture", "adapters"],
-    ["integrate", "clean-architecture"],
+    ["modules", "app-domain"],
+    ["modules", "infrastructure"],
+    ["modules", "adapters"],
+    ["integrate", "modules"],
   ])("by default %s waits for %s", (workstream, dependency) => {
     const ws = load(DEFAULTS.workstreams);
     expect(before(runOrder(ws), dependency, workstream)).toBe(true);
@@ -95,8 +95,8 @@ describe("every layer belongs to exactly one workstream", () => {
     );
   });
   it("a layer file no workstream owns is rejected", () => {
-    const d = { ...DECLARATIONS, "clean-architecture": declare() };
-    const f = { ...folders(d), "clean-architecture": { layerFiles: ["modules"] } };
+    const d = { ...DECLARATIONS, modules: declare() };
+    const f = { ...folders(d), modules: { layerFiles: ["modules"] } };
     expect(() => load(DEFAULTS.workstreams, d, f)).toThrow(
       /layer modules: .* owned by no workstream/,
     );
@@ -107,7 +107,7 @@ describe("every layer belongs to exactly one workstream", () => {
     ["domain", "app-domain"],
     ["infrastructure", "infrastructure"],
     ["adapters", "adapters"],
-    ["modules", "clean-architecture"],
+    ["modules", "modules"],
   ])("layer %s belongs to %s", (name, workstream) => {
     expect(ownerOf(load(DEFAULTS.workstreams), name)?.id).toBe(workstream);
   });

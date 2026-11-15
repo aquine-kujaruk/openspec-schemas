@@ -5,7 +5,7 @@ description: Run the integrate reduce workstream of the implementer: join the wo
 
 # integrate
 
-**Reduces:** the workstreams the topology lists under it (by default `clean-architecture`).
+**Reduces:** the workstreams the topology lists under it (by default `modules`).
 
 **Owns:** the checks that only make sense once everything is wired:
 

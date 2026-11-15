@@ -1,8 +1,8 @@
 import { globSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
-import { ARCHITECTURE_SPECS, PACKAGE_ROOT } from "../core/paths.ts";
+import { ARCHITECTURE_SPECS, PACKAGE_ROOT, SOURCE_EXT } from "../core/paths.ts";
 import { productOf } from "../repository/products.ts";
-import { ownerOf } from "./graph.ts";
+import { holderNames, loadHolder } from "../repository/schema.ts";
 
 /** Where the tests generated from specs are written: what tells a project from the repository the command is developed in. */
 export type Layout = {
@@ -35,8 +35,12 @@ export const layoutOf = async (root: string, named?: string): Promise<Layout> =>
   const { acceptance } = config;
   if (root !== PACKAGE_ROOT)
     return { repository: false, acceptance, product: name || undefined, adapterFolder: () => undefined };
-  // A layer's spec is proved in the folder of the workstream that owns the layer.
-  const { architecture, WORKSTREAM_DIRS } = await import("./project.ts");
+  // A layer's spec is proved in the folder of the workstream that owns the layer, whoever holds it.
+  const owners = new Map<string, string>();
+  for (const holder of await holderNames(root))
+    for (const dir of Object.values((await loadHolder(holder, root)).workstreamDirs))
+      for (const rules of globSync(`*.rules${SOURCE_EXT}`, { cwd: dir }))
+        owners.set(basename(rules, `.rules${SOURCE_EXT}`), relative(root, dir));
   const adapters = new Map(
     globSync("**/*.feature.steps.ts", {
       cwd: root,
@@ -47,10 +51,7 @@ export const layoutOf = async (root: string, named?: string): Promise<Layout> =>
   return {
     repository: true,
     acceptance,
-    adapterFolder: (spec) => {
-      const owner =
-        dirname(spec) === layers ? ownerOf(architecture.workstreams, basename(spec)) : undefined;
-      return owner ? relative(root, WORKSTREAM_DIRS[owner.id]!) : adapters.get(basename(spec));
-    },
+    adapterFolder: (spec) =>
+      (dirname(spec) === layers ? owners.get(basename(spec)) : undefined) ?? adapters.get(basename(spec)),
   };
 };

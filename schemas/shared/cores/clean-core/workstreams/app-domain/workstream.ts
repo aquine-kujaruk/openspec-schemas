@@ -1,4 +1,4 @@
-import type { WorkstreamDeclaration } from "../../../../toolkit/core/types.ts";
+import type { WorkstreamDeclaration } from "../../../../../../toolkit/core/types.ts";
 import { acceptance } from "./acceptance.rules.ts";
 import { application } from "./application.rules.ts";
 import { domain } from "./domain.rules.ts";

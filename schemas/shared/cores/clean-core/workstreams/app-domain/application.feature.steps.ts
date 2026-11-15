@@ -1,9 +1,9 @@
 import { basename, join } from "node:path";
 import { expect } from "vitest";
-import { architecture, exampleArchitecture } from "../../../../toolkit/architecture/project.ts";
-import { ruleIds } from "../../../../toolkit/architecture/rules.ts";
-import { examples, type Findings } from "../../../../toolkit/architecture/examples.ts";
-import { expectations } from "../../../../toolkit/architecture/expectations.ts";
+import { architecture, exampleArchitecture } from "../../../../../../toolkit/architecture/project.ts";
+import { ruleIds } from "../../../../../../toolkit/architecture/rules.ts";
+import { examples, type Findings } from "../../../../../../toolkit/architecture/examples.ts";
+import { expectations } from "../../../../../../toolkit/architecture/expectations.ts";
 
 const layer = basename(import.meta.filename, ".feature.steps.ts");
 const ex = examples(exampleArchitecture, import.meta.dirname, layer);

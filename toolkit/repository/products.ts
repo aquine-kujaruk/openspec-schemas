@@ -1,10 +1,10 @@
 import { existsSync } from "node:fs";
-import { join, posix } from "node:path";
+import { join, posix, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { type ProductEntry, type ProjectConfig, resolveConfig } from "../core/config.ts";
 import { PACKAGE_ROOT } from "../core/paths.ts";
 import type { FactoryConfig } from "../core/types.ts";
-import { loadDefinition, projectSchemaName } from "./schema.ts";
+import { loadDefinition, loadHolder, projectSchemaName } from "./schema.ts";
 
 /**
  * One product of the project: a folder governed by one schema, with its configuration resolved.
@@ -23,6 +23,12 @@ export type Product = {
 
 /** The environment variable that names the product a run of the command works on. */
 export const PRODUCT_VARIABLE = "FACTORY_PRODUCT";
+
+/**
+ * The environment variable that names, in the repository the command is developed in, the holder
+ * of workstreams (a core or a schema) whose defaults a run uses: its examples are verified with them.
+ */
+export const HOLDER_VARIABLE = "FACTORY_HOLDER";
 
 /** The project's `factory.config.ts`, when it has one. */
 export const readProjectConfig = async (project: string): Promise<ProjectConfig | undefined> => {
@@ -125,6 +131,12 @@ export const productNamed = async (
  * several products and none named, fails saying how to name one.
  */
 export const currentProduct = async (project: string, root = PACKAGE_ROOT): Promise<Product> => {
+  const holder = process.env[HOLDER_VARIABLE];
+  if (holder && resolve(project) === resolve(root)) {
+    const { defaults } = (await loadHolder(holder, root)).definition;
+    const config = resolveConfig(defaults, await readProjectConfig(project));
+    return { name: "", root: ".", schema: holder, config, elsewhere: [] };
+  }
   const products = await projectProducts(project, root);
   const named = process.env[PRODUCT_VARIABLE];
   if (named) return productNamed(project, named, root);

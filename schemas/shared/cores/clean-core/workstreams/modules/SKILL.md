@@ -1,9 +1,9 @@
 ---
-name: clean-architecture
-description: Run the clean-architecture reduce workstream of the implementer: merge app-domain, infrastructure and adapters, resolve conflicts at their seams and pass the cross-module rules. Read from the implement skill.
+name: modules
+description: Run the modules reduce workstream of the implementer: merge app-domain, infrastructure and adapters, resolve conflicts at their seams and pass the cross-module rules. Read from the implement skill.
 ---
 
-# clean-architecture
+# modules
 
 **Reduces:** the workstreams the topology lists under it (by default `app-domain`, `infrastructure` and `adapters`).
 
@@ -17,4 +17,4 @@ description: Run the clean-architecture reduce workstream of the implementer: me
 2. Run the check. This is where it shows whether each map workstream built what its spec, its skill and its seams asked for. A failure names the workstream: go back to it and fix it there, keeping the seams and the artifacts as they are, then run this check again. A decision the artifacts do not settle and you cannot take goes to the person, as the implement skill says.
 3. Fix what crosses modules: move what two modules share into `shared`, break cycles.
 
-**Check:** `pnpm exec factory check --workstream clean-architecture [--module <module>]`, which includes every upstream workstream's check.
+**Check:** `pnpm exec factory check --workstream modules [--module <module>]`, which includes every upstream workstream's check.

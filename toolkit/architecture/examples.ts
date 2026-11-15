@@ -42,6 +42,7 @@ const TEMPLATE = {
       module: "esnext",
       moduleResolution: "bundler",
       strict: false,
+      jsx: "preserve",
       noEmit: true,
       skipLibCheck: true,
     },
@@ -71,7 +72,7 @@ export const examples = (
   const parsed = parse(dir);
   const known = a.workstreams.some((w) => w.id === basename(dir));
   const dirs = known
-    ? withUpstream(a.workstreams, basename(dir)).map((w) => join(dirname(dir), w.id))
+    ? withUpstream(a.workstreams, basename(dir)).map((w) => a.folders?.[w.id] ?? join(dirname(dir), w.id))
     : [dir];
   const reference: Files = new Map();
   const from = new Map<string, string>();

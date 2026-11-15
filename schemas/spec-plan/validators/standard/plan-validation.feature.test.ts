@@ -386,8 +386,8 @@ describe('Feature: flow/plan-validation Specification', () => {
     test('a task naming `app-domain` placed `inside a phase` makes the change `ready`', async () => {
       const steps = createSteps()
 
-      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, clean-architecture, integrate`
-      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, clean-architecture, integrate')
+      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules, integrate`
+      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules, integrate')
       // And its plan has a task naming the workstream `app-domain` placed `inside a phase`
       await steps.taskNamingWorkstreamPlaced('app-domain', 'inside a phase')
       // When the change is validated
@@ -400,8 +400,8 @@ describe('Feature: flow/plan-validation Specification', () => {
     test('a task naming `react-ui` placed `inside a phase` makes the change `not ready`', async () => {
       const steps = createSteps()
 
-      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, clean-architecture, integrate`
-      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, clean-architecture, integrate')
+      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules, integrate`
+      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules, integrate')
       // And its plan has a task naming the workstream `react-ui` placed `inside a phase`
       await steps.taskNamingWorkstreamPlaced('react-ui', 'inside a phase')
       // When the change is validated
@@ -414,8 +414,8 @@ describe('Feature: flow/plan-validation Specification', () => {
     test('a task naming `app-domain` placed `outside a phase` makes the change `not ready`', async () => {
       const steps = createSteps()
 
-      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, clean-architecture, integrate`
-      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, clean-architecture, integrate')
+      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules, integrate`
+      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules, integrate')
       // And its plan has a task naming the workstream `app-domain` placed `outside a phase`
       await steps.taskNamingWorkstreamPlaced('app-domain', 'outside a phase')
       // When the change is validated
@@ -428,8 +428,8 @@ describe('Feature: flow/plan-validation Specification', () => {
     test('a task naming `none` placed `inside a phase` makes the change `not ready`', async () => {
       const steps = createSteps()
 
-      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, clean-architecture, integrate`
-      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, clean-architecture, integrate')
+      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules, integrate`
+      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules, integrate')
       // And its plan has a task naming the workstream `none` placed `inside a phase`
       await steps.taskNamingWorkstreamPlaced('none', 'inside a phase')
       // When the change is validated

@@ -2,7 +2,7 @@ import { globSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { type Folders, loadWorkstreams } from "./graph.ts";
 import { PROJECT_ROOT, SOURCE_EXT } from "../core/paths.ts";
-import { loadSchema } from "../repository/schema.ts";
+import { loadHolder } from "../repository/schema.ts";
 import { currentProduct } from "../repository/products.ts";
 import type { Architecture, FactoryConfig } from "../core/types.ts";
 
@@ -13,7 +13,7 @@ import type { Architecture, FactoryConfig } from "../core/types.ts";
  * composed from here.
  */
 export const product = await currentProduct(PROJECT_ROOT);
-export const schema = await loadSchema(product.schema);
+export const schema = await loadHolder(product.schema);
 
 /** The folder of each workstream of the schema, and its rubric. */
 export const WORKSTREAM_DIRS = schema.workstreamDirs;
@@ -43,6 +43,7 @@ const folders: Folders = Object.fromEntries(
 export const architecture: Architecture = {
   platform: config.platform,
   workstreams: loadWorkstreams(schema.workstreams, folders, config.workstreams, config),
+  folders: WORKSTREAM_DIRS,
   review: config.review,
   ignore: config.ignore,
   allowUnmatched: config.allowUnmatched,

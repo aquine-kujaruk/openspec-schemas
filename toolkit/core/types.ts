@@ -125,6 +125,8 @@ export type FactoryConfig = Options & {
 export type Architecture = {
   platform: Platform;
   workstreams: Workstream[];
+  /** The folder of each workstream, where its rules and examples are; a core's live apart from its schema's. */
+  folders?: Record<string, string>;
   /** `factory review`. */
   review: Review;
   /** Paths fallow ignores entirely. */
@@ -158,6 +160,11 @@ export type SchemaDefinition = {
   description: string;
   artifacts: ArtifactDefinition[];
   apply: { requires: string[]; tracks: string; instruction: string };
+  /**
+   * The core it builds through (a folder of `shared/cores/`). Its workstreams come first, then the
+   * ones this definition names; `defaults.workstreams` adds to what the core's wait for.
+   */
+  core?: string;
   /** Folders of `workstreams/`, in the order the tools are composed. */
   workstreams: string[];
   /** A folder of `validators/`. */
@@ -165,6 +172,19 @@ export type SchemaDefinition = {
   /** A policy of `questions/`. */
   questions: string;
   defaults: FactoryConfig;
+};
+
+/**
+ * A core: the workstreams several schemas build through, held in `schemas/shared/cores/<name>/`,
+ * and which waits for which. It names no framework: a schema that names it adds that.
+ */
+export type CoreDefinition = {
+  name: string;
+  description: string;
+  /** Folders of its `workstreams/`, in the order the tools are composed. */
+  workstreams: string[];
+  /** What each of its workstreams waits for, by default. */
+  topology: Topology;
 };
 
 /** A definition that starts from another one and sets only what it overrides. */

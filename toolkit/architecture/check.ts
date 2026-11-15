@@ -114,7 +114,7 @@ export const check = async (args: string[]): Promise<number> => {
         .flatMap((o) => o.files ?? [])
         .flatMap((p) => globSync(p, { exclude: (f) => f.includes("node_modules") })),
     ),
-  ].filter((f) => f.endsWith(".ts") && inModule(f));
+  ].filter((f) => /\.tsx?$/.test(f) && inModule(f));
   if (lintFiles.length) {
     console.log(`\n▶ oxlint (packages and globals) over ${lintFiles.length} files`);
     const r = runTool(

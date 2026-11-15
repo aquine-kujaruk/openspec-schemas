@@ -39,7 +39,7 @@ describe("a workstream folder holds everything its agent reads", () => {
   it("a missing file is named by its path in the repository", () => {
     expect(missingFiles(WORKSTREAM_DIRS["app-domain"]!, ["nothing"])).toEqual(
       ["rules.ts", "examples.md", "feature.steps.ts", "feature.test.ts"].map(
-        (s) => `schemas/clean-backend/workstreams/app-domain/nothing.${s}`,
+        (s) => `schemas/shared/cores/clean-core/workstreams/app-domain/nothing.${s}`,
       ),
     );
   });

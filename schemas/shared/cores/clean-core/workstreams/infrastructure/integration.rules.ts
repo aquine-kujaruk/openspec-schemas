@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
-import type { Layer } from "../../../../toolkit/core/types.ts";
-import type { Options } from "../../../../toolkit/core/types.ts";
+import type { Layer } from "../../../../../../toolkit/core/types.ts";
+import type { Options } from "../../../../../../toolkit/core/types.ts";
 
 /** Integration: one test per repository implementation, over an in-memory adapter typed by the real ACL. Spec: `openspec/specs/architecture/integration`. */
 export const integration = (o: Options): Layer => ({

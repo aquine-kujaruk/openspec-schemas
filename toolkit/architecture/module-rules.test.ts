@@ -14,7 +14,7 @@ describe("module rules hold whatever the module root contains", () => {
     const back = process.cwd();
     process.chdir(cwd);
     try {
-      const ids = ownRuleIds(architecture, "clean-architecture");
+      const ids = ownRuleIds(architecture, "modules");
       expect([...ids]).toEqual(
         expect.arrayContaining(["modules-are-isolated", "shared-imports-no-module"]),
       );

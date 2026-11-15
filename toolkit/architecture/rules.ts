@@ -22,10 +22,11 @@ const projectTsconfig = (): string => {
         module: "esnext",
         moduleResolution: "bundler",
         allowImportingTsExtensions: true,
+        jsx: "preserve",
         noEmit: true,
         skipLibCheck: true,
       },
-      include: [`${root}/**/*.ts`],
+      include: [`${root}/**/*.ts`, `${root}/**/*.tsx`],
       exclude: [`${root}/**/node_modules/**`],
     }),
   );

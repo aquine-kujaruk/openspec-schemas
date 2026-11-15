@@ -239,7 +239,7 @@ export const build = async (
       "toolkit/cli.ts",
       "toolkit/core/config.ts",
       ...definitions.map((file) => relative(root, file)),
-      ...found(["workstream", "validator"]),
+      ...found(["core", "workstream", "validator"]),
     ]);
     for (const file of compiled)
       write(join(command, file.replace(/\.ts$/, ".js")), javascript(used(join(root, file))));

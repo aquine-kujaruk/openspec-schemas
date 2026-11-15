@@ -1,5 +1,5 @@
 import { posix } from "node:path";
-import type { WorkstreamDeclaration } from "../../../../toolkit/core/types.ts";
+import type { WorkstreamDeclaration } from "../../../../../../toolkit/core/types.ts";
 
 const OFF = [
   "unused-exports",
@@ -23,7 +23,7 @@ const OFF = [
 ];
 
 /**
- * Reduce over clean-architecture: the whole product wired. No layer of its own; it owns the checks
+ * Reduce over modules: the whole product wired. No layer of its own; it owns the checks
  * that only make sense once everything is connected.
  */
 export default {
