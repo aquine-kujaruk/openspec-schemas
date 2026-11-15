@@ -3,7 +3,31 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PACKAGE_ROOT, PROJECT_ROOT } from "./core/paths.ts";
 
-const COMMANDS: Record<string, (args: string[]) => Promise<number>> = {
+/** What each command does and takes, printed by `factory help` and `factory <command> --help`. */
+const USAGE = {
+  check: "check [--workstream <id>] [--product <name>]: checks the product's rules",
+  generate: "generate [--check] [--product <name>]: writes the acceptance tests generated from the specs",
+  expect: "expect: writes what each example case of the rules reports (only in this repository)",
+  test: "test <acceptance|integration> [--report <file>] [--product <name>]: runs the product's tests of one kind",
+  validate: "validate <change>: says whether the change is ready and, when not, every reason",
+  schemas: "schemas [--json]: the schemas a change can be opened with, and the products the project declares",
+  build: "build <package> [--check]: builds the package into dist/<package>",
+  doctor: "doctor [--fix]: lists what the flow needs and the project lacks",
+  guard: "guard [path…]: judges a write an agent is about to make",
+  gate: "gate [--helper]: judges an agent's attempt to finish",
+  implement: "implement <change>: starts building the next phase of a ready change",
+  feedback: "feedback <change> [raise|take …]: lists, raises or takes feedback on a change",
+  verify: "verify <change> [--proved <spec>]: runs every check and test and writes the evidence",
+  archive: "archive [change]: archives the change, or every verified one, consolidating its specs",
+  proof: "proof [package]: builds the package and proves it in an empty project",
+  openspec: "openspec <args…>: runs the specification tool",
+  prepare: "prepare [--product <name>]: creates the product's configured folders",
+  review: "review [--product <name>]: reviews the product against its schema's rubric",
+} satisfies Record<string, string>;
+
+type Command = keyof typeof USAGE;
+
+const COMMANDS: Record<Command, (args: string[]) => Promise<number>> = {
   check: async (args) => (await import("./architecture/check.ts")).check(args),
   generate: async (args) => (await import("./architecture/generate.ts")).generate(args),
   expect: async (args) => (await import("./architecture/expect.ts")).expect(args),
@@ -38,6 +62,9 @@ const COMMANDS: Record<string, (args: string[]) => Promise<number>> = {
   review: async () => (await import("./architecture/review/cli.ts")).run(),
 };
 
+const usage = (only?: string): string =>
+  (only ? [USAGE[only as Command]] : Object.values(USAGE)).map((line) => `factory ${line}`).join("\n");
+
 // archunit extends the matchers of a test runner it finds in the environment; the command is never one.
 delete process.env.VITEST;
 
@@ -60,10 +87,19 @@ if (command === "--version" || command === "-v") {
   console.log((manifest as { version: string }).version);
   process.exit(0);
 }
-const run = command ? COMMANDS[command] : undefined;
+// Help never runs a command: `archive` with no change would archive every verified one.
+if (command === "help" || command === "--help" || command === "-h") {
+  console.log(usage(given[0] && given[0] in USAGE ? given[0] : undefined));
+  process.exit(0);
+}
+if (command && command !== "openspec" && command in USAGE && args.some((a) => a === "--help" || a === "-h")) {
+  console.log(usage(command));
+  process.exit(0);
+}
+const run = command && command in COMMANDS ? COMMANDS[command as Command] : undefined;
 if (!run) {
   console.error(
-    `Unknown command: ${command ?? "(none)"}. Commands: ${Object.keys(COMMANDS).join(", ")}`,
+    `Unknown command: ${command ?? "(none)"}. Commands:\n${usage()}`,
   );
   process.exit(2);
 }
