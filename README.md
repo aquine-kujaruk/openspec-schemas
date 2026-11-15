@@ -48,7 +48,7 @@ The project needs Node 22.18 or later, pnpm, and the agent package manager APM 0
 2. Pin the command the skills call. The tarball came with the `setup` skill; its file name carries the version:
 
    ```bash
-   pnpm add -D ./.claude/skills/setup/assets/factory-0.2.3.tgz
+   pnpm add -D ./.claude/skills/setup/assets/factory-0.2.4.tgz
    ```
 
 3. Let setup repair what the package owns and list what the project must supply:
@@ -89,6 +89,8 @@ A change goes through five skills, each calling the command:
 | `verify` | Runs every check and test and writes the evidence | `factory verify <change>` |
 | `archive` | Consolidates the change's specs, decisions and procedures and archives it | `factory archive [change]` |
 | `feedback` | Takes a correction back into the change it is about | `factory feedback <change>` |
+
+The implement phase starts every short, rule-fixed file (schemas, entities, value objects, exception families, repository interfaces, ACLs, in-memory repositories and the shared bases) from a scaffold kept in the `## scaffolds` section of its layer's examples, rendered with `pnpm dlx ejs@7.0.2`; the first render on a machine needs the network.
 
 Two guards hold the flow: a write guard lets product code through only for a started change whose schema builds product code and never lets an agent write the harness, and a completion gate holds a turn that would leave a started change failing the checks of its own schema.
 

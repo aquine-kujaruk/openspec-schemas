@@ -108,6 +108,35 @@ import { HttpClientAdapter } from "./http-client.adapter";
 export const clientAdapter: ClientAcl = new HttpClientAdapter();
 ```
 
+## scaffolds
+
+```ejs src/shared/infrastructure/adapters/http-api.adapter.ts
+import type { z } from "zod";
+import type { DomainException } from "../../domain/exceptions/domain.exceptions";
+export class HttpApiAdapter {
+  constructor(private readonly baseUrl: string) {}
+  async get<S extends z.ZodType>(
+    path: string,
+    schema: S,
+    fail: (response: Response) => DomainException,
+  ): Promise<z.output<S>> {
+    const response = await fetch(`${this.baseUrl}${path}`);
+    if (!response.ok) throw fail(response);
+    return schema.parse(await response.json());
+  }
+  async find<S extends z.ZodType>(
+    path: string,
+    schema: S,
+    fail: (response: Response) => DomainException,
+  ): Promise<z.output<S> | null> {
+    const response = await fetch(`${this.baseUrl}${path}`);
+    if (response.status === 404) return null;
+    if (!response.ok) throw fail(response);
+    return schema.parse(await response.json());
+  }
+}
+```
+
 ## infrastructure-vocabulary
 
 ### wrong-suffix

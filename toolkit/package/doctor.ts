@@ -121,7 +121,14 @@ const lacks = (root: string, installed: Installed, assets: string): Lack[] => {
         ? `the skills name ${COMMAND} ${installed.version} and the project depends on ${pinned}`
         : `the project does not depend on ${COMMAND} ${installed.version}`,
       ...(pinned ? { drift: true as const } : {}),
-      repair: () => run(["add", "-D", `./${join(assets, installed.command)}`]),
+      // A drifted pin names a tarball the package update removed, and `pnpm add` re-resolves it and
+      // fails: the specifier is rewritten and installed instead.
+      repair: () => {
+        const tarball = `./${join(assets, installed.command)}`;
+        if (!pinned) return run(["add", "-D", tarball]);
+        run(["pkg", "set", `devDependencies.${COMMAND}=file:${tarball}`]);
+        run(["install"]);
+      },
     });
 
   for (const schema of installed.schemas) {

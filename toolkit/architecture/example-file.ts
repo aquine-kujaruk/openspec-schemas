@@ -8,8 +8,19 @@ export type Files = Map<string, string>;
 /** A case: its files, and the findings its `expect` block records (`undefined` without one). */
 export type Case = { files: Files; expected: Findings | undefined };
 
-/** A `<layer>.examples.md`: its `## reference` files and, per `## <rule>`, its `### <case>` cases. */
-export type ExampleFile = { reference: Files; rules: Map<string, Map<string, Case>> };
+/**
+ * A `<layer>.examples.md`: its `## reference` files, its `## scaffolds` (destination pattern →
+ * template, the pattern naming `<module>` and `<name>` where they vary) and, per `## <rule>`, its
+ * `### <case>` cases.
+ */
+export type ExampleFile = {
+  reference: Files;
+  scaffolds: Files;
+  rules: Map<string, Map<string, Case>>;
+};
+
+/** The sections of an example file that are not rules. */
+const PLACES = new Set(["reference", "scaffolds"]);
 
 /** Findings to record, per `## <rule>`, per `### <case>`. */
 export type Recorded = Map<string, Map<string, Findings>>;
@@ -21,14 +32,14 @@ const FENCE = /^(`{3,})\S*\s+(\S+)\s*$/;
 const EXPECT = /^(`{3,})expect\s*$/;
 
 /**
- * Reads an example file. Headings outside fences give the place (`##` rule or `reference`, `###`
- * case); every file is a fence with `<lang> <path>` in its info string that holds that file
- * verbatim, and a case ends with at most one fence whose info string is `expect`, holding its
- * recorded findings. Prose between them is ignored. A fence closes on a line of at least as many
- * backticks, so a block can contain a shorter fence.
+ * Reads an example file. Headings outside fences give the place (`##` rule, `reference` or
+ * `scaffolds`, `###` case); every file is a fence with `<lang> <path>` in its info string that
+ * holds that file verbatim, and a case ends with at most one fence whose info string is `expect`,
+ * holding its recorded findings. Prose between them is ignored. A fence closes on a line of at
+ * least as many backticks, so a block can contain a shorter fence.
  */
 const scan = (lines: string[], name: string) => {
-  const file: ExampleFile = { reference: new Map(), rules: new Map() };
+  const file: ExampleFile = { reference: new Map(), scaffolds: new Map(), rules: new Map() };
   const spans: Span[] = [];
   let section = "";
   let target: Files | undefined;
@@ -54,9 +65,14 @@ const scan = (lines: string[], name: string) => {
     const expect = EXPECT.exec(line);
     if (heading?.[1] === "##") {
       section = heading[2];
-      target = section === "reference" ? file.reference : undefined;
+      target =
+        section === "reference"
+          ? file.reference
+          : section === "scaffolds"
+            ? file.scaffolds
+            : undefined;
       current = undefined;
-      if (section !== "reference") file.rules.set(section, new Map());
+      if (!PLACES.has(section)) file.rules.set(section, new Map());
     } else if (heading?.[1] === "###") {
       const c: Case = { files: new Map(), expected: undefined };
       const rule = file.rules.get(section);
@@ -76,7 +92,8 @@ const scan = (lines: string[], name: string) => {
       open = { ticks: expect![1], at: i, lines: [] };
     } else if (line.startsWith("```")) {
       const fence = FENCE.exec(line);
-      if (!fence || !target) fail("a block needs `<lang> <path>` inside a case or reference");
+      if (!fence || !target)
+        fail("a block needs `<lang> <path>` inside a case, the reference or the scaffolds");
       if (current?.span.block)
         fail(`the expect block must be the last block of case ${current.span.name}`);
       open = { ticks: fence![1], path: fence![2], at: i, lines: [] };

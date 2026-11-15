@@ -56,8 +56,14 @@ const TEMPLATE = {
  * may be in several of them only with identical content. A case (or the reference) is written to a
  * temp directory with the configs composed from the architecture, and each tool reports the files
  * that violate each rule. A tool runs at most once per case, and only when a rule it owns is asked for.
+ * `modules` adds named file sets checked like the reference, such as the scaffolds once rendered.
  */
-export const examples = (a: Architecture, dir: string, layer: string) => {
+export const examples = (
+  a: Architecture,
+  dir: string,
+  layer: string,
+  modules: Record<string, Files> = {},
+) => {
   const root = mkdtempSync(join(tmpdir(), "architecture-examples-"));
   const name = `${layer}.examples.md`;
   const parse = (d: string) =>
@@ -82,6 +88,7 @@ export const examples = (a: Architecture, dir: string, layer: string) => {
       }
   const filesOf = (example: string, rule?: string): Files => {
     if (example === "reference") return reference;
+    if (modules[example]) return modules[example];
     const files = rule && parsed.get(name)?.rules.get(rule)?.get(example)?.files;
     if (!files) throw new Error(`${name} has no case \`${example}\` under \`## ${rule}\``);
     return files;
@@ -134,7 +141,7 @@ export const examples = (a: Architecture, dir: string, layer: string) => {
 
   const prepared = new Map<string, { cwd: string; ran: Map<Tool, Hits> }>();
   const prepare = (example: string, rule?: string) => {
-    const key = example === "reference" ? example : `${rule}/${example}`;
+    const key = example === "reference" || modules[example] ? example : `${rule}/${example}`;
     if (!prepared.has(key)) {
       const cwd = join(root, key.replaceAll("/", "__"));
       for (const [path, content] of filesOf(example, rule)) {

@@ -1,6 +1,6 @@
 {
   "name": "openspec-schemas",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": true,
   "description": "OpenSpec schemas, the resources they are built from and the packages built from them.",
   "type": "module",
@@ -27,7 +27,9 @@
     "yaml": "2.9.1"
   },
   "devDependencies": {
+    "@types/ejs": "3.1.5",
     "@types/node": "26.6.5",
+    "ejs": "7.0.2",
     "factory": "link:.",
     "vitest": "5.0.5"
   },

@@ -84,6 +84,19 @@ export const run = async () => {
 };
 ```
 
+## scaffolds
+
+```ejs test/acceptance/<module>/repositories/in-memory-<name>.repository.ts
+import type { <%= Name %>RepositoryInterface } from "../../../../src/<%= module %>/application/repository-interfaces/<%= name %>.repository-interface";
+import type { <%= Name %>Props } from "../../../../src/<%= module %>/domain/schemas/<%= name %>.schema";
+export class InMemory<%= Name %>Repository implements <%= Name %>RepositoryInterface {
+  private items: <%= Name %>Props[] = [];
+  seed(items: <%= Name %>Props[]) {
+    this.items = items;
+  }
+}
+```
+
 ## acceptance-test-targets-use-case
 
 ### steps-without-use-case

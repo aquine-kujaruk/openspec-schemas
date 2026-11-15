@@ -127,6 +127,75 @@ export class LatePaymentService {
 }
 ```
 
+## scaffolds
+
+```ejs src/shared/domain/exceptions/domain.exceptions.ts
+export class DomainException extends Error {
+  constructor(message: string, options: { cause?: unknown } = {}) {
+    super(message, { cause: options.cause });
+    this.name = new.target.name;
+  }
+}
+```
+
+```ejs src/shared/domain/exceptions/validation.exceptions.ts
+import { DomainException } from "./domain.exceptions";
+export class ValidationException extends DomainException {
+  constructor(
+    public readonly source: string,
+    cause: unknown,
+  ) {
+    super(`${source} rejected its props`, { cause });
+  }
+}
+```
+
+```ejs src/shared/domain/schemas/validation.schema.ts
+import type { z } from "zod";
+import { ValidationException } from "../exceptions/validation.exceptions";
+export const validateSchema = <S extends z.ZodType>(
+  target: object,
+  schema: S,
+  props: unknown,
+): z.output<S> => {
+  const result = schema.safeParse(props);
+  if (!result.success) throw new ValidationException(target.constructor.name, result.error);
+  Object.assign(target, result.data);
+  return result.data;
+};
+```
+
+```ejs src/<module>/domain/schemas/<name>.schema.ts
+import { z } from "zod";
+export const <%= Name %>Schema = z.object({});
+export type <%= Name %>Props = z.infer<typeof <%= Name %>Schema>;
+```
+
+```ejs src/<module>/domain/entities/<name>.entity.ts
+import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
+import { <%= Name %>Schema, type <%= Name %>Props } from "../schemas/<%= name %>.schema";
+export class <%= Name %>Entity {
+  constructor(props: <%= Name %>Props) {
+    validateSchema(this, <%= Name %>Schema, props);
+  }
+}
+```
+
+```ejs src/<module>/domain/value-objects/<name>.value-object.ts
+import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
+import { <%= Name %>Schema, type <%= Name %>Props } from "../schemas/<%= name %>.schema";
+export class <%= Name %>ValueObject {
+  constructor(props: <%= Name %>Props) {
+    validateSchema(this, <%= Name %>Schema, props);
+  }
+}
+```
+
+```ejs src/<module>/domain/exceptions/<name>.exceptions.ts
+import { DomainException } from "../../../shared/domain/exceptions/domain.exceptions";
+export class <%= Name %>Exception extends DomainException {}
+```
+
 ## domain-vocabulary
 
 ### folder-outside-vocabulary

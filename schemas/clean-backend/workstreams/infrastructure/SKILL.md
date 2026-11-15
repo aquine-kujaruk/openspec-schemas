@@ -14,7 +14,7 @@ description: Build the infrastructure workstream of the implementer: repository 
 ## How
 
 1. Read the `## reference` of `infrastructure.examples.md` and `integration.examples.md`.
-2. Per resource: the ACL (record schema and interface) is already fixed; write the repository implementation over it. A repository never imports an adapter or does `new XAdapter(`: the composition root injects it.
+2. Per resource: the ACL (record schema and interface) is already fixed, started from its scaffold at the seam step; write the repository implementation over it. A repository never imports an adapter or does `new XAdapter(`: the composition root injects it.
 3. Per repository implementation, write `test/integration/<module>/<x>-repository.test.ts`: the mapping of every field the design names and the exception for every failure. Invent the records inside the ACL's schema, taking the Examples of the product specs as a guide where values overlap; no fixture comes from the artifacts. When the behavior changes, rewrite the test inside the same seams.
 
 **Check:** `pnpm exec factory check --workstream infrastructure [--module <module>]`, plus `pnpm exec factory test integration`.

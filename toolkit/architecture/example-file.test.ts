@@ -74,3 +74,24 @@ describe("example file", () => {
     expect(() => parseExampleText(text, "sample")).toThrow(message);
   });
 });
+
+describe("scaffolds of an example file", () => {
+  const text = `# acl
+
+## scaffolds
+
+\`\`\`ejs src/<module>/infrastructure/acl/<name>.acl.ts
+export interface <%= Name %>Acl {}
+\`\`\`
+
+## acl-adapter-paired
+`;
+  it("reads each scaffold by its destination pattern and keeps it out of the rules", () => {
+    const file = parseExampleText(text, "sample");
+    expect([...file.scaffolds]).toEqual([
+      ["src/<module>/infrastructure/acl/<name>.acl.ts", "export interface <%= Name %>Acl {}\n"],
+    ]);
+    expect([...file.rules.keys()]).toEqual(["acl-adapter-paired"]);
+    expect(file.reference.size).toBe(0);
+  });
+});

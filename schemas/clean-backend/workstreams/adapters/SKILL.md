@@ -13,7 +13,7 @@ description: Build the adapters workstream of the implementer: the resource adap
 
 ## How
 
-1. Read the `## reference` of `adapters.examples.md`.
+1. Read the `## reference` of `adapters.examples.md`. The shared base `http-api.adapter.ts` already exists: the seam step renders it from its scaffold when it is missing.
 2. Per ACL: one adapter per backend (`http-<name>.adapter.ts`, `in-memory-<name>.adapter.ts`), each a class that `implements <Name>Acl`, and `<name>.adapter.ts`, which picks one by environment and exports the ACL-typed instance (`export const <name>Adapter: <Name>Acl`). Every ACL needs at least one adapter.
 3. Speak the resource's shape: parse through the ACL's record schemas, never a domain schema. Translate the resource's failures into domain exceptions with the caught error as `cause`.
 

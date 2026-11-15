@@ -35,6 +35,12 @@ export class GetInvoiceUseCase {
 }
 ```
 
+## scaffolds
+
+```ejs src/<module>/application/repository-interfaces/<name>.repository-interface.ts
+export interface <%= Name %>RepositoryInterface {}
+```
+
 ## application-vocabulary
 
 ### folder-outside-vocabulary

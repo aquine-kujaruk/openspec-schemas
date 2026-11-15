@@ -66,6 +66,12 @@ export class B2cClientRepositoryImplementation extends ClientRepositoryBase {
 }
 ```
 
+## scaffolds
+
+```ejs src/<module>/infrastructure/acl/<name>.acl.ts
+export interface <%= Name %>Acl {}
+```
+
 ## infrastructure-vocabulary
 
 ### folder-outside-vocabulary

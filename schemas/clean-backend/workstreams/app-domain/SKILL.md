@@ -14,9 +14,23 @@ description: Build the app-domain workstream of the implementer: the acceptance 
 ## How
 
 1. Read the `## reference` sections of `acceptance.examples.md`, `application.examples.md` and `domain.examples.md`: they are the shape of correct code. The other sections show each way of breaking a rule.
-2. `pnpm exec factory generate`: each product spec becomes `test/acceptance/<module>/<use-case>.feature.test.ts` and a step adapter `<use-case>.feature.steps.ts` with a pending method per step. Never write or edit a test file; a behavior the spec lacks goes back as feedback on the change.
-3. Write the in-memory repositories, fill the step adapter of each use case, then write the use case and the domain it needs, until `pnpm exec factory test acceptance` is green. A step method keeps its parameter names equal to the spec's placeholders, or the next generation scaffolds it again. Steps check their data with assertions (`expect`), never `throw new Error(`; the `PENDING` bodies feat2test scaffolds break that rule, so the pipeline is red until every step is written.
-4. The module's exceptions are the family the design declares: one base extending `DomainException`, one subclass per business failure.
-5. Follow the core-wide rules even though `clean-architecture` checks them: no `any` in the core, only domain exceptions (the provider error in `cause`), the schema package only in `domain/schemas`.
+2. Start every file of the kinds below from its scaffold, then fill it in; never write one of them from nothing. `<ref>` is the folder this skill is in, `<Name>` and `<name>` the name in PascalCase and kebab-case, and the configured roots replace `src` and `test/acceptance`:
+   ```bash
+   # schema
+   mkdir -p src/<module>/domain/schemas && pnpm dlx ejs@7.0.2 <(sed -n '\#^```ejs src/<module>/domain/schemas/<name>.schema.ts$#,/^```$/{//!p}' <ref>/domain.examples.md) -o src/<module>/domain/schemas/<name>.schema.ts Name=<Name> name=<name> module=<module>
+   # entity
+   mkdir -p src/<module>/domain/entities && pnpm dlx ejs@7.0.2 <(sed -n '\#^```ejs src/<module>/domain/entities/<name>.entity.ts$#,/^```$/{//!p}' <ref>/domain.examples.md) -o src/<module>/domain/entities/<name>.entity.ts Name=<Name> name=<name> module=<module>
+   # value object
+   mkdir -p src/<module>/domain/value-objects && pnpm dlx ejs@7.0.2 <(sed -n '\#^```ejs src/<module>/domain/value-objects/<name>.value-object.ts$#,/^```$/{//!p}' <ref>/domain.examples.md) -o src/<module>/domain/value-objects/<name>.value-object.ts Name=<Name> name=<name> module=<module>
+   # exception family
+   mkdir -p src/<module>/domain/exceptions && pnpm dlx ejs@7.0.2 <(sed -n '\#^```ejs src/<module>/domain/exceptions/<name>.exceptions.ts$#,/^```$/{//!p}' <ref>/domain.examples.md) -o src/<module>/domain/exceptions/<name>.exceptions.ts Name=<Name> name=<name> module=<module>
+   # in-memory repository
+   mkdir -p test/acceptance/<module>/repositories && pnpm dlx ejs@7.0.2 <(sed -n '\#^```ejs test/acceptance/<module>/repositories/in-memory-<name>.repository.ts$#,/^```$/{//!p}' <ref>/acceptance.examples.md) -o test/acceptance/<module>/repositories/in-memory-<name>.repository.ts Name=<Name> name=<name> module=<module>
+   ```
+   The `shared` bases these files import, and the repository interfaces, are seams: they already exist, rendered from their scaffolds before this workstream started.
+3. `pnpm exec factory generate`: each product spec becomes `test/acceptance/<module>/<use-case>.feature.test.ts` and a step adapter `<use-case>.feature.steps.ts` with a pending method per step. Never write or edit a test file; a behavior the spec lacks goes back as feedback on the change.
+4. Write the in-memory repositories, fill the step adapter of each use case, then write the use case and the domain it needs, until `pnpm exec factory test acceptance` is green. A step method keeps its parameter names equal to the spec's placeholders, or the next generation scaffolds it again. Steps check their data with assertions (`expect`), never `throw new Error(`; the `PENDING` bodies feat2test scaffolds break that rule, so the pipeline is red until every step is written.
+5. The module's exceptions are the family the design declares: one base extending `DomainException`, one subclass per business failure.
+6. Follow the core-wide rules even though `clean-architecture` checks them: no `any` in the core, only domain exceptions (the provider error in `cause`), the schema package only in `domain/schemas`.
 
 **Check:** `pnpm exec factory check --workstream app-domain [--module <module>]`, plus `pnpm exec factory test acceptance`.
