@@ -15,9 +15,9 @@ import type { Architecture, FactoryConfig } from "../core/types.ts";
 export const product = await currentProduct(PROJECT_ROOT);
 export const schema = await loadHolder(product.schema);
 
-/** The folder of each workstream of the schema, and its rubric. */
+/** The folder of each workstream of the schema, and its rubrics: its core's, then its own. */
 export const WORKSTREAM_DIRS = schema.workstreamDirs;
-export const RUBRIC = schema.rubric;
+export const RUBRICS = schema.rubrics;
 
 /** The example files of every layer, each in the folder of the workstream that owns it. */
 export const EXAMPLE_FILES = Object.values(WORKSTREAM_DIRS)

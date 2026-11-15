@@ -28,12 +28,43 @@ describe("clean-backend builds through the clean core", () => {
     expect(
       Object.fromEntries(Object.entries(schema.workstreamDirs).map(([id, dir]) => [id, relative(PACKAGE_ROOT, dir)])),
     ).toEqual(Object.fromEntries(schema.definition.workstreams.map((id) => [id, join(core, "workstreams", id)])));
-    expect(relative(PACKAGE_ROOT, schema.rubric!)).toBe(join(core, "review/RUBRIC.md"));
+    expect(schema.rubrics.map((r) => relative(PACKAGE_ROOT, r))).toEqual([join(core, "review/RUBRIC.md")]);
   });
 
   it("its own defaults stay its own", async () => {
     const d = await loadDefinition("clean-backend");
     expect(d.defaults.platform.name).toBe("node");
     expect(d.defaults.frameworks.core.packages).toContain("express");
+  });
+});
+
+/** Spec: `implementer`, "A schema's own workstreams join its core's in one topology". */
+describe("clean-react joins its workstreams to the core's", () => {
+  it.each([
+    ["react-hooks", "react-ui"],
+    ["integrate", "react-hooks"],
+    ["integrate", "modules"],
+    ["modules", "app-domain"],
+  ])("%s waits for %s", async (workstream, dependency) => {
+    const d = await loadDefinition("clean-react");
+    expect(d.defaults.workstreams[workstream]!.dependsOn).toContain(dependency);
+  });
+
+  it.each([["app-domain"], ["infrastructure"], ["adapters"]])("react-ui and %s may run at the same time", async (other) => {
+    const d = await loadDefinition("clean-react");
+    expect(d.defaults.workstreams["react-ui"]!.dependsOn).toEqual([]);
+    expect(d.defaults.workstreams[other]!.dependsOn).not.toContain("react-ui");
+  });
+
+  it.each([
+    ["ui", "react-ui"],
+    ["framework", "react-hooks"],
+    ["domain", "app-domain"],
+    ["modules", "modules"],
+  ])("layer %s belongs to %s", async (layer, workstream) => {
+    const { workstreamDirs } = await loadSchema("clean-react");
+    const { existsSync } = await import("node:fs");
+    const owners = Object.entries(workstreamDirs).filter(([, dir]) => existsSync(join(dir, `${layer}.rules.ts`)));
+    expect(owners.map(([id]) => id)).toEqual([workstream]);
   });
 });

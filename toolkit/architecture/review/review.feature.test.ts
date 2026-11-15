@@ -224,4 +224,34 @@ describe('Feature: Review the architecture rubric with a decision model', () => 
       await steps.rowVerdict('rejected')
     })
   })
+
+  describe('Rule: review-asks-core-and-schema-rows · review asks the rows of the core and the rows of the schema', () => {
+    // Line 100
+    test('a product of `clean-backend` is asked the rows `S05, S06`', async () => {
+      const steps = createSteps()
+
+      // Given a core whose rubric has the rows `S05, S06`
+      await steps.coreRubricRows('S05, S06')
+      // And the schema `clean-backend` names that core and adds the rows `none`
+      await steps.schemaAddsRows('clean-backend', 'none')
+      // When `factory review` runs over a product of `clean-backend`
+      await steps.reviewRunsOverProductOf('clean-backend')
+      // Then the rows asked are `S05, S06`
+      await steps.rowsAsked('S05, S06')
+    })
+
+    // Line 100
+    test('a product of `clean-react` is asked the rows `S05, S06, S01, S02`', async () => {
+      const steps = createSteps()
+
+      // Given a core whose rubric has the rows `S05, S06`
+      await steps.coreRubricRows('S05, S06')
+      // And the schema `clean-react` names that core and adds the rows `S01, S02`
+      await steps.schemaAddsRows('clean-react', 'S01, S02')
+      // When `factory review` runs over a product of `clean-react`
+      await steps.reviewRunsOverProductOf('clean-react')
+      // Then the rows asked are `S05, S06, S01, S02`
+      await steps.rowsAsked('S05, S06, S01, S02')
+    })
+  })
 })

@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { filesOf, projectOf } from "./guard.ts";
-import { readyChange } from "../core/testing.ts";
+import { readyChange, scratchProject } from "../core/testing.ts";
 
 const CLI = fileURLToPath(new URL("../cli.ts", import.meta.url));
 const PATCH = [
@@ -47,7 +47,7 @@ describe("the files a tool call is about to write", () => {
 
 describe("the command as an agent's hook", () => {
   const project = () => {
-    const root = mkdtempSync(join(tmpdir(), "hook-"));
+    const root = scratchProject("hook-");
     mkdirSync(join(root, "openspec"));
     mkdirSync(join(root, "src/orders"), { recursive: true });
     return root;

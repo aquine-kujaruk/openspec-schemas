@@ -125,7 +125,7 @@ export function createSteps() {
   const out = join(root, "dist");
   let schemas = ["clean-backend"];
   const tools: Record<string, string> = {};
-  const skills: Array<{ tool: string; path: string }> = [];
+  const skills: Array<{ tool: string; path: string } | { repository: string; commit?: string; path: string }> = [];
   let built: { dir: string; record: BuildRecord } | undefined;
   let failure: Error | undefined;
   let fresh: Freshness | undefined;
@@ -194,6 +194,10 @@ export function createSteps() {
     // Context
     async manifestListingSchemas(packageStep: string, listed: string): Promise<void> {
       schemas = listed.split(", ");
+      // A schema the fixture does not define yet starts as a plain variant of spec-plan.
+      for (const schema of schemas)
+        if (!existsSync(join(root, "schemas", schema, "schema.ts")))
+          writeDefinition(schema, { name: schema, extends: "spec-plan", description: `The ${schema} schema` });
       writeManifest(packageStep);
     },
     async definitionNamesResource(listed: string, kind: string, name: string): Promise<void> {
@@ -314,6 +318,10 @@ export function createSteps() {
         core,
         workstreams,
       });
+    },
+    async manifestTakesSkillFromRepository(skill: string, repository: string, commit: string): Promise<void> {
+      skills.push({ repository, path: `skills/${skill}`, ...(commit === "none" ? {} : { commit }) });
+      for (const file of readdirSync(join(root, "packages"))) writeManifest(file.slice(0, -3));
     },
 
     // Action

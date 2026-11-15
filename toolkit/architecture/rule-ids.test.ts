@@ -1,14 +1,19 @@
 import { globSync, readFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import { ARCHITECTURE_SPECS, hasLayerSpecs, PACKAGE_ROOT, SKIPPED_WITHOUT_SPECS } from "../core/paths.ts";
 import { architecture } from "./project.ts";
 import { layersOf } from "./compose.ts";
 import { ownRuleIds } from "./rules.ts";
+import { specsAsReadyChangesLeaveThem } from "../flow/merged.ts";
+
+/** The layer specs as ready changes leave them, so a layer a change adds is held to its spec before the archive. */
+const specs = await specsAsReadyChangesLeaveThem(PACKAGE_ROOT);
+afterAll(specs.dispose);
 
 /** The specs of the layers the workstreams own; a capability of the harness itself (`review`) names no linter rule. */
 const layers = new Set(layersOf(architecture).map((l) => l.name));
-const layerSpecs = globSync(join(PACKAGE_ROOT, ARCHITECTURE_SPECS, "*/spec.md")).filter((spec) =>
+const layerSpecs = globSync(join(specs.base, ARCHITECTURE_SPECS, "*/spec.md")).filter((spec) =>
   layers.has(basename(dirname(spec))),
 );
 

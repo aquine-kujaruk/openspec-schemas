@@ -2,14 +2,14 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { write } from "../core/testing.ts";
+import { ONE_SCHEMA, write } from "../core/testing.ts";
 import { listProducts } from "./schemas.ts";
 import { currentProduct, PRODUCT_VARIABLE, productHolding, projectProducts } from "./products.ts";
 
 /** Spec: `implementer`, "A project declares its products by folder" and "Each product's specs and acceptance tests live under that product". */
 const project = (config?: object) => {
   const root = mkdtempSync(join(tmpdir(), "products-"));
-  if (config) write(root, "factory.config.ts", `export default ${JSON.stringify(config)};\n`);
+  write(root, "factory.config.ts", config ? `export default ${JSON.stringify(config)};\n` : ONE_SCHEMA);
   return root;
 };
 

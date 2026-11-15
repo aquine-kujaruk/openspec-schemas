@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { expect } from "vitest";
 import { gate, readGate, type Verdict } from "./gate.ts";
 import { COMMAND, INSTALLED, SETUP_ASSETS } from "../core/paths.ts";
-import { declareProducts, readyChange, write } from "../core/testing.ts";
+import { declareProducts, ONE_SCHEMA, readyChange, write } from "../core/testing.ts";
 import type { Installed } from "../core/types.ts";
 
 /**
@@ -73,7 +73,7 @@ export function createSteps() {
 
   const project = () => {
     if (declared) declareProducts(root, declared);
-    else write(root, "factory.config.ts", "export default {};\n");
+    else write(root, "factory.config.ts", ONE_SCHEMA);
     write(root, join(".claude/skills", SETUP_ASSETS, INSTALLED), JSON.stringify(INSTALLED_PACKAGE));
     write(root, join(SCHEMA, "schema.yaml"), "name: clean-backend\n");
     mkdirSync(join(root, "openspec/schemas"), { recursive: true });

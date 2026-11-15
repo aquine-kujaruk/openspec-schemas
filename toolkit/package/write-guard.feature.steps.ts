@@ -4,14 +4,14 @@ import { join } from "node:path";
 import { expect } from "vitest";
 import { guard, productRoots as rootsOf, type Refusal } from "./guard.ts";
 import { projectConfig } from "../repository/products.ts";
-import { declareProducts, productsOf, readyChange } from "../core/testing.ts";
+import { declareProducts, productsOf, readyChange, scratchProject } from "../core/testing.ts";
 
 /**
  * Each scenario judges a write in a project of its own. The project's changes are written when the
  * write is judged: as many in implementation as the scenario says, and the active change it names.
  */
 export function createSteps() {
-  const root = mkdtempSync(join(tmpdir(), "write-guard-"));
+  const root = scratchProject("write-guard-");
   let building = 0;
   let made = "clean-backend";
   let active: string | undefined;

@@ -168,8 +168,8 @@ export const verify = async (
     warnings: [],
     note: `the project configures no ${config.review.keyVariable}`,
   };
-  const { rubric } = await loadSchema(product.schema);
-  if (!rubric) review.note = "the schema this project is checked with has no rubric";
+  const { rubrics } = await loadSchema(product.schema);
+  if (!rubrics.length) review.note = "the schema this project is checked with has no rubric";
   else if (key)
     try {
       review = { state: "run", warnings: await (options.review ?? realReview(product))(root, key) };

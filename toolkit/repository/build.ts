@@ -116,9 +116,18 @@ const REPOSITORY = /^(?:git\+)?(?:https?:\/\/|ssh:\/\/git@|git@)?([^/:@]+)[/:](.
 const skillDependency = (
   root: string,
   manifest: PackageManifest,
-  { tool, path }: PackageManifest["skills"][number],
+  taken: PackageManifest["skills"][number],
   used: (path: string) => string,
 ): string => {
+  if ("repository" in taken) {
+    const skill = basename(taken.path);
+    if (!taken.commit)
+      throw new Error(
+        `package ${manifest.name} takes the skill ${skill} from ${taken.repository} at no commit: pin the commit it is declared at`,
+      );
+    return `${taken.repository}/${taken.path}#${taken.commit}`;
+  }
+  const { tool, path } = taken;
   const skill = basename(path);
   const about = `package ${manifest.name} takes the skill ${skill} from ${tool}`;
   const version = manifest.tools[tool];
@@ -248,7 +257,7 @@ export const build = async (
     chmodSync(join(command, "toolkit/cli.js"), 0o755);
     for (const file of [
       ...found(["question policy", "template"]),
-      ...new Set(schemas.flatMap((s) => (s.rubric ? [relative(root, s.rubric)] : []))),
+      ...new Set(schemas.flatMap((s) => s.rubrics.map((r) => relative(root, r)))),
     ])
       copy(file, join(command, file));
     for (const schema of schemas)

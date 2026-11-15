@@ -56,10 +56,11 @@ describe("the examples of a layer are verified with the defaults of whoever hold
     expect(owning.map((dir) => relative(root, dir))).toEqual([folder]);
   });
 
-  it("the core alone builds through its workstreams and no framework's", async () => {
+  it("the core alone builds through its workstreams, with the stand-in framework its examples veto", async () => {
     const core = await loadHolder("clean-core", repository());
     expect(core.definition.workstreams).toEqual(["app-domain", "infrastructure", "adapters", "modules", "integrate"]);
-    expect(core.definition.defaults.frameworks.core.packages).toEqual([]);
+    expect(core.definition.defaults.frameworks.core.packages).toContain("express");
+    expect(core.definition.defaults.frameworks.core.packages).not.toContain("react");
   });
 
   it("the schema with a framework joins its workstreams to the core's", async () => {

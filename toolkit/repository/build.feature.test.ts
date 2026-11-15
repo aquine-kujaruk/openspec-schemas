@@ -488,4 +488,54 @@ describe('Feature: repository/build Specification', () => {
       await steps.builtPackagesCalled('0', 'backend')
     })
   })
+
+  describe('Rule: A package declares a skill that lives in a repository of its own', () => {
+    // Line 182
+    test('the skill `component-patterns` of the repository `acme/agent-skills` at `1a2c79d` is declared as `acme/agent-skills/skills/component-patterns#1a2c79d`', async () => {
+      const steps = createSteps()
+
+      // Given a package manifest `frontend` listing the schemas `clean-react`
+      await steps.manifestListingSchemas('frontend', 'clean-react')
+      // And the manifest takes the skill `component-patterns` from the repository `acme/agent-skills` at the commit `1a2c79d`
+      await steps.manifestTakesSkillFromRepository('component-patterns', 'acme/agent-skills', '1a2c79d')
+      // When the package `frontend` is built
+      await steps.buildPackage('frontend')
+      // Then the built package declares the dependency `acme/agent-skills/skills/component-patterns#1a2c79d`
+      await steps.builtPackageDeclares('acme/agent-skills/skills/component-patterns#1a2c79d')
+      // And it holds `0` copy(ies) of the skill `component-patterns`
+      await steps.skillCopiesHeld('0', 'component-patterns')
+    })
+
+    // Line 182
+    test('the skill `interface-review` of the repository `acme/agent-skills` at `1a2c79d` is declared as `acme/agent-skills/skills/interface-review#1a2c79d`', async () => {
+      const steps = createSteps()
+
+      // Given a package manifest `frontend` listing the schemas `clean-react`
+      await steps.manifestListingSchemas('frontend', 'clean-react')
+      // And the manifest takes the skill `interface-review` from the repository `acme/agent-skills` at the commit `1a2c79d`
+      await steps.manifestTakesSkillFromRepository('interface-review', 'acme/agent-skills', '1a2c79d')
+      // When the package `frontend` is built
+      await steps.buildPackage('frontend')
+      // Then the built package declares the dependency `acme/agent-skills/skills/interface-review#1a2c79d`
+      await steps.builtPackageDeclares('acme/agent-skills/skills/interface-review#1a2c79d')
+      // And it holds `0` copy(ies) of the skill `interface-review`
+      await steps.skillCopiesHeld('0', 'interface-review')
+    })
+
+    // Line 194
+    test('the skill `component-patterns` taken from `acme/agent-skills` with no commit stops the build', async () => {
+      const steps = createSteps()
+
+      // Given a package manifest `frontend` listing the schemas `clean-react`
+      await steps.manifestListingSchemas('frontend', 'clean-react')
+      // And the manifest takes the skill `component-patterns` from the repository `acme/agent-skills` at the commit `none`
+      await steps.manifestTakesSkillFromRepository('component-patterns', 'acme/agent-skills', 'none')
+      // When the package `frontend` is built
+      await steps.buildPackage('frontend')
+      // Then the build fails naming `component-patterns`
+      await steps.buildFailsNaming('component-patterns')
+      // And `0` built package(s) called `frontend` exist
+      await steps.builtPackagesCalled('0', 'frontend')
+    })
+  })
 })

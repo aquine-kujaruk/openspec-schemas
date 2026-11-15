@@ -12,7 +12,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { change, delta } from "../core/testing.ts";
+import { change, delta, scratchProject } from "../core/testing.ts";
 
 /** Spec: `implementer`, "Acceptance tests are generated from the product specs". */
 const CLI = fileURLToPath(new URL("../cli.ts", import.meta.url));
@@ -45,7 +45,7 @@ ${rows.map((r) => `  | ${r} |`).join("\n")}
 `;
 
 const repo = (rows: string[], path = SPEC) => {
-  const cwd = mkdtempSync(join(tmpdir(), "generate-"));
+  const cwd = scratchProject("generate-");
   mkdirSync(join(cwd, dirname(path)), { recursive: true });
   writeFileSync(join(cwd, path), spec(rows));
   return cwd;

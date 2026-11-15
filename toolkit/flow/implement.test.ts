@@ -9,12 +9,12 @@ import { start } from "./implement.ts";
 import { archive } from "./archive.ts";
 import { loadSchema, projectSchemaName } from "../repository/schema.ts";
 import { emitSchema } from "../repository/schema-yaml.ts";
-import { change, write } from "../core/testing.ts";
+import { change, scratchProject, write } from "../core/testing.ts";
 import { changesInImplementation } from "./validate.ts";
 import { verify } from "./verify.ts";
 
 /** Spec: `flow/implement`, "Only a ready change is implemented"; `package/write-guard`, what in implementation means. */
-const project = () => mkdtempSync(join(tmpdir(), "implement-"));
+const project = () => scratchProject("implement-");
 const PRODUCT = "src/orders/domain/entities/order.entity.ts";
 
 describe("the implement phase starts a change", () => {

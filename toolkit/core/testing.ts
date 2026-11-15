@@ -1,10 +1,25 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
 /** What the step adapters share to set a project up. Nothing the command runs imports this. */
 export const write = (root: string, path: string, text: string): void => {
   mkdirSync(dirname(join(root, path)), { recursive: true });
   writeFileSync(join(root, path), text);
+};
+
+/**
+ * What a scratch project's `factory.config.ts` says: this repository defines more than one schema
+ * that builds product code, so a project names the one its tools are composed from. The scratch
+ * projects of the tests build a backend.
+ */
+export const ONE_SCHEMA = 'export default { schema: "clean-backend" };\n';
+
+/** A scratch project in a fresh temporary folder, its tools composed from `clean-backend`. */
+export const scratchProject = (prefix: string): string => {
+  const root = mkdtempSync(join(tmpdir(), prefix));
+  write(root, "factory.config.ts", ONE_SCHEMA);
+  return root;
 };
 
 /** A delta spec the specification tool accepts: one new use case, `useCase`, with one scenario. */

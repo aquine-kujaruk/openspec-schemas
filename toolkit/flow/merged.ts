@@ -36,6 +36,17 @@ const readyWithDeltas = async (root: string): Promise<string[]> => {
 };
 
 /**
+ * The folder whose `openspec/specs` holds the project's specs as ready changes leave them: a merged
+ * copy while a ready change holds deltas (`dispose` removes it), else the project itself.
+ */
+export const specsAsReadyChangesLeaveThem = async (
+  root: string,
+): Promise<{ base: string; dispose: () => void }> => {
+  const merged = await mergedSpecs(root);
+  return merged ? { base: merged.root, dispose: merged.dispose } : { base: root, dispose: () => {} };
+};
+
+/**
  * The project's specs as they will stand once every ready change is archived: a copy of its
  * `openspec` folder in which the specification tool has archived them, so the merge is the tool's
  * own. Returns the folder of that copy, or nothing when no ready change holds a delta.

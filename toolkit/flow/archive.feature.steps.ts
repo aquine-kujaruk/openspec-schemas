@@ -10,7 +10,7 @@ import { raised } from "./feedback.ts";
 import { self } from "../core/paths.ts";
 import { loadSchema } from "../repository/schema.ts";
 import { emitSchema } from "../repository/schema-yaml.ts";
-import { block, change as writeChange, declareProducts, delta, type PlanParts, write } from "../core/testing.ts";
+import { block, change as writeChange, declareProducts, delta, type PlanParts, scratchProject, write } from "../core/testing.ts";
 
 /**
  * Each scenario archives in a project of its own, with the schema as the specification tool reads
@@ -37,7 +37,7 @@ const decisionBody = (alternatives: number) =>
   ].join("\n\n");
 
 export function createSteps() {
-  const root = mkdtempSync(join(tmpdir(), "archive-"));
+  const root = scratchProject("archive-");
   const changes = new Map<string, Planned>();
   const standing = new Map<string, string>();
   let alternativesListed = 0;

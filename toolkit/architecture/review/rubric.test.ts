@@ -1,5 +1,10 @@
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { checkGeneric, loadRubric, packagesOf, parseRubric } from "./rubric.ts";
+import { PACKAGE_ROOT } from "../../core/paths.ts";
+import { loadSchema } from "../../repository/schema.ts";
+import { checkGeneric, loadRubric, packagesOf, parseRubric, readRubric } from "./rubric.ts";
 
 const RUBRIC = `# Doc
 
@@ -75,5 +80,27 @@ describe("rubric", () => {
   it("rejects a row without a question", () => {
     const rows = loadRubric(RUBRIC.replace("Does an aggregate exist by obligation?", ""), []);
     expect(rows[1]).toMatchObject({ id: "S11", verdict: "rejected", reason: "has no question" });
+  });
+});
+
+/** Spec: `architecture/review`, "review asks the rows of the core and the rows of the schema". */
+describe("the rubrics of a schema", () => {
+  it("clean-react asks the core's rows, then its own, each of its own accepted", async () => {
+    const { rubrics } = await loadSchema("clean-react");
+    const rows = readRubric(PACKAGE_ROOT, rubrics);
+    const ids = rows.map((r) => r.id);
+    expect(ids.slice(0, 16)).toEqual(readRubric(PACKAGE_ROOT, rubrics[0]!).map((r) => r.id));
+    expect(ids.slice(16)).toEqual(["S01", "S02", "S03", "S04", "S21", "S22"]);
+    expect(rows.slice(16).filter((r) => r.verdict === "rejected")).toEqual([]);
+  });
+
+  it("refuses a row id that two rubrics carry", () => {
+    const dir = mkdtempSync(join(tmpdir(), "rubrics-"));
+    writeFileSync(join(dir, "package.json"), "{}");
+    writeFileSync(join(dir, "a.md"), RUBRIC);
+    writeFileSync(join(dir, "b.md"), RUBRIC);
+    expect(() => readRubric(dir, [join(dir, "a.md"), join(dir, "b.md")])).toThrow(
+      /rubric row S09 is in .*a\.md and in .*b\.md: a row id belongs to one rubric/,
+    );
   });
 });

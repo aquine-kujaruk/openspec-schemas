@@ -6,6 +6,7 @@ OpenSpec schemas, the resources they are built from, and the packages built from
 schemas/
   spec-plan/       a plan and delta specs, with no architecture: templates, validator, question policy
   clean-backend/   extends spec-plan: Clean Architecture for a backend, the clean core with no framework
+  clean-react/     extends spec-plan: a React frontend, the clean core plus react-ui and react-hooks, and its rubric
   shared/          what every package carries: the phase skills, setup, the flow instruction, the guards
     cores/         the cores schemas build through, each with its workstreams and its rubric
 packages/          one manifest per package: the schemas it carries, the agents, the pinned tools
@@ -18,9 +19,11 @@ toolkit/           the command, `factory`: its entry and one folder per area of 
 openspec/          this repository's own specs and changes
 ```
 
-Open a schema's folder and you see what only that schema is made of. A schema that builds product code names one core, a folder of `schemas/shared/cores/` that holds the workstreams of an architecture and says which waits for which, and adds the workstreams of its framework, if it has one. `clean-core` is Clean Architecture: `app-domain`, `infrastructure`, `adapters`, `modules` (the rules across modules and the entry) and `integrate`. A schema's name is its core's short name and what it adds: `clean-backend`. A resource lives with the definition that names it; one that extends another finds its base's resources in the base's folder; a resource named by two unrelated definitions lives in `schemas/shared/`. The build fails, naming the resource and where it belongs, when one is held anywhere else.
+Open a schema's folder and you see what only that schema is made of. A schema that builds product code names one core, a folder of `schemas/shared/cores/` that holds the workstreams of an architecture and says which waits for which, and adds the workstreams of its framework, if it has one. `clean-core` is Clean Architecture: `app-domain`, `infrastructure`, `adapters`, `modules` (the rules across modules and the entry) and `integrate`. A schema's name is its core's short name and what it adds: `clean-backend`, `clean-react`. A resource lives with the definition that names it; one that extends another finds its base's resources in the base's folder; a resource named by two unrelated definitions lives in `schemas/shared/`. The build fails, naming the resource and where it belongs, when one is held anywhere else.
 
-`spec-plan` is for a change no architecture covers: a procedure, a decision, tooling, documents. `clean-backend` builds a backend through the clean core. The package `backend` carries both for Claude and Codex.
+`spec-plan` is for a change no architecture covers: a procedure, a decision, tooling, documents. `clean-backend` builds a backend through the clean core. `clean-react` builds a React frontend through the same core and adds two workstreams: `react-ui` (pages, components, bridges and the entry `src/main.tsx`, built against a stub controller per page) and `react-hooks` (controllers, queries, mutations, view-models and stores; each query or mutation composes its use case over its repository and adapter once). Its rubric adds rows S01–S04, S21 and S22 to the core's.
+
+Three packages carry them, for Claude and Codex: `backend` (`clean-backend`, `spec-plan`), `frontend` (`clean-react`, `spec-plan`) and `fullstack` (`clean-backend`, `clean-react`, `spec-plan`), for a repository that declares a backend and a frontend as products. `frontend` and `fullstack` also declare the skills `composition-patterns` and `web-design-guidelines` of `vercel-labs/agent-skills` at a pinned commit; installing them reaches GitHub.
 
 Why each thing is the way it is lives in `openspec/`: the specs under `openspec/specs`, the change in progress under `openspec/changes`.
 
@@ -49,7 +52,7 @@ The project needs Node 22.18 or later, pnpm, and the agent package manager APM 0
 2. Pin the command the skills call. The tarball came with the `setup` skill; its file name carries the version:
 
    ```bash
-   pnpm add -D ./.claude/skills/setup/assets/factory-0.4.0.tgz
+   pnpm add -D ./.claude/skills/setup/assets/factory-0.5.0.tgz
    ```
 
 3. Let setup repair what the package owns and list what the project must supply:
@@ -115,7 +118,16 @@ export default {
 - The write guard opens a product's folder only to a change of that product. The gate, `factory verify` and `factory implement` judge a change by its own product alone.
 - `check`, `generate`, `test`, `prepare` and `review` run once per product, or for one with `--product <name>`. `factory schemas` lists the products.
 
-A project with no `products` has one product at its root and works as before.
+A project with no `products` has one product at its root and works as before. A project that installs `fullstack` has two schemas that build product code, so it declares its products, or names the one schema it uses as `schema`:
+
+```ts
+export default {
+  products: {
+    api: { root: "apps/api", schema: "clean-backend" },
+    web: { root: "apps/web", schema: "clean-react" },
+  },
+};
+```
 
 ### From 0.3 to 0.4
 

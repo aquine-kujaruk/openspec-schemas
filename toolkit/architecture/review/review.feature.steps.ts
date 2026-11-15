@@ -88,15 +88,27 @@ export function createSteps() {
   let result: ReviewResult | undefined;
   let file = entity(0);
 
+  let rubrics = ["RUBRIC.md"];
   const runMain = async () => {
     exit = await main({
       root,
-      rubric: join(root, "RUBRIC.md"),
+      rubric: rubrics.map((r) => join(root, r)),
       env,
       stdout: (l) => output.push(l),
       stderr: (l) => output.push(l),
       client: () => client,
     });
+  };
+  /** A rubric of generic rows `ids` at `path` inside the temp repository. */
+  const writeRubric = (path: string, ids: string) => {
+    const rows = ids.split(", ").map((id) => ({
+      id,
+      rule: `Rule ${id} holds`,
+      question: `Does this file break rule ${id}?`,
+      layers: "domain",
+    }));
+    mkdirSync(dirname(join(root, path)), { recursive: true });
+    writeFileSync(join(root, path), rubricMarkdown(rows));
   };
   const runReview = async () => {
     result = await review({ root, rows, client, config });
@@ -161,6 +173,17 @@ export function createSteps() {
     async rowWorded(row: string, wording: string): Promise<void> {
       rows = loadRubric(rubricMarkdown([{ ...S09, id: row, question: `${wording}?` }]), PACKAGES);
     },
+    async coreRubricRows(coreRows: string): Promise<void> {
+      files[entity(0)] = CLASS;
+      root = repo([], files);
+      writeRubric("core/RUBRIC.md", coreRows);
+      rubrics = ["core/RUBRIC.md"];
+    },
+    async schemaAddsRows(schema: string, schemaRows: string): Promise<void> {
+      if (schemaRows === "none") return;
+      writeRubric(`${schema}/RUBRIC.md`, schemaRows);
+      rubrics = [...rubrics, `${schema}/RUBRIC.md`];
+    },
 
     // Action
     async reviewRuns(): Promise<void> {
@@ -174,6 +197,12 @@ export function createSteps() {
     },
     async rubricLoaded(): Promise<void> {
       expect(rows).toHaveLength(1);
+    },
+    async reviewRunsOverProductOf(schema: string): Promise<void> {
+      // A product of the schema is asked its core's rubric and its own, never another schema's.
+      rubrics = rubrics.filter((r) => r === "core/RUBRIC.md" || r === `${schema}/RUBRIC.md`);
+      client = markerClient();
+      await runMain();
     },
 
     // Outcome
@@ -226,6 +255,11 @@ export function createSteps() {
     },
     async rowVerdict(verdict: string): Promise<void> {
       expect(rows[0].verdict, rows[0].reason).toBe(verdict);
+    },
+    async rowsAsked(asked: string): Promise<void> {
+      expect(exit, output.join("\n")).toBe(0);
+      const ids = client.calls.flatMap((c) => c.questions.map((q) => q.name.split("_")[0]!));
+      expect([...new Set(ids)].join(", ")).toBe(asked);
     },
   };
 }

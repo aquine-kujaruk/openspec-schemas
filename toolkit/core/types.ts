@@ -185,6 +185,11 @@ export type CoreDefinition = {
   workstreams: string[];
   /** What each of its workstreams waits for, by default. */
   topology: Topology;
+  /**
+   * What its own examples are verified with over the defaults of the base every schema naming it
+   * extends: a stand-in framework their counterexamples import. It vetoes nothing in a product.
+   */
+  examples?: Partial<FactoryConfig>;
 };
 
 /** A definition that starts from another one and sets only what it overrides. */
@@ -211,10 +216,11 @@ export type PackageManifest = {
   /** The tools the command runs, each at one exact version. */
   tools: Record<string, string>;
   /**
-   * Skills that ship inside a pinned tool: the tool and the folder inside it. The built package
-   * declares each one at the tool's pinned version and carries no copy.
+   * Skills the package declares and carries no copy of: one that ships inside a pinned tool (the
+   * tool and the folder inside it, declared at the tool's pinned version), or one that lives in a
+   * repository of its own (`owner/repo`, the folder inside it and the commit it is pinned at).
    */
-  skills: Array<{ tool: string; path: string }>;
+  skills: Array<{ tool: string; path: string } | { repository: string; commit?: string; path: string }>;
   languageServers: LanguageServer[];
   /** The agent package manager the package was built against. */
   packageManager: { name: string; version: string };

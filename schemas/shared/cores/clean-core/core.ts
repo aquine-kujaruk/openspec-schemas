@@ -1,4 +1,10 @@
-import type { CoreDefinition } from "../../../../toolkit/core/types.ts";
+import type { CoreDefinition, Vetoed } from "../../../../toolkit/core/types.ts";
+
+/** The framework the core's counterexamples import to break no-framework-import: an HTTP delivery package. */
+const standIn: Vetoed = {
+  packages: ["express", "fastify", "koa", "hono", "@nestjs/common", "@nestjs/core"],
+  patterns: ["express/*", "fastify/*", "koa/*", "hono/*", "@nestjs/*"],
+};
 
 /**
  * The clean core: Clean Architecture's domain, application, infrastructure and adapters, and the two
@@ -17,4 +23,5 @@ export default {
     modules: { dependsOn: ["app-domain", "infrastructure", "adapters"] },
     integrate: { dependsOn: ["modules"] },
   },
+  examples: { frameworks: { core: standIn, infrastructure: standIn } },
 } satisfies CoreDefinition;

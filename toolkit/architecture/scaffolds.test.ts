@@ -12,7 +12,16 @@ import { ruleIds } from "./rules.ts";
  * workstream is rendered with one sample name in one sample module, all together, so that a
  * scaffold finds the scaffolds it imports, and the rules of every workstream run over the result.
  */
-const SAMPLE = { Name: "Invoice", name: "invoice", camel: "invoice", module: "billing" };
+const SAMPLE = {
+  Name: "Invoice",
+  name: "invoice",
+  camel: "invoice",
+  module: "billing",
+  // The resource a framework scaffold composes its use case over: its repository implementation and adapter.
+  Resource: "Invoice",
+  resource: "invoice",
+  resourceCamel: "invoice",
+};
 
 /** Rules that judge a file by files another workstream writes: an ACL waits for its adapter. */
 const EXEMPT = new Set(["acl-adapter-paired"]);

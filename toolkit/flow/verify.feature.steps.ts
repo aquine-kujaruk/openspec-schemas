@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { expect } from "vitest";
 import { type Evidence, readEvidence, type ScenarioResult } from "./evidence.ts";
 import { raised } from "./feedback.ts";
-import { block, change as writeChange, delta, write } from "../core/testing.ts";
+import { block, change as writeChange, delta, scratchProject, write } from "../core/testing.ts";
 import { verify } from "./verify.ts";
 
 /**
@@ -23,7 +23,7 @@ const product = (root: string): Record<string, string> =>
   );
 
 export function createSteps() {
-  const root = mkdtempSync(join(tmpdir(), "verify-"));
+  const root = scratchProject("verify-");
   let total = 0;
   let proved = 0;
   let failing: Evidence["failing"] = [];

@@ -1,5 +1,5 @@
 import { capture, PROJECT_ROOT } from "../../core/paths.ts";
-import { architecture, RUBRIC } from "../project.ts";
+import { architecture, RUBRICS } from "../project.ts";
 import { type DecisionClient, openAiClient } from "./client.ts";
 import { loadEnv } from "./env.ts";
 import { readRecord, writeRecord } from "./record.ts";
@@ -16,8 +16,8 @@ export type MainOptions = {
   env: Record<string, string | undefined>;
   stdout: (line: string) => void;
   stderr: (line: string) => void;
-  /** The rubric file; by default, the one of the schema the project's tools are composed from. */
-  rubric?: string;
+  /** The rubric files, asked in order; by default, those of the schema the project's tools are composed from. */
+  rubric?: string | string[];
   /** Builds the client from the key; the real one by default. */
   client?: (key: string) => DecisionClient;
 };
@@ -36,8 +36,8 @@ export const main = async (o: MainOptions): Promise<number> => {
     );
     return 2;
   }
-  const rubric = o.rubric ?? RUBRIC;
-  if (!rubric) {
+  const rubric = o.rubric ?? RUBRICS;
+  if (![rubric].flat().length) {
     o.stderr("the schema this project is checked with has no rubric: there is nothing to review");
     return 2;
   }

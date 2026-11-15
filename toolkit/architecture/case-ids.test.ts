@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { basename, join, relative } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import {
   ARCHITECTURE_SPECS,
   hasLayerSpecs,
@@ -9,6 +9,11 @@ import {
 } from "../core/paths.ts";
 import { EXAMPLE_FILES } from "./project.ts";
 import { parseExampleFile } from "./example-file.ts";
+import { specsAsReadyChangesLeaveThem } from "../flow/merged.ts";
+
+/** The layer specs as ready changes leave them, so a layer a change adds is held to its spec before the archive. */
+const specs = await specsAsReadyChangesLeaveThem(PACKAGE_ROOT);
+afterAll(specs.dispose);
 
 /** `(rule, case)` pairs of the Examples rows `| <case> | <rule> |` in a layer spec. */
 const rowsOf = (spec: string): string[] => {
@@ -38,7 +43,7 @@ describe.skipIf(!hasLayerSpecs())(
       const cases = [...parseExampleFile(path).rules].flatMap(([rule, c]) =>
         [...c.keys()].map((name) => `${rule} · ${name}`),
       );
-      const rows = hasLayerSpecs() ? rowsOf(join(PACKAGE_ROOT, spec)) : [];
+      const rows = hasLayerSpecs() ? rowsOf(join(specs.base, spec)) : [];
       it(`${layer}: every case in ${examples} is a row of ${spec}`, () => {
         expect(
           cases.filter((c) => !rows.includes(c)),

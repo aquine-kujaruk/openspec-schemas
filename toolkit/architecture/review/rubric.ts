@@ -112,8 +112,16 @@ export const packagesOf = (packageJson: string): string[] => {
 };
 
 /** The rubric checked against the project's `package.json`, so no question names one of its packages. */
-export const readRubric = (root: string, rubric: string): LoadedRow[] =>
-  loadRubric(
-    readFileSync(rubric, "utf8"),
-    packagesOf(readFileSync(join(root, "package.json"), "utf8")),
-  );
+export const readRubric = (root: string, rubric: string | string[]): LoadedRow[] => {
+  const packages = packagesOf(readFileSync(join(root, "package.json"), "utf8"));
+  const rows: LoadedRow[] = [];
+  const from = new Map<string, string>();
+  for (const file of [rubric].flat())
+    for (const row of loadRubric(readFileSync(file, "utf8"), packages)) {
+      if (from.has(row.id))
+        throw new Error(`rubric row ${row.id} is in ${from.get(row.id)} and in ${file}: a row id belongs to one rubric`);
+      from.set(row.id, file);
+      rows.push(row);
+    }
+  return rows;
+};

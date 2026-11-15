@@ -23,8 +23,8 @@ export type Schema = {
   templates: Record<string, string>;
   /** The folder of each workstream it names. */
   workstreamDirs: Record<string, string>;
-  /** Its rubric, when it or a definition it extends has one. */
-  rubric?: string;
+  /** Its rubrics, in the order review asks them: its core's, then its own or the nearest base's. */
+  rubrics: string[];
   /** The file each resource it names was found in. */
   resources: Array<{ kind: Kind; id: string; file: string }>;
 };
@@ -200,8 +200,13 @@ const schemaOf = async (definition: SchemaDefinition, chained: string[], root: s
   const templates: Record<string, string> = {};
   for (const { template } of definition.artifacts)
     templates[template] = readFileSync(resource("template", template), "utf8");
-  const rubric = folders.map((folder) => join(folder, "review/RUBRIC.md")).find((f) => existsSync(f));
-  return { definition, workstreams, validator, questions, templates, workstreamDirs, rubric, resources };
+  const rubricIn = (names: string[]) =>
+    names.map((n) => join(root, SCHEMAS, n, "review/RUBRIC.md")).find((f) => existsSync(f));
+  const rubrics = [
+    ...(definition.core ? [rubricIn([coreFolder(definition.core)])] : []),
+    rubricIn([...chained, SHARED]),
+  ].filter((r): r is string => r !== undefined);
+  return { definition, workstreams, validator, questions, templates, workstreamDirs, rubrics, resources };
 };
 
 /**
@@ -232,7 +237,9 @@ export const loadHolder = async (name: string, root = PACKAGE_ROOT): Promise<Sch
   const base = naming[0]?.find((b) => naming.every((c) => c.includes(b)));
   if (!base) throw new Error(`nothing holds ${name}: holders: ${(await holderNames(root)).join(", ")}`);
   const written = await writtenDefinition(base, root);
-  const definition = await withCore({ ...written, name, core: name, workstreams: [] }, name, root);
+  const { examples = {} } = await loadCore(name, name, root);
+  const alone = { ...written, name, core: name, workstreams: [], defaults: { ...written.defaults, ...examples } };
+  const definition = await withCore(alone, name, root);
   return schemaOf(definition, await chain(base, root), root);
 };
 
