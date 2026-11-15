@@ -1,3 +1,4 @@
+import { posix } from "node:path";
 import type { WorkstreamDeclaration } from "../../../../toolkit/core/types.ts";
 
 const OFF = [
@@ -36,7 +37,8 @@ export default {
           ...o.entry,
           `${o.acceptance}/**/*.test.ts`,
           `${o.integration}/**/*.test.ts`,
-          "test/*.ts",
+          // The helpers beside the acceptance root (`test/*.ts`), in the product's own folder.
+          `${posix.dirname(o.acceptance)}/*.ts`,
           "factory.config.ts",
         ],
         rules: { "unused-files": "error", ...Object.fromEntries(OFF.map((r) => [r, "off"])) },

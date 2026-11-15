@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { CHANGES } from "../flow/change.ts";
 import { DECISIONS, PROCEDURES } from "../flow/consolidated.ts";
-import { projectConfig } from "../repository/schema.ts";
+import { type Product, productHolding, projectProducts } from "../repository/products.ts";
 import type { FactoryConfig } from "../core/types.ts";
 import { type Building, changesInImplementation } from "../flow/validate.ts";
 
@@ -19,7 +19,7 @@ const under =
  * the thing it protects does change.
  */
 const harness = (
-  config: FactoryConfig,
+  acceptance: string[],
 ): Array<{ part: string; holds: (path: string) => boolean; changes: string }> => [
   {
     part: "factory configuration",
@@ -28,7 +28,7 @@ const harness = (
   },
   {
     part: "generated tests",
-    holds: (path) => under(config.acceptance)(path) && path.endsWith(".feature.test.ts"),
+    holds: (path) => under(...acceptance)(path) && path.endsWith(".feature.test.ts"),
     changes: "change the spec they come from and run `pnpm exec factory generate`",
   },
   {
@@ -80,36 +80,48 @@ export const productRoots = (config: FactoryConfig): string[] => [
   config.integration,
 ];
 
+/** Why a write to product code is refused: what is in implementation, and how the write becomes possible. */
+const productRefusal = (path: string, started: Building[], product?: Product): string => {
+  if (!started.length)
+    return `${path} is product code and no change is in implementation: start with the \`plan\` phase, and write product code through the \`implement\` phase once validation reports the change ready`;
+  const listed = started.map((c) => `${c.name}, ${c.product ? `product ${c.product}, ` : ""}${c.schema}`).join("; ");
+  if (product)
+    return `${path} belongs to the product ${product.name}, and no change of that product is in implementation (${listed}): a product's folder opens only to a change of that product, opened by the \`plan\` phase`;
+  return `${path} is product code and the change in implementation (${listed}) was made with a schema that builds none: product code is written through a change of a schema that has workstreams, opened by the \`plan\` phase`;
+};
+
 /**
  * Judges a write to each of `paths` (absolute, or relative to `cwd`) in the project at `root`. A
- * path outside the project, or inside it but neither harness nor product, is nobody's business.
+ * path outside the project, or inside it but neither harness nor product, is nobody's business. In
+ * a project that declares products, a path in a product's folder opens only to a change of that
+ * product; otherwise product code opens to a change whose schema builds it.
  */
 export const guard = async (root: string, paths: string[], cwd = root): Promise<Refusal[]> => {
-  const config = await projectConfig(root);
-  const parts = harness(config);
-  const product = under(...productRoots(config));
+  const products = await projectProducts(root);
+  const declared = products.some((p) => p.name !== "");
+  const parts = harness(products.map((p) => p.config.acceptance));
+  const roots = under(...productRoots(products[0]!.config));
   let started: Building[] | undefined;
   const refusals: Refusal[] = [];
   for (const given of paths) {
     const path = relative(root, resolve(cwd, given)).split("\\").join("/");
     if (path.startsWith("..") || isAbsolute(path)) continue;
     const part = parts.find((p) => p.holds(path));
-    if (part)
+    if (part) {
       refusals.push({
         path,
         part: part.part,
         reason: `${path} belongs to the harness (${part.part}) and an agent never writes it: ${part.changes}`,
       });
-    else if (product(path)) {
-      started ??= await changesInImplementation(root);
-      if (!started.some((change) => change.builds))
-        refusals.push({
-          path,
-          reason: started.length
-            ? `${path} is product code and the change in implementation (${started.map((c) => `${c.name}, ${c.schema}`).join("; ")}) was made with a schema that builds none: product code is written through a change of a schema that has workstreams, opened by the \`plan\` phase`
-            : `${path} is product code and no change is in implementation: start with the \`plan\` phase, and write product code through the \`implement\` phase once validation reports the change ready`,
-        });
+      continue;
     }
+    const holder = declared ? productHolding(products, path) : undefined;
+    if (declared ? !holder : !roots(path)) continue;
+    started ??= await changesInImplementation(root);
+    const opens = holder
+      ? started.some((change) => change.product === holder.name)
+      : started.some((change) => change.builds);
+    if (!opens) refusals.push({ path, reason: productRefusal(path, started, holder) });
   }
   return refusals;
 };

@@ -268,4 +268,38 @@ describe('Feature: package/completion-gate Specification', () => {
       await steps.finishVerdict('allowed')
     })
   })
+
+  describe('Rule: A change is judged by its own product alone', () => {
+    // Line 106
+    test('a change of `api` finishing while `api` fails is `refused`', async () => {
+      const steps = createSteps()
+
+      // Given the project declares the products `api, worker`
+      await steps.projectDeclaresProducts('api, worker')
+      // And a change of the product `api` in implementation
+      await steps.changeOfProductInImplementation('api')
+      // And the checks of the product `api` fail
+      await steps.productChecksFail('api')
+      // When the `main` agent is about to finish
+      await steps.aboutToFinish('main')
+      // Then finishing is `refused`
+      await steps.finishVerdict('refused')
+    })
+
+    // Line 106
+    test('a change of `api` finishing while `worker` fails is `allowed`', async () => {
+      const steps = createSteps()
+
+      // Given the project declares the products `api, worker`
+      await steps.projectDeclaresProducts('api, worker')
+      // And a change of the product `api` in implementation
+      await steps.changeOfProductInImplementation('api')
+      // And the checks of the product `worker` fail
+      await steps.productChecksFail('worker')
+      // When the `main` agent is about to finish
+      await steps.aboutToFinish('main')
+      // Then finishing is `allowed`
+      await steps.finishVerdict('allowed')
+    })
+  })
 })

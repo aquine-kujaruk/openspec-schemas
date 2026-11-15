@@ -7,9 +7,17 @@ export type DeepPartial<T> = T extends readonly unknown[]
     ? { [K in keyof T]?: DeepPartial<T[K]> }
     : T;
 
-/** What `factory.config.ts` exports. */
-/** What a project sets over its schema's defaults, and which schema that is when it has several that build product code. */
-export type ProjectConfig = DeepPartial<FactoryConfig> & { schema?: string };
+/** One product of a project: its folder, its schema, and what it sets over the project's configuration. */
+export type ProductEntry = DeepPartial<FactoryConfig> & { root: string; schema: string };
+
+/**
+ * What `factory.config.ts` exports: what a project sets over its schema's defaults, which schema
+ * that is when it has several that build product code, and the products it declares by folder.
+ */
+export type ProjectConfig = DeepPartial<FactoryConfig> & {
+  schema?: string;
+  products?: Record<string, ProductEntry>;
+};
 
 /** Types a project configuration without changing it: `export default defineFactory({ ... })`. */
 export const defineFactory = (c: ProjectConfig): ProjectConfig => c;
@@ -31,6 +39,6 @@ const merge = (base: unknown, over: unknown): unknown => {
  * Without a project configuration, the defaults as they are.
  */
 export const resolveConfig = (defaults: FactoryConfig, project?: ProjectConfig): FactoryConfig => {
-  const { schema: _schema, ...over } = project ?? {};
+  const { schema: _schema, products: _products, ...over } = project ?? {};
   return merge(defaults, project ? over : undefined) as FactoryConfig;
 };

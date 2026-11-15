@@ -2,15 +2,18 @@ import { globSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { type Folders, loadWorkstreams } from "./graph.ts";
 import { PROJECT_ROOT, SOURCE_EXT } from "../core/paths.ts";
-import { loadSchema, projectConfig, projectSchemaName } from "../repository/schema.ts";
+import { loadSchema } from "../repository/schema.ts";
+import { currentProduct } from "../repository/products.ts";
 import type { Architecture, FactoryConfig } from "../core/types.ts";
 
 /**
- * The schema over the project: its defaults under the project's `factory.config.ts`, and the
- * workstreams it declares joined with the configured topology. Every tool (fallow, oxlint, archunit,
- * the tests, the checks) is composed from here.
+ * The product a run works on (the only one, or the one `--product` names) and its schema: the
+ * schema's defaults under the project's `factory.config.ts`, and the workstreams it declares joined
+ * with the configured topology. Every tool (fallow, oxlint, archunit, the tests, the checks) is
+ * composed from here.
  */
-export const schema = await loadSchema(await projectSchemaName(PROJECT_ROOT));
+export const product = await currentProduct(PROJECT_ROOT);
+export const schema = await loadSchema(product.schema);
 
 /** The folder of each workstream of the schema, and its rubric. */
 export const WORKSTREAM_DIRS = schema.workstreamDirs;
@@ -23,7 +26,7 @@ export const EXAMPLE_FILES = Object.values(WORKSTREAM_DIRS)
 
 export const DEFAULTS: FactoryConfig = schema.definition.defaults;
 
-export const config = await projectConfig(PROJECT_ROOT);
+export const config = product.config;
 
 const RULES = `.rules${SOURCE_EXT}`;
 const folders: Folders = Object.fromEntries(

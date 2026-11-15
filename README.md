@@ -48,7 +48,7 @@ The project needs Node 22.18 or later, pnpm, and the agent package manager APM 0
 2. Pin the command the skills call. The tarball came with the `setup` skill; its file name carries the version:
 
    ```bash
-   pnpm add -D ./.claude/skills/setup/assets/factory-0.2.4.tgz
+   pnpm add -D ./.claude/skills/setup/assets/factory-0.3.0.tgz
    ```
 
 3. Let setup repair what the package owns and list what the project must supply:
@@ -93,6 +93,28 @@ A change goes through five skills, each calling the command:
 The implement phase starts every short, rule-fixed file (schemas, entities, value objects, exception families, repository interfaces, ACLs, in-memory repositories and the shared bases) from a scaffold kept in the `## scaffolds` section of its layer's examples, rendered with `pnpm dlx ejs@7.0.2`; the first render on a machine needs the network.
 
 Two guards hold the flow: a write guard lets product code through only for a started change whose schema builds product code and never lets an agent write the harness, and a completion gate holds a turn that would leave a started change failing the checks of its own schema.
+
+### Several products in one repository
+
+A repository can hold several products, each in its own folder and governed by one schema. Declare them in `factory.config.ts`:
+
+```ts
+export default {
+  products: {
+    api: { root: "apps/api", schema: "clean-backend" },
+    worker: { root: "apps/worker", schema: "clean-backend", modules: "lib/*" },
+    contracts: { root: "packages/contracts", schema: "spec-plan" },
+  },
+};
+```
+
+- A product's settings come from its schema's defaults, then the top level of `factory.config.ts`, then its own entry. Its roots (`modules`, `acceptance`, `integration`, `entry`) are read inside its folder.
+- Its specs live at `openspec/specs/<product>/<module>/<use-case>/spec.md`, and the decisions its changes consolidate at `openspec/adr/<product>/`. There is one `openspec/` at the repository root.
+- Every change builds one product, named as `x-product` in its `.openspec.yaml`, and is made with that product's schema. The changes of one intention name each other under `x-linked`. `factory validate` checks both.
+- The write guard opens a product's folder only to a change of that product. The gate, `factory verify` and `factory implement` judge a change by its own product alone.
+- `check`, `generate`, `test`, `prepare` and `review` run once per product, or for one with `--product <name>`. `factory schemas` lists the products.
+
+A project with no `products` has one product at its root and works as before.
 
 ### Codex
 

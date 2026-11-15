@@ -6,7 +6,8 @@ import { CHANGES, GATE } from "../flow/change.ts";
 import { PLACES, readInstalled, schemaLinkHolds, unwiredGuards } from "./doctor.ts";
 import { hookInput, projectOf } from "./guard.ts";
 import { capture, self } from "../core/paths.ts";
-import { loadSchema, projectConfig } from "../repository/schema.ts";
+import { loadSchema } from "../repository/schema.ts";
+import { productOf } from "../repository/products.ts";
 import { type Building, changesInImplementation } from "../flow/validate.ts";
 
 /** How many failed attempts in a row hand a change to the person. */
@@ -103,7 +104,8 @@ export const alteredHarness = (root: string): string[] => {
  * The checks of the phase a change is building, which is the one the implement phase started: the
  * rules of the workstreams its tasks name, with those upstream of them, and the product tests those
  * workstreams are proved by. The workstreams are those of the change's own schema, so a change
- * whose schema has none is checked by nothing here.
+ * whose schema has none is checked by nothing here; in a project with products, they run over the
+ * change's own product only.
  */
 export const phaseChecks = async (
   root: string,
@@ -115,10 +117,12 @@ export const phaseChecks = async (
     change.plan.phases.find((p) => p.title === started) ??
     change.plan.phases.find((p) => p.tasks.some((t) => !t.done));
   if (!phase) return [];
+  // In a project with products, the change is judged by its own product alone.
   const [config, schema] = [
-    await projectConfig(root),
+    (await productOf(root, change.product)).config,
     await loadSchema(change.schema),
   ];
+  const product = change.product ? ["--product", change.product] : [];
   const upstream = (id: string, seen = new Set<string>()): Set<string> => {
     for (const d of config.workstreams[id]?.dependsOn ?? [])
       if (!seen.has(d)) upstream(d, seen.add(d));
@@ -130,14 +134,14 @@ export const phaseChecks = async (
   const covered = new Set(named.flatMap((id) => [...upstream(id)]));
   const found: string[] = [];
   for (const id of named.filter((id) => !covered.has(id))) {
-    const r = run(root, ["check", "--workstream", id]);
+    const r = run(root, ["check", "--workstream", id, ...product]);
     if (r.status !== 0) found.push(`the check of ${id} fails:\n${r.output}`);
   }
   const kinds = new Set(
     [...new Set([...named, ...covered])].flatMap((id) => schema.workstreams[id]?.tests ?? []),
   );
   for (const kind of kinds) {
-    const r = run(root, ["test", kind]);
+    const r = run(root, ["test", kind, ...product]);
     if (r.status !== 0) found.push(`the ${kind} tests fail:\n${r.output}`);
   }
   return found;

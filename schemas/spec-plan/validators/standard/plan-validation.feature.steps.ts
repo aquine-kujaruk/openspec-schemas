@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { expect } from "vitest";
 import { loadSchema } from "../../../../toolkit/repository/schema.ts";
 import { validateChange, type Verdict } from "../../../../toolkit/flow/validate.ts";
+import { declareProducts } from "../../../../toolkit/core/testing.ts";
 
 /**
  * Each scenario validates one change of a temp project. The change starts ready: a plan with one
@@ -31,16 +32,20 @@ export function createSteps() {
   let openQuestions = 0;
   const decisions: string[] = [];
   const procedures: string[] = [];
-  let schema = "clean-backend";
+  let made = "clean-backend";
   let phaseTasks = ["app-domain: write the use case", "integrate: verify the phase"];
   let strayTasks: string[] = [];
   let specCount = 1;
   let noBehaviour = false;
   let verdict: Verdict | undefined;
+  let name = CHANGE;
+  let product: string | undefined;
+  let links: string[] = [];
+  const list = (names: string) => (names === "none" ? [] : names.split(",").map((n) => n.trim()));
 
   const plan = () =>
     [
-      `---\nname: ${CHANGE}\ndescription: Orders can be listed\nschema: ${schema}\n---`,
+      `---\nname: ${CHANGE}\ndescription: Orders can be listed\nschema: ${made}\n---`,
       "# Add orders",
       "## Goal\n\nOrders can be listed.",
       "## Decisions",
@@ -56,9 +61,10 @@ export function createSteps() {
     ].join("\n\n");
 
   const write = () => {
-    const change = `openspec/changes/${CHANGE}`;
+    const change = `openspec/changes/${name}`;
     files[`${change}/.openspec.yaml`] =
-      `schema: ${schema}\ncreated: 2026-11-13\n${noBehaviour ? "skip_specs: true\n" : ""}`;
+      `schema: ${made}\ncreated: 2026-11-13\n${noBehaviour ? "skip_specs: true\n" : ""}` +
+      `${product ? `x-product: ${product}\n` : ""}${links.length ? `x-linked: [${links.join(", ")}]\n` : ""}`;
     files[`${change}/plan.md`] = plan();
     for (let i = 0; i < specCount; i++)
       files[`${change}/specs/orders/use-case-${i}/spec.md`] = "## ADDED Requirements\n";
@@ -114,10 +120,10 @@ export function createSteps() {
     },
     async schemaWorkstreams(workstreams: string): Promise<void> {
       if (workstreams === "none") {
-        schema = "spec-plan";
+        made = "spec-plan";
         phaseTasks = ["write the use case", "verify the phase"];
       }
-      expect((await loadSchema(schema)).definition.workstreams.join(", ") || "none").toBe(
+      expect((await loadSchema(made)).definition.workstreams.join(", ") || "none").toBe(
         workstreams,
       );
     },
@@ -131,11 +137,30 @@ export function createSteps() {
       specCount = Number(deltaSpecs);
       noBehaviour = marked === "set";
     },
+    async projectDeclaresProducts(products: string): Promise<void> {
+      declareProducts(root, products);
+    },
+    async changeNamesProduct(schema: string, named: string): Promise<void> {
+      made = schema;
+      if ((await loadSchema(made)).definition.workstreams.length === 0)
+        phaseTasks = ["write the use case", "verify the phase"];
+      product = named === "none" ? undefined : named;
+    },
+    async changeLinks(change: string, linked: string): Promise<void> {
+      name = change;
+      links = list(linked);
+    },
+    // A linked change whose name starts with `missing` is left unwritten: it does not exist.
+    async linkedChangeLinksBack(linked: string, back: string): Promise<void> {
+      if (linked.startsWith("missing")) return;
+      files[`openspec/changes/${linked}/.openspec.yaml`] =
+        `schema: ${made}\ncreated: 2026-11-13\n${back === "none" ? "" : `x-linked: [${list(back).join(", ")}]\n`}`;
+    },
 
     // Action
     async validateChange(): Promise<void> {
       write();
-      verdict = await validateChange(root, CHANGE);
+      verdict = await validateChange(root, name);
     },
 
     // Outcome

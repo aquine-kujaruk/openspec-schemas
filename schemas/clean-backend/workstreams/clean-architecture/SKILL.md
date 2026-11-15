@@ -9,6 +9,8 @@ description: Run the clean-architecture reduce workstream of the implementer: me
 
 **Owns:** the cross-module rules (`modules.rules.ts`): modules do not import one another, `shared` imports no module, no cycles, every file in a zone, no tests in `src`, no `any` and no raw errors in the core, and no escape from the harness (a lint rule disabled, a type error suppressed or expected, a cast through `unknown`). It also owns the entry (`src/main.ts` by default), the composition root: the only place that builds adapters, repositories and use cases together.
 
+**Paths:** every path here is written at the defaults. In a project with products, it sits in the folder of the change's product and under that product's configured roots (`pnpm exec factory schemas` lists each product's folder): `src` stands for the module root, `test/acceptance` and `test/integration` for the acceptance and integration roots, and `openspec/specs/<module>` for `openspec/specs/<product>/<module>`. A scaffold's info string stays as written; only `mkdir -p` and `-o` take the product's path.
+
 ## How
 
 1. Merge the upstream workstreams' work. A conflict can only be at a seam: if both sides changed a repository interface or an ACL, the seam was not fixed first; settle it on what the consumer needs (the use case for a repository interface, the repository implementation for an ACL) and adapt the other side.

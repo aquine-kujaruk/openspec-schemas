@@ -2,9 +2,9 @@ import { createHash } from "node:crypto";
 import { existsSync, globSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse, stringify } from "yaml";
-import { CHANGES } from "./change.ts";
+import { CHANGES, readChange } from "./change.ts";
 import { productRoots } from "../package/guard.ts";
-import { projectConfig } from "../repository/schema.ts";
+import { productOf } from "../repository/products.ts";
 
 export const EVIDENCE = "evidence.md";
 
@@ -36,15 +36,17 @@ export type Evidence = {
   }>;
 };
 
-/** A digest of the change's plan and delta specs and of every file under the product roots. */
+/** A digest of the change's plan and delta specs and of every file under the roots of its product. */
 export const digestOf = async (root: string, change: string): Promise<string> => {
-  const config = await projectConfig(root);
+  const product = await productOf(root, readChange(root, change)?.product);
+  // A declared product is its whole folder; the product of a project that declares none, its roots.
+  const roots = product.name ? [product.root] : productRoots(product.config);
   const files = [
     join(CHANGES, change, "plan.md"),
     ...globSync("specs/**/*.md", { cwd: join(root, CHANGES, change) }).map((f) =>
       join(CHANGES, change, f),
     ),
-    ...productRoots(config).flatMap((dir) =>
+    ...roots.flatMap((dir) =>
       existsSync(join(root, dir))
         ? globSync("**/*", { cwd: join(root, dir), withFileTypes: true })
             .filter((f) => f.isFile())

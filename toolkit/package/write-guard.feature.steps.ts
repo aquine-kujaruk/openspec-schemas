@@ -3,8 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect } from "vitest";
 import { guard, productRoots as rootsOf, type Refusal } from "./guard.ts";
-import { projectConfig } from "../repository/schema.ts";
-import { readyChange } from "../core/testing.ts";
+import { projectConfig } from "../repository/products.ts";
+import { declareProducts, productsOf, readyChange } from "../core/testing.ts";
 
 /**
  * Each scenario judges a write in a project of its own. The project's changes are written when the
@@ -16,12 +16,14 @@ export function createSteps() {
   let made = "clean-backend";
   let active: string | undefined;
   let refusals: Refusal[] = [];
+  let declared: Record<string, { root: string; schema: string }> = {};
+  let product: string | undefined;
 
   const project = () => {
     const names = Array.from({ length: building }, (_, i) =>
       i === 0 && active ? active : `change-${i + 1}`,
     );
-    for (const name of names) readyChange(root, name, { schema: made });
+    for (const name of names) readyChange(root, name, { schema: made, product });
     if (active && !names.includes(active)) readyChange(root, active, { done: true });
   };
 
@@ -41,6 +43,15 @@ export function createSteps() {
     async changeInImplementationWithSchema(schema: string): Promise<void> {
       building = 1;
       made = schema;
+    },
+    async projectDeclaresProducts(products: string): Promise<void> {
+      declared = productsOf(products);
+      declareProducts(root, products);
+    },
+    async changeOfProductInImplementation(changeProduct: string): Promise<void> {
+      building = 1;
+      product = changeProduct;
+      made = declared[changeProduct]!.schema;
     },
 
     // Action

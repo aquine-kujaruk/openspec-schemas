@@ -4,10 +4,13 @@ import { projectFiles } from "archunit";
 import { COVERAGE_RULE, layersOf, oxlintOverrides } from "./compose.ts";
 import { withUpstream } from "./graph.ts";
 import { cacheDir } from "../core/paths.ts";
+import { product } from "./project.ts";
 import type { Architecture, Rule } from "../core/types.ts";
 
-/** The project's tsconfig, or one composed over the whole project when it has none. */
+/** The product's tsconfig, else the project's, or one composed over the whole project when it has neither. */
 const projectTsconfig = (): string => {
+  const own = join(product.root, "tsconfig.json");
+  if (product.root !== "." && existsSync(own)) return own;
   if (existsSync("tsconfig.json")) return "tsconfig.json";
   const root = process.cwd();
   const path = join(cacheDir(root), "tsconfig.json");

@@ -384,4 +384,62 @@ describe('Feature: package/write-guard Specification', () => {
       await steps.writeVerdict('allowed')
     })
   })
+
+  describe('Rule: A product\'s folder opens only to that product\'s change', () => {
+    // Line 113
+    test('with a change of `api` in implementation, writing `apps/api/src/orders/domain/order.entity.ts` is `allowed`', async () => {
+      const steps = createSteps()
+
+      // Given the project declares the products `api at apps/api, worker at apps/worker`
+      await steps.projectDeclaresProducts('api at apps/api, worker at apps/worker')
+      // And a change of the product `api` in implementation
+      await steps.changeOfProductInImplementation('api')
+      // When an agent is about to write `apps/api/src/orders/domain/order.entity.ts`
+      await steps.aboutToWrite('apps/api/src/orders/domain/order.entity.ts')
+      // Then the write is `allowed`
+      await steps.writeVerdict('allowed')
+    })
+
+    // Line 113
+    test('with a change of `api` in implementation, writing `apps/worker/src/billing/domain/charge.entity.ts` is `refused`', async () => {
+      const steps = createSteps()
+
+      // Given the project declares the products `api at apps/api, worker at apps/worker`
+      await steps.projectDeclaresProducts('api at apps/api, worker at apps/worker')
+      // And a change of the product `api` in implementation
+      await steps.changeOfProductInImplementation('api')
+      // When an agent is about to write `apps/worker/src/billing/domain/charge.entity.ts`
+      await steps.aboutToWrite('apps/worker/src/billing/domain/charge.entity.ts')
+      // Then the write is `refused`
+      await steps.writeVerdict('refused')
+    })
+
+    // Line 113
+    test('with a change of `contracts` in implementation, writing `packages/contracts/src/orders.ts` is `allowed`', async () => {
+      const steps = createSteps()
+
+      // Given the project declares the products `api at apps/api, contracts at packages/contracts with the schema spec-plan`
+      await steps.projectDeclaresProducts('api at apps/api, contracts at packages/contracts with the schema spec-plan')
+      // And a change of the product `contracts` in implementation
+      await steps.changeOfProductInImplementation('contracts')
+      // When an agent is about to write `packages/contracts/src/orders.ts`
+      await steps.aboutToWrite('packages/contracts/src/orders.ts')
+      // Then the write is `allowed`
+      await steps.writeVerdict('allowed')
+    })
+
+    // Line 113
+    test('with a change of `contracts` in implementation, writing `apps/api/src/orders/domain/order.entity.ts` is `refused`', async () => {
+      const steps = createSteps()
+
+      // Given the project declares the products `api at apps/api, contracts at packages/contracts with the schema spec-plan`
+      await steps.projectDeclaresProducts('api at apps/api, contracts at packages/contracts with the schema spec-plan')
+      // And a change of the product `contracts` in implementation
+      await steps.changeOfProductInImplementation('contracts')
+      // When an agent is about to write `apps/api/src/orders/domain/order.entity.ts`
+      await steps.aboutToWrite('apps/api/src/orders/domain/order.entity.ts')
+      // Then the write is `refused`
+      await steps.writeVerdict('refused')
+    })
+  })
 })

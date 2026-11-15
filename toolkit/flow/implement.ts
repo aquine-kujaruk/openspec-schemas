@@ -20,14 +20,19 @@ export const start = async (root: string, name: string): Promise<Started> => {
   const verdict = await validateChange(root, name);
   if (!verdict.ready)
     return { state: "not ready", findings: verdict.findings.map((f) => `[${f.rule}] ${f.message}`) };
-  const phase = parsePlan(readChange(root, name)!.plan!).phases.find((p) =>
+  const change = readChange(root, name)!;
+  const phase = parsePlan(change.plan!).phases.find((p) =>
     p.tasks.some((t) => !t.done),
   );
   if (!phase) return { state: "nothing to build" };
-  // The product's roots are laid only for a schema that builds product code.
+  // The product's roots are laid only for a schema that builds product code, and with products only
+  // those of the change's own product. The tests are generated for every product, so the harness
+  // the gate checks stays whole.
   const builds = (await loadSchema(verdict.schema)).definition.workstreams.length > 0;
-  for (const step of builds ? ["prepare", "generate"] : ["generate"]) {
-    const r = self(root, [step]);
+  const over = change.product ? ["--product", change.product] : [];
+  const steps = builds ? [["prepare", ...over], ["generate"]] : [["generate"]];
+  for (const step of steps) {
+    const r = self(root, step);
     if (r.status !== 0) return { state: "cannot start", findings: [r.output] };
   }
   writeFileSync(
@@ -56,7 +61,8 @@ export const run = async (args: string[]): Promise<number> => {
   try {
     const started = await start(PROJECT_ROOT, name);
     if (started.state === "started") {
-      console.log(`in implementation: ${name} — ${started.phase}`);
+      const product = readChange(PROJECT_ROOT, name)?.product;
+      console.log(`in implementation: ${name}${product ? ` (product ${product})` : ""} — ${started.phase}`);
       for (const task of started.tasks) console.log(`- [ ] ${task}`);
       return 0;
     }

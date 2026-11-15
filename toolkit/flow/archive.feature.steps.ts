@@ -10,7 +10,7 @@ import { raised } from "./feedback.ts";
 import { self } from "../core/paths.ts";
 import { loadSchema } from "../repository/schema.ts";
 import { emitSchema } from "../repository/schema-yaml.ts";
-import { block, change as writeChange, delta, type PlanParts, write } from "../core/testing.ts";
+import { block, change as writeChange, declareProducts, delta, type PlanParts, write } from "../core/testing.ts";
 
 /**
  * Each scenario archives in a project of its own, with the schema as the specification tool reads
@@ -25,6 +25,7 @@ type Planned = {
   procedures: string[];
   deltas: number;
   created: string;
+  product?: string;
 };
 
 const decisionBody = (alternatives: number) =>
@@ -76,6 +77,7 @@ export function createSteps() {
       writeChange(root, name, {
         parts,
         created: c.created,
+        product: c.product,
         deltas: Object.fromEntries(
           Array.from({ length: c.deltas }, (_, i) => [`orders/use-case-${i + 1}`, delta(`use-case-${i + 1}`)]),
         ),
@@ -163,6 +165,20 @@ export function createSteps() {
     async unverifiedChanges(unverified: string): Promise<void> {
       if (unverified !== "none")
         for (const name of unverified.split(", ")) planned(name, "not verified");
+    },
+    async projectDeclaresProducts(products: string): Promise<void> {
+      declareProducts(root, products);
+    },
+    async verifiedChangeOfProductAddsDecisionIn(
+      change: string,
+      product: string,
+      slug: string,
+      area: string,
+      topic: string,
+    ): Promise<void> {
+      const c = planned(change);
+      c.product = product;
+      c.decisions.push({ slug, tags: ["@adds", `@area:${area}`, `@topic:${topic}`, ...DECISION_TAGS] });
     },
 
     // Action

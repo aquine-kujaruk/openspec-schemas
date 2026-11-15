@@ -360,4 +360,20 @@ describe('Feature: flow/archive Specification', () => {
       await steps.changesStillActive('add-refunds')
     })
   })
+
+  describe('Rule: With products, decisions consolidate under their product', () => {
+    // Line 166
+    test('`money-in-cents` of the product `api` is consolidated in `openspec/adr/api/product/money.md`', async () => {
+      const steps = createSteps()
+
+      // Given the project declares the products `api, worker`
+      await steps.projectDeclaresProducts('api, worker')
+      // And a verified change `add-orders-api` of the product `api` whose plan adds the decision `money-in-cents` in the area `product` and topic `money`
+      await steps.verifiedChangeOfProductAddsDecisionIn('add-orders-api', 'api', 'money-in-cents', 'product', 'money')
+      // When the change `add-orders-api` is archived on `2026-11-20`
+      await steps.archiveChange('add-orders-api', '2026-11-20')
+      // Then the decision `money-in-cents` is consolidated in `openspec/adr/api/product/money.md`
+      await steps.decisionConsolidatedIn('money-in-cents', 'openspec/adr/api/product/money.md')
+    })
+  })
 })

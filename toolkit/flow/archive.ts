@@ -63,15 +63,23 @@ const consolidated = (kind: Kind, block: Block, origin: string): string => {
  * Applies the operation each durable block of the plan declares to the consolidated tree of its
  * kind, stamping what it writes with `origin`. Returns every file it touched as it was before.
  */
-const consolidate = (root: string, blocks: Block[], kind: Kind, origin: string): Map<string, string | undefined> => {
+const consolidate = (
+  root: string,
+  blocks: Block[],
+  kind: Kind,
+  origin: string,
+  product = "",
+): Map<string, string | undefined> => {
   const tree = kind === "Decision" ? DECISIONS : PROCEDURES;
   const standing = readConsolidated(root)[kind === "Decision" ? "decisions" : "procedures"];
   const files = new Map<string, File>();
   const open = (path: string) =>
     files.get(path) ?? files.set(path, readFile(join(root, path), kind)).get(path)!;
+  // With products, a decision lives under the product its change builds.
   const home = (block: Block) =>
     join(
       tree,
+      kind === "Decision" ? product : "",
       tagOf(block, kind === "Decision" ? "area" : "purpose")?.value ?? "",
       `${tagOf(block, "topic")?.value}.md`,
     );
@@ -141,7 +149,7 @@ const archiveOne = async (root: string, name: string, date: string): Promise<Arc
   const plan = parsePlan(readChange(root, name)!.plan!);
   const as = `${date}-${name}`;
   const before = new Map([
-    ...consolidate(root, plan.decisions, "Decision", as),
+    ...consolidate(root, plan.decisions, "Decision", as, readChange(root, name)?.product),
     ...consolidate(root, plan.procedures, "Procedure", as),
   ]);
   const merged = openspec(root, ["archive", name, "-y"]);

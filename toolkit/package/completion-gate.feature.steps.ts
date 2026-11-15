@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { expect } from "vitest";
 import { gate, readGate, type Verdict } from "./gate.ts";
 import { COMMAND, INSTALLED, SETUP_ASSETS } from "../core/paths.ts";
-import { readyChange, write } from "../core/testing.ts";
+import { declareProducts, readyChange, write } from "../core/testing.ts";
 import type { Installed } from "../core/types.ts";
 
 /**
@@ -67,16 +67,20 @@ export function createSteps() {
   let failed = 0;
   let altered: string | undefined;
   let outcome: Verdict | undefined;
+  let declared: string | undefined;
+  let built: string | undefined;
+  let failingProduct: string | undefined;
 
   const project = () => {
-    write(root, "factory.config.ts", "export default {};\n");
+    if (declared) declareProducts(root, declared);
+    else write(root, "factory.config.ts", "export default {};\n");
     write(root, join(".claude/skills", SETUP_ASSETS, INSTALLED), JSON.stringify(INSTALLED_PACKAGE));
     write(root, join(SCHEMA, "schema.yaml"), "name: clean-backend\n");
     mkdirSync(join(root, "openspec/schemas"), { recursive: true });
     symlinkSync(join("../..", SCHEMA), join(root, "openspec/schemas/clean-backend"));
     write(root, "openspec/specs/orders/list-orders/spec.md", SPEC);
     write(root, "openspec/config.yaml", "schema: clean-backend\n");
-    if (building) readyChange(root, CHANGE, { schema: made });
+    if (building) readyChange(root, CHANGE, { schema: made, product: built });
     run(process.execPath, CLI, "generate");
     write(root, ".gitignore", "node_modules\n");
     run("git", "init", "-q");
@@ -118,16 +122,29 @@ export function createSteps() {
     async productChecks(checks: string): Promise<void> {
       productFails = checks === "fail";
     },
+    async projectDeclaresProducts(products: string): Promise<void> {
+      declared = products;
+    },
+    async changeOfProductInImplementation(product: string): Promise<void> {
+      built = product;
+    },
+    // The checks of `failing` fail and every other product's pass: a check run names its product.
+    async productChecksFail(failing: string): Promise<void> {
+      failingProduct = failing;
+    },
 
     // Action
     async aboutToFinish(agentKind: string): Promise<void> {
       expect(["main", "helper"]).toContain(agentKind);
       project();
+      const named = (args: string[]) => args[args.indexOf("--product") + 1];
       outcome = await gate(
         root,
-        productFails === undefined
-          ? { checks: async () => findings }
-          : { run: () => ({ status: productFails ? 1 : 0, output: "a rule is broken" }) },
+        failingProduct !== undefined
+          ? { run: (_, args) => ({ status: named(args) === failingProduct ? 1 : 0, output: "a rule is broken" }) }
+          : productFails === undefined
+            ? { checks: async () => findings }
+            : { run: () => ({ status: productFails ? 1 : 0, output: "a rule is broken" }) },
       );
     },
 

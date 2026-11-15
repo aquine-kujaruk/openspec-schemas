@@ -1,10 +1,9 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { type ProjectConfig, resolveConfig } from "../core/config.ts";
+import type { ProjectConfig } from "../core/config.ts";
 import { PACKAGE_ROOT, SOURCE_EXT } from "../core/paths.ts";
 import type {
-  FactoryConfig,
   SchemaDefinition,
   SchemaVariant,
   WorkstreamDeclaration,
@@ -174,16 +173,6 @@ export const projectSchemaName = async (project: string, root = PACKAGE_ROOT): P
   const chosen = existsSync(path) ? (await module<ProjectConfig>(path)).schema : undefined;
   if (chosen && building.includes(chosen)) return chosen;
   throw new Error(
-    `this project has ${building.length} schemas that build product code (${building.join(", ")}): name the one its tools are composed from as \`schema\` in factory.config.ts`,
-  );
-};
-
-/** The configuration of the project at `project`: the defaults of its schema under its `factory.config.ts`. */
-export const projectConfig = async (project: string): Promise<FactoryConfig> => {
-  const { defaults } = await loadDefinition(await projectSchemaName(project));
-  const path = join(project, "factory.config.ts");
-  return resolveConfig(
-    defaults,
-    existsSync(path) ? await module<ProjectConfig>(path) : undefined,
+    `this project has ${building.length} schemas that build product code (${building.join(", ")}): declare its products by folder as \`products\` in factory.config.ts, or name the one its tools are composed from as \`schema\``,
   );
 };

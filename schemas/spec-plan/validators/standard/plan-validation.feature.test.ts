@@ -530,4 +530,120 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
   })
+
+  describe('Rule: A change names one declared product of its schema', () => {
+    // Line 169
+    test('a `clean-backend` change naming `api` is `ready`', async () => {
+      const steps = createSteps()
+
+      // Given the project declares the products `api with clean-backend, contracts with spec-plan`
+      await steps.projectDeclaresProducts('api with clean-backend, contracts with spec-plan')
+      // And a change made with the schema `clean-backend` that names the product `api`
+      await steps.changeNamesProduct('clean-backend', 'api')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 169
+    test('a `spec-plan` change naming `contracts` is `ready`', async () => {
+      const steps = createSteps()
+
+      // Given the project declares the products `api with clean-backend, contracts with spec-plan`
+      await steps.projectDeclaresProducts('api with clean-backend, contracts with spec-plan')
+      // And a change made with the schema `spec-plan` that names the product `contracts`
+      await steps.changeNamesProduct('spec-plan', 'contracts')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 169
+    test('a `spec-plan` change naming `api` is `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given the project declares the products `api with clean-backend, contracts with spec-plan`
+      await steps.projectDeclaresProducts('api with clean-backend, contracts with spec-plan')
+      // And a change made with the schema `spec-plan` that names the product `api`
+      await steps.changeNamesProduct('spec-plan', 'api')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 169
+    test('a `clean-backend` change naming `web` is `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given the project declares the products `api with clean-backend, contracts with spec-plan`
+      await steps.projectDeclaresProducts('api with clean-backend, contracts with spec-plan')
+      // And a change made with the schema `clean-backend` that names the product `web`
+      await steps.changeNamesProduct('clean-backend', 'web')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 169
+    test('a `clean-backend` change naming `none` is `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given the project declares the products `api with clean-backend, contracts with spec-plan`
+      await steps.projectDeclaresProducts('api with clean-backend, contracts with spec-plan')
+      // And a change made with the schema `clean-backend` that names the product `none`
+      await steps.changeNamesProduct('clean-backend', 'none')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+  })
+
+  describe('Rule: Linked changes name each other', () => {
+    // Line 187
+    test('`add-orders-api` linking `add-orders-web`, which links `add-orders-api`, is `ready`', async () => {
+      const steps = createSteps()
+
+      // Given the change `add-orders-api` links the changes `add-orders-web`
+      await steps.changeLinks('add-orders-api', 'add-orders-web')
+      // And the change `add-orders-web` links back the changes `add-orders-api`
+      await steps.linkedChangeLinksBack('add-orders-web', 'add-orders-api')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 187
+    test('`add-orders-api` linking `add-orders-web`, which links `none`, is `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given the change `add-orders-api` links the changes `add-orders-web`
+      await steps.changeLinks('add-orders-api', 'add-orders-web')
+      // And the change `add-orders-web` links back the changes `none`
+      await steps.linkedChangeLinksBack('add-orders-web', 'none')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 187
+    test('`add-orders-api` linking `missing-change`, which links `none`, is `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given the change `add-orders-api` links the changes `missing-change`
+      await steps.changeLinks('add-orders-api', 'missing-change')
+      // And the change `missing-change` links back the changes `none`
+      await steps.linkedChangeLinksBack('missing-change', 'none')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+  })
 })

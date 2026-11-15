@@ -7,7 +7,8 @@ import { digestOf, type Evidence, type ScenarioResult, writeEvidence } from "./e
 import { raise } from "./feedback.ts";
 import { cacheDir, capture, PROJECT_ROOT, self } from "../core/paths.ts";
 import { parsePlan, tagOf } from "./plan.ts";
-import { loadSchema, projectConfig, projectSchemaName, schemaNames } from "../repository/schema.ts";
+import { loadSchema, schemaNames } from "../repository/schema.ts";
+import { type Product, productOf } from "../repository/products.ts";
 
 /** The environments a procedure is executed in while verifying; in any other it is only reviewed. */
 export const SAFE = ["local", "sandbox"];
@@ -39,6 +40,9 @@ type TestReport = {
   }>;
 };
 
+/** `--product <name>` for a run of the command over a declared product; nothing otherwise. */
+const over = (product: Product): string[] => (product.name ? ["--product", product.name] : []);
+
 /** Runs the generated tests `files`: all the acceptance tests of a project, those files alone in the command's repository. */
 const runTests =
   (layout: Layout) =>
@@ -49,7 +53,8 @@ const runTests =
       capture("pnpm", ["exec", "vitest", "run", ...files, "--reporter=json", `--outputFile=${report}`], {
         cwd: root,
       });
-    else self(root, ["test", "acceptance", "--report", report]);
+    else
+      self(root, ["test", "acceptance", "--report", report, ...(layout.product ? ["--product", layout.product] : [])]);
     return existsSync(report)
       ? (JSON.parse(readFileSync(report, "utf8")) as TestReport).testResults
       : [];
@@ -63,9 +68,10 @@ const acceptance = async (
   root: string,
   specs: string[],
   options: VerifyOptions,
+  product?: string,
 ): Promise<ScenarioResult[]> => {
   if (!specs.length) return [];
-  const layout = options.layout ?? (await layoutOf(root));
+  const layout = options.layout ?? (await layoutOf(root, product));
   const wanted = specs.map((spec) => ({ spec, file: testOf(spec, layout) }));
   const files = wanted.flatMap((w) => (w.file ? [w.file] : []));
   const ran = files.length ? await (options.tests ?? runTests(layout))(root, files) : [];
@@ -89,8 +95,8 @@ const acceptance = async (
  * the workstream that owns it: one whose upstream fails is not checked. Then the product tests each
  * is proved by. A schema with no workstreams leaves only the freshness of the generated tests.
  */
-const realChecks = async (root: string, made: string): Promise<Failing> => {
-  const [config, schema] = [await projectConfig(root), await loadSchema(made)];
+const realChecks = async (root: string, made: string, product: Product): Promise<Failing> => {
+  const [config, schema] = [product.config, await loadSchema(made)];
   const failing: Failing = [];
   const failed = new Set<string>();
   const done = new Set<string>();
@@ -105,10 +111,10 @@ const realChecks = async (root: string, made: string): Promise<Failing> => {
       failed.add(next);
       continue;
     }
-    const check = self(root, ["check", "--workstream", next]);
+    const check = self(root, ["check", "--workstream", next, ...over(product)]);
     const tests = (schema.workstreams[next]?.tests ?? [])
       .filter((kind) => kind !== "acceptance")
-      .map((kind) => self(root, ["test", kind]))
+      .map((kind) => self(root, ["test", kind, ...over(product)]))
       .find((r) => r.status !== 0);
     const broken = check.status !== 0 ? check : tests;
     if (broken) {
@@ -116,15 +122,15 @@ const realChecks = async (root: string, made: string): Promise<Failing> => {
       failing.push({ workstream: next, output: broken.output });
     }
   }
-  const fresh = self(root, ["generate", "--check"]);
+  const fresh = self(root, ["generate", "--check", ...over(product)]);
   if (fresh.status !== 0 && !failing.length)
     failing.push({ workstream: ids[0] ?? "generated tests", output: `the generated tests are not fresh:\n${fresh.output}` });
   return failing;
 };
 
-const realReview = async (root: string, key: string): Promise<string[]> => {
-  const { review } = await projectConfig(root);
-  const r = self(root, ["review"], { ...process.env, [review.keyVariable]: key });
+const realReview = (product: Product) => async (root: string, key: string): Promise<string[]> => {
+  const { review } = product.config;
+  const r = self(root, ["review", ...over(product)], { ...process.env, [review.keyVariable]: key });
   if (r.status !== 0) throw new Error(r.output);
   return r.output.split("\n").filter((line) => /^S\d{2} p=/.test(line));
 };
@@ -146,26 +152,27 @@ export const verify = async (
       `the change ${name} was made with the schema ${change.schema ?? "(none)"}, which this package does not define; schemas: ${schemaNames().join(", ")}`,
     );
   const made = change.schema;
+  const product = await productOf(root, change.product);
   const plan = parsePlan(change.plan ?? "");
   const specs = change.deltaSpecs.map((f) => f.replace(/^specs\//, "").replace(/\/spec\.md$/, ""));
 
   const scenarios = await (options.scenarios
     ? options.scenarios(root, specs)
-    : acceptance(root, specs, options));
-  const failing = await (options.checks ? options.checks(root) : realChecks(root, made));
+    : acceptance(root, specs, options, change.product));
+  const failing = await (options.checks ? options.checks(root) : realChecks(root, made, product));
 
-  const config = await projectConfig(root);
+  const { config } = product;
   const key = (options.env ?? loadEnv(root, process.env))[config.review.keyVariable];
   let review: Evidence["review"] = {
     state: "skipped",
     warnings: [],
     note: `the project configures no ${config.review.keyVariable}`,
   };
-  const { rubric } = await loadSchema(await projectSchemaName(root));
+  const { rubric } = await loadSchema(product.schema);
   if (!rubric) review.note = "the schema this project is checked with has no rubric";
   else if (key)
     try {
-      review = { state: "run", warnings: await (options.review ?? realReview)(root, key) };
+      review = { state: "run", warnings: await (options.review ?? realReview(product))(root, key) };
     } catch (e) {
       review.note = `the review could not run: ${e instanceof Error ? e.message : String(e)}`;
     }
@@ -198,11 +205,15 @@ export const verify = async (
   writeEvidence(root, evidence);
 
   const says = "the verify phase";
+  // An unproved scenario is raised on the workstream proved by acceptance tests, else on the change.
+  const prover =
+    Object.entries((await loadSchema(made)).workstreams).find(([, w]) => w.tests?.includes("acceptance"))?.[0] ??
+    name;
   for (const f of failing) raise(root, name, { source: says, names: f.workstream, findings: [f.output] });
-  if (unproved.length && !failing.some((f) => f.workstream === "app-domain"))
+  if (unproved.length && !failing.some((f) => f.workstream === prover))
     raise(root, name, {
       source: says,
-      names: "app-domain",
+      names: prover,
       findings: unproved.map((s) => `${s.spec}: ${s.scenario || "no generated test ran"} ${s.result}`),
     });
   for (const p of unexercised)

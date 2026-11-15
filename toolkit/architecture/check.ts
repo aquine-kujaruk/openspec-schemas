@@ -5,7 +5,7 @@ import { fileOf } from "./examples.ts";
 import { generate } from "./generate.ts";
 import { withUpstream } from "./graph.ts";
 import { cacheDir, jsonOf, PROJECT_ROOT, runTool } from "../core/paths.ts";
-import { architecture, config } from "./project.ts";
+import { architecture, config, product } from "./project.ts";
 import { archunitRules } from "./rules.ts";
 import type { Check, Layer } from "../core/types.ts";
 
@@ -25,6 +25,13 @@ const option = (args: string[], name: string): string | undefined => {
  * fallow (imports and calls) reports only the zones of the selected layers, oxlint lints the files
  * of their overrides, archunit runs only their rules.
  */
+/** A whole-product check's configuration that leaves the other products' folders alone. */
+const leaveOthers = (body: unknown): unknown => {
+  if (!product.elsewhere.length || typeof body !== "object" || body === null) return body;
+  const { ignorePatterns = [] } = body as { ignorePatterns?: string[] };
+  return { ...body, ignorePatterns: [...ignorePatterns, ...product.elsewhere] };
+};
+
 export const check = async (args: string[]): Promise<number> => {
   const all = architecture.workstreams;
   const layer = option(args, "--layer");
@@ -139,7 +146,7 @@ export const check = async (args: string[]): Promise<number> => {
     console.log(`\n▶ ${c.id} (whole product)`);
     const r = runTool(
       "fallow",
-      [...c.args, "--config", compose(`${c.id}.json`, c.config(config))],
+      [...c.args, "--config", compose(`${c.id}.json`, leaveOthers(c.config(config)))],
       { show: true },
     );
     if (r.status !== 0) failed = true;

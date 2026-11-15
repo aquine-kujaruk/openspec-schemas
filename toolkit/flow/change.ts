@@ -25,15 +25,42 @@ export type Change = {
   plan?: string;
   /** Its delta specs, relative to `dir`. */
   deltaSpecs: string[];
+  /** The product it builds, in a project that declares products (`x-product`). */
+  product?: string;
+  /** The other changes of its intention (`x-linked`). */
+  linked: string[];
 };
 
-export const readChange = (root: string, name: string): Change | undefined => {
-  const dir = join(root, CHANGES, name);
+export const readChange = (root: string, name: string): Change | undefined =>
+  readChangeAt(join(root, CHANGES, name), name);
+
+/** The change archived under `name`, if any: the folder `archive/<date>-<name>`. */
+export const readArchivedChange = (root: string, name: string): Change | undefined => {
+  const archive = join(root, CHANGES, "archive");
+  if (!existsSync(archive)) return undefined;
+  const folder = readdirSync(archive)
+    .filter((f) => /^\d{4}-\d{2}-\d{2}-/.test(f) && f.slice(11) === name)
+    .sort()
+    .at(-1);
+  return folder ? readChangeAt(join(archive, folder), name) : undefined;
+};
+
+const readChangeAt = (dir: string, name: string): Change | undefined => {
   if (!existsSync(dir)) return undefined;
   const meta = join(dir, ".openspec.yaml");
-  const { schema, skip_specs, created } = (
-    existsSync(meta) ? (parse(readFileSync(meta, "utf8")) ?? {}) : {}
-  ) as { schema?: unknown; skip_specs?: unknown; created?: unknown };
+  const {
+    schema,
+    skip_specs,
+    created,
+    "x-product": product,
+    "x-linked": linked,
+  } = (existsSync(meta) ? (parse(readFileSync(meta, "utf8")) ?? {}) : {}) as {
+    schema?: unknown;
+    skip_specs?: unknown;
+    created?: unknown;
+    "x-product"?: unknown;
+    "x-linked"?: unknown;
+  };
   const plan = join(dir, "plan.md");
   return {
     name,
@@ -43,6 +70,8 @@ export const readChange = (root: string, name: string): Change | undefined => {
     noBehaviour: skip_specs === true,
     plan: existsSync(plan) ? readFileSync(plan, "utf8") : undefined,
     deltaSpecs: globSync("specs/**/*.md", { cwd: dir }).sort(),
+    product: typeof product === "string" ? product : undefined,
+    linked: Array.isArray(linked) ? linked.filter((l): l is string => typeof l === "string") : [],
   };
 };
 

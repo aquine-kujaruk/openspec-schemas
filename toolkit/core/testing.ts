@@ -81,11 +81,20 @@ export const change = (
     deltas = { "orders/get-order": delta() },
     created = "2026-11-13",
     schema = "clean-backend",
-  }: { parts?: PlanParts; deltas?: Record<string, string>; created?: string; schema?: string } = {},
+    product,
+  }: {
+    parts?: PlanParts;
+    deltas?: Record<string, string>;
+    created?: string;
+    schema?: string;
+    /** The product it builds, in a project that declares products. */
+    product?: string;
+  } = {},
 ): void => {
   const folder = `openspec/changes/${name}`;
   const marked = Object.keys(deltas).length ? "" : "skip_specs: true\n";
-  write(root, `${folder}/.openspec.yaml`, `schema: ${schema}\ncreated: ${created}\n${marked}`);
+  const builds = product ? `x-product: ${product}\n` : "";
+  write(root, `${folder}/.openspec.yaml`, `schema: ${schema}\ncreated: ${created}\n${marked}${builds}`);
   for (const [spec, text] of Object.entries(deltas)) write(root, `${folder}/specs/${spec}/spec.md`, text);
   write(root, `${folder}/plan.md`, planText(name, { bare: schema !== "clean-backend", ...parts }));
 };
@@ -94,9 +103,9 @@ export const change = (
 export const readyChange = (
   root: string,
   name: string,
-  { done = false, schema = "clean-backend" } = {},
+  { done = false, schema = "clean-backend", product }: { done?: boolean; schema?: string; product?: string } = {},
 ): void => {
-  change(root, name, { parts: { phases: [done] }, schema });
+  change(root, name, { parts: { phases: [done] }, schema, product });
   if (!done)
     write(
       root,
@@ -109,3 +118,21 @@ export const readyChange = (
       }),
     );
 };
+
+/**
+ * The products a scenario names, as `factory.config.ts` declares them: each item is
+ * `<name>[ at <root>][ with[ the schema] <schema>]`, its folder `apps/<name>` and its schema
+ * `clean-backend` when it says nothing else.
+ */
+export const productsOf = (text: string): Record<string, { root: string; schema: string }> =>
+  Object.fromEntries(
+    text.split(",").map((item) => {
+      const m = /^(\S+)(?: at (\S+))?(?: with (?:the schema )?(\S+))?$/.exec(item.trim());
+      if (!m) throw new Error(`not a product: ${item}`);
+      return [m[1]!, { root: m[2] ?? `apps/${m[1]}`, schema: m[3] ?? "clean-backend" }];
+    }),
+  );
+
+/** Declares the products `text` names in the project at `root` (see `productsOf`). */
+export const declareProducts = (root: string, text: string): void =>
+  write(root, "factory.config.ts", `export default ${JSON.stringify({ products: productsOf(text) })};\n`);
