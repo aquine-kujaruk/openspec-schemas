@@ -77,7 +77,7 @@ export const planText = (name: string, parts: PlanParts = {}): string =>
     ...(parts.phases ?? [false]).map((done, i) =>
       [
         `### Phase ${i + 1}: Step ${i + 1} works`,
-        `- [${done ? "x" : " "}] ${parts.bare ? "" : "app-domain: "}build step ${i + 1}\n- [${done ? "x" : " "}] ${parts.bare ? "" : "integrate: "}verify the phase`,
+        `- [${done ? "x" : " "}] ${parts.bare ? "" : "app-domain: "}build step ${i + 1}\n- [${done ? "x" : " "}] ${parts.bare ? "" : "modules: "}verify the phase`,
       ].join("\n\n"),
     ),
     ["## Feedback", (parts.feedback ?? []).map((f) => `- ${f}`).join("\n")].join("\n\n"),

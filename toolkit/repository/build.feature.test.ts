@@ -439,35 +439,35 @@ describe('Feature: repository/build Specification', () => {
 
   describe('Rule: A schema builds through the workstreams of its core and its own', () => {
     // Line 154
-    test('`clean-backend` naming the core `clean-core` and its own `none` builds through `app-domain, infrastructure, adapters, modules, integrate`', async () => {
+    test('`clean-backend` naming the core `clean-core` and its own `none` builds through `app-domain, infrastructure, adapters, modules`', async () => {
       const steps = createSteps()
 
       // Given a package manifest `backend` listing the schemas `clean-backend`
       await steps.manifestListingSchemas('backend', 'clean-backend')
-      // And the core `clean-core` lists the workstreams `app-domain, infrastructure, adapters, modules, integrate`
-      await steps.coreListsWorkstreams('clean-core', 'app-domain, infrastructure, adapters, modules, integrate')
+      // And the core `clean-core` lists the workstreams `app-domain, infrastructure, adapters, modules`
+      await steps.coreListsWorkstreams('clean-core', 'app-domain, infrastructure, adapters, modules')
       // And the definition of `clean-backend` names the core `clean-core` and the workstreams `none`
       await steps.definitionNamesCoreAndWorkstreams('clean-backend', 'clean-core', 'none')
       // When the package `backend` is built
       await steps.buildPackage('backend')
-      // Then the built schema `clean-backend` lets a task name `app-domain, infrastructure, adapters, modules, integrate`
-      await steps.builtSchemaLetsTaskName('clean-backend', 'app-domain, infrastructure, adapters, modules, integrate')
+      // Then the built schema `clean-backend` lets a task name `app-domain, infrastructure, adapters, modules`
+      await steps.builtSchemaLetsTaskName('clean-backend', 'app-domain, infrastructure, adapters, modules')
     })
 
     // Line 154
-    test('`clean-react` naming the core `clean-core` and its own `react-ui, react-hooks` builds through `app-domain, infrastructure, adapters, modules, integrate, react-ui, react-hooks`', async () => {
+    test('`clean-react` naming the core `clean-core` and its own `react-ui, react-hooks` builds through `app-domain, infrastructure, adapters, modules, react-ui, react-hooks`', async () => {
       const steps = createSteps()
 
       // Given a package manifest `frontend` listing the schemas `clean-react`
       await steps.manifestListingSchemas('frontend', 'clean-react')
-      // And the core `clean-core` lists the workstreams `app-domain, infrastructure, adapters, modules, integrate`
-      await steps.coreListsWorkstreams('clean-core', 'app-domain, infrastructure, adapters, modules, integrate')
+      // And the core `clean-core` lists the workstreams `app-domain, infrastructure, adapters, modules`
+      await steps.coreListsWorkstreams('clean-core', 'app-domain, infrastructure, adapters, modules')
       // And the definition of `clean-react` names the core `clean-core` and the workstreams `react-ui, react-hooks`
       await steps.definitionNamesCoreAndWorkstreams('clean-react', 'clean-core', 'react-ui, react-hooks')
       // When the package `frontend` is built
       await steps.buildPackage('frontend')
-      // Then the built schema `clean-react` lets a task name `app-domain, infrastructure, adapters, modules, integrate, react-ui, react-hooks`
-      await steps.builtSchemaLetsTaskName('clean-react', 'app-domain, infrastructure, adapters, modules, integrate, react-ui, react-hooks')
+      // Then the built schema `clean-react` lets a task name `app-domain, infrastructure, adapters, modules, react-ui, react-hooks`
+      await steps.builtSchemaLetsTaskName('clean-react', 'app-domain, infrastructure, adapters, modules, react-ui, react-hooks')
     })
 
     // Line 166
@@ -476,8 +476,8 @@ describe('Feature: repository/build Specification', () => {
 
       // Given a package manifest `backend` listing the schemas `clean-backend`
       await steps.manifestListingSchemas('backend', 'clean-backend')
-      // And the core `clean-core` lists the workstreams `app-domain, infrastructure, adapters, modules, integrate`
-      await steps.coreListsWorkstreams('clean-core', 'app-domain, infrastructure, adapters, modules, integrate')
+      // And the core `clean-core` lists the workstreams `app-domain, infrastructure, adapters, modules`
+      await steps.coreListsWorkstreams('clean-core', 'app-domain, infrastructure, adapters, modules')
       // And the definition of `clean-backend` names the core `clean-core` and the workstreams `modules`
       await steps.definitionNamesCoreAndWorkstreams('clean-backend', 'clean-core', 'modules')
       // When the package `backend` is built

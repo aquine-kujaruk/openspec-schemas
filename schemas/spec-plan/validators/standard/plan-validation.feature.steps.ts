@@ -32,8 +32,9 @@ export function createSteps() {
   let openQuestions = 0;
   const decisions: string[] = [];
   const procedures: string[] = [];
+  const screens: string[] = [];
   let made = "clean-backend";
-  let phaseTasks = ["app-domain: write the use case", "integrate: verify the phase"];
+  let phaseTasks = ["app-domain: write the use case", "modules: verify the phase"];
   let strayTasks: string[] = [];
   let specCount = 1;
   let noBehaviour = false;
@@ -52,6 +53,7 @@ export function createSteps() {
       ["## Open questions", ...Array.from({ length: openQuestions }, (_, i) => `- Question ${i + 1}?`)].join("\n\n"),
       ["## Architecture decisions", ...decisions].join("\n\n"),
       ["## Procedures", ...procedures].join("\n\n"),
+      ["## Screens", ...screens].join("\n\n"),
       "## Phases",
       "### Phase 1: Orders are listed",
       "**Seams**\n\n```ts\nexport interface OrderRepositoryInterface {}\n```",
@@ -161,6 +163,17 @@ export function createSteps() {
       procedures.push(
         procedure(slug, ["@adds", `@purpose:${purpose}`, ...record, ...without(PROCEDURE_TAGS, "@purpose")]),
       );
+    },
+    async changeWithSchema(schema: string): Promise<void> {
+      made = schema;
+    },
+    async planScreenApproved(screen: string, approved: string): Promise<void> {
+      if (screen === "no screen") return;
+      const tags = [...(approved === "none" ? [] : [`@approved:${approved}`]), `@page:src/orders/framework/ui/${screen}/${screen}.page.tsx`];
+      screens.push(`### Screen: ${screen} · The orders list\n\n${tags.join(" ")}\n\nThe orders, newest first.\n`);
+    },
+    async planSpikeTasks(tasks: string): Promise<void> {
+      if (Number(tasks)) phaseTasks = ["react-ui: build the orders list page", ...phaseTasks];
     },
 
     // Action

@@ -3,9 +3,9 @@ import { mkdtempSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect } from "vitest";
-import { type Evidence, readEvidence, type ScenarioResult } from "./evidence.ts";
+import { type E2eResult, type Evidence, readEvidence, type ScenarioResult } from "./evidence.ts";
 import { raised } from "./feedback.ts";
-import { block, change as writeChange, delta, scratchProject, write } from "../core/testing.ts";
+import { block, change as writeChange, delta, ONE_SCHEMA, scratchProject, write } from "../core/testing.ts";
 import { verify } from "./verify.ts";
 
 /**
@@ -41,6 +41,11 @@ export function createSteps() {
   let written = true;
   const vouched: string[] = [];
   let asked: string[] = [];
+  // The scenarios on whole-product checks and end-to-end tests: what those print stood in for.
+  let builtOn: string | undefined;
+  let wholeOutputs: string[] = [];
+  let e2eResults: E2eResult[] = [];
+  let lastFailure = "";
 
   return {
     // Context
@@ -91,15 +96,50 @@ export function createSteps() {
       if (word === "proved") vouched.push(spec);
       else expect(word).toBe("none");
     },
+    async builtChangeOfPlatform(platform: string): Promise<void> {
+      builtOn = platform;
+      // A web product is a clean-react one; any other, the scratch project's backend.
+      write(root, "factory.config.ts", platform === "web" ? 'export default { schema: "clean-react" };\n' : ONE_SCHEMA);
+    },
+    async wholeProductFailure(failure: string): Promise<void> {
+      lastFailure = failure;
+      const m = /^(\S+) names (\S+)$/.exec(failure);
+      if (!m) return;
+      write(root, m[2]!, "export const unused = 1;\n");
+      wholeOutputs = [`${m[1]}: ${m[2]}`];
+      if (failure.startsWith("the end-to-end test")) wholeOutputs = [];
+    },
+    async e2eTestResult(test: string, result: string): Promise<void> {
+      e2eResults = [{ test, result: result === "passes" ? "passed" : "failed" }];
+    },
 
     // Action
     async verifyChange(): Promise<void> {
+      if (builtOn) {
+        writeChange(root, CHANGE, {
+          deltas: {},
+          schema: builtOn === "web" ? "clean-react" : "clean-backend",
+          parts: { phases: [true] },
+        });
+        const failingE2e = /^the end-to-end test (\S+) fails$/.exec(lastFailure)?.[1];
+        evidence = await verify(root, CHANGE, {
+          env: {},
+          scenarios: async () => [],
+          checks: async () => [],
+          whole: async () => wholeOutputs,
+          e2e: async () =>
+            failingE2e ? [{ test: failingE2e, result: "failed" }] : builtOn === "web" ? e2eResults : [],
+        });
+        return;
+      }
       if (delivered) {
         const { repository, spec } = delivered;
         writeChange(root, CHANGE, { deltas: { [spec]: delta() }, parts: { phases: [true] } });
         evidence = await verify(root, CHANGE, {
           env: {},
           checks: async () => [],
+          whole: async () => [],
+          e2e: async () => [],
           proved: vouched,
           layout: {
             repository,
@@ -149,6 +189,8 @@ export function createSteps() {
         env,
         scenarios: async () => results,
         checks: async () => failing,
+        whole: async () => [],
+        e2e: async () => [],
         review: async () => lines,
         procedures:
           givenOutcome === undefined
@@ -202,6 +244,17 @@ export function createSteps() {
         expect(recorded).toMatchObject({ result: "missing" });
         expect(text).not.toContain("by the person's word");
       }
+    },
+    async feedbackRaisedOn(raisedOn: string): Promise<void> {
+      const names = raised(root, CHANGE).map((f) => f.names);
+      if (raisedOn === "nothing") expect(names).toEqual([]);
+      else expect(names).toEqual([raisedOn === "the change" ? CHANGE : raisedOn]);
+    },
+    async evidenceRecordsE2e(test: string, recorded: string): Promise<void> {
+      expect(evidence!.e2e).toMatchObject([{ test, result: recorded }]);
+      expect(readFileSync(join(root, "openspec/changes", CHANGE, "evidence.md"), "utf8")).toContain(
+        `| ${test} | ${recorded} |`,
+      );
     },
   };
 }

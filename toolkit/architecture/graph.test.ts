@@ -13,7 +13,6 @@ const DECLARATIONS = {
   infrastructure: declare("infrastructure"),
   adapters: declare("adapters"),
   modules: declare("modules"),
-  integrate: declare(),
 };
 const folders = (d: Record<string, WorkstreamDeclaration> = DECLARATIONS): Folders =>
   Object.fromEntries(
@@ -26,11 +25,10 @@ const SEQUENCE: Topology = {
   infrastructure: { dependsOn: ["app-domain"] },
   adapters: { dependsOn: ["infrastructure"] },
   modules: { dependsOn: ["adapters"] },
-  integrate: { dependsOn: ["modules"] },
 };
 
 describe("the implementer declares its workstreams and their dependencies", () => {
-  it.each([["integrate", "moduls"]])("a dependency of %s on the unknown workstream %s is rejected", (workstream, dependency) => {
+  it.each([["modules", "adaptres"]])("a dependency of %s on the unknown workstream %s is rejected", (workstream, dependency) => {
     const topology = { ...DEFAULTS.workstreams, [workstream]: { dependsOn: [dependency] } };
     expect(() => load(topology)).toThrow(new RegExp(`${workstream} depends on ${dependency}`));
   });
@@ -48,7 +46,7 @@ describe("the implementer declares its workstreams and their dependencies", () =
     expect(() => load(topology)).toThrow(/workstream e2e: configured, but it has no folder/);
   });
   it.each([
-    ["modules", "integrate", "modules → integrate → modules"],
+    ["adapters", "modules", "adapters → modules → adapters"],
   ])("%s and %s depending on each other are rejected", (workstream, dependency, cycle) => {
     const topology = {
       ...DEFAULTS.workstreams,
@@ -65,7 +63,6 @@ describe("workstreams run in dependency order", () => {
     ["modules", "app-domain"],
     ["modules", "infrastructure"],
     ["modules", "adapters"],
-    ["integrate", "modules"],
   ])("by default %s waits for %s", (workstream, dependency) => {
     const ws = load(DEFAULTS.workstreams);
     expect(before(runOrder(ws), dependency, workstream)).toBe(true);

@@ -164,6 +164,42 @@ const procedureProbed: Rule = (c) =>
     ];
   });
 
+const APPROVED = /^(?:\d{4}-\d{2}-\d{2}|declined)$/;
+
+/** A web change lists its screens, and each one is approved by whoever could decide it, and names its page. */
+const screenApproved: Rule = (c) => {
+  if (!c.spike) return [];
+  const spiked = c.plan.phases.some((p) => p.tasks.some((t) => t.workstream === c.spike));
+  const found: Finding[] = spiked && !c.plan.screens.length
+    ? [
+        {
+          rule: "screen-approved",
+          message: `the plan has tasks of ${c.spike}, the spike workstream, and lists no screen: list each screen under ## Screens, spiked and approved while planning`,
+        },
+      ]
+    : [];
+  for (const screen of c.plan.screens) {
+    const approved = tagOf(screen, "approved")?.value;
+    if (!approved || !APPROVED.test(approved))
+      found.push({
+        rule: "screen-approved",
+        block: screen.slug,
+        tag: "@approved",
+        message: approved
+          ? `the screen ${screen.slug} carries @approved:${approved}: it is the date it was approved (YYYY-MM-DD) or declined`
+          : `the screen ${screen.slug} lacks @approved: show its spike to whoever decides it and tag it with the date, or with declined when the person chose not to see it`,
+      });
+    if (!tagOf(screen, "page")?.value)
+      found.push({
+        rule: "screen-approved",
+        block: screen.slug,
+        tag: "@page",
+        message: `the screen ${screen.slug} names no page: tag it with @page:<path of the page it spikes>`,
+      });
+  }
+  return found;
+};
+
 const noCredentialInProcedure: Rule = (c) =>
   c.plan.procedures
     .filter((block) => holdsCredential(block.body))
@@ -216,6 +252,7 @@ const RULES: Rule[] = [
   carries("decision", "decision-tags", ["area", "topic", "applies", "enforced"], { area: AREAS }),
   carries("procedure", "procedure-tags", ["purpose", "topic", "env"], { purpose: PURPOSES }),
   procedureProbed,
+  screenApproved,
   noCredentialInProcedure,
   tasksBelong,
   deltaSpecsOrNoBehaviour,

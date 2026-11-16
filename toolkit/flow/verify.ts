@@ -1,9 +1,9 @@
 import { existsSync, readFileSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { join, matchesGlob } from "node:path";
 import { type Layout, layoutOf, testOf } from "../architecture/generated.ts";
 import { loadEnv } from "../architecture/review/env.ts";
 import { activeChanges, readChange } from "./change.ts";
-import { digestOf, type Evidence, type ScenarioResult, writeEvidence } from "./evidence.ts";
+import { digestOf, type E2eResult, type Evidence, type ScenarioResult, writeEvidence } from "./evidence.ts";
 import { raise } from "./feedback.ts";
 import { cacheDir, capture, PROJECT_ROOT, self } from "../core/paths.ts";
 import { parsePlan, tagOf } from "./plan.ts";
@@ -21,6 +21,10 @@ export type VerifyOptions = {
   scenarios?: (root: string, specs: string[]) => Promise<ScenarioResult[]>;
   /** The workstreams whose check or tests fail; by default, the real checks. */
   checks?: (root: string) => Promise<Failing>;
+  /** What each failing whole-product check printed; by default, `factory check --whole`. */
+  whole?: (root: string) => Promise<string[]>;
+  /** The result of each end-to-end test of a web product; by default, `factory test e2e`. */
+  e2e?: (root: string) => Promise<E2eResult[]>;
   /** The warnings of the rubric review, given its key; by default, the real review. */
   review?: (root: string, key: string) => Promise<string[]>;
   /** How each procedure went where it was executed, by `<slug>@<environment>`. */
@@ -128,6 +132,39 @@ const realChecks = async (root: string, made: string, product: Product): Promise
   return failing;
 };
 
+/** What failing whole-product checks printed: nothing when they pass. */
+const realWhole = (product: Product) => async (root: string): Promise<string[]> => {
+  const r = self(root, ["check", "--whole", ...over(product)]);
+  return r.status === 0 ? [] : [r.output];
+};
+
+/** The end-to-end tests of a web product, each with its result; none for another platform. */
+const realE2e = (product: Product) => async (root: string): Promise<E2eResult[]> => {
+  if (product.config.platform.name !== "web") return [];
+  const report = join(cacheDir(root), "e2e.json");
+  rmSync(report, { force: true });
+  const r = self(root, ["test", "e2e", "--report", report, ...over(product)]);
+  // Status 2: the run could not start, and no test result says anything.
+  if (r.status !== 0 && r.status !== 1) return [{ test: "the end-to-end run", result: "failed", output: r.output }];
+  return existsSync(report) ? (JSON.parse(readFileSync(report, "utf8")) as { tests: E2eResult[] }).tests : [];
+};
+
+/** The source files a check's output names. */
+const filesNamed = (output: string): string[] => [
+  ...new Set(output.match(/[\w@.\/-]+\.(?:tsx?|jsx?|mts|cts)\b/g) ?? []),
+];
+
+/** The workstream whose layers hold `file` in the product, by the zones each layer declares. */
+const ownerOf = async (made: string, product: Product): Promise<(file: string) => string | undefined> => {
+  const { workstreams } = await loadSchema(made);
+  const zones = Object.entries(workstreams).flatMap(([id, w]) =>
+    w.layers(product.config).flatMap((l) => (l.fallow?.zones ?? []).map((z) => ({ id, patterns: z.patterns }))),
+  );
+  const inProduct = (file: string) =>
+    product.name && file.startsWith(`${product.root}/`) ? file.slice(product.root.length + 1) : file;
+  return (file) => zones.find((z) => z.patterns.some((p) => matchesGlob(inProduct(file), p)))?.id;
+};
+
 const realReview = (product: Product) => async (root: string, key: string): Promise<string[]> => {
   const { review } = product.config;
   const r = self(root, ["review", ...over(product)], { ...process.env, [review.keyVariable]: key });
@@ -160,6 +197,19 @@ export const verify = async (
     ? options.scenarios(root, specs)
     : acceptance(root, specs, options, change.product));
   const failing = await (options.checks ? options.checks(root) : realChecks(root, made, product));
+  // The workstreams stay decoupled: what proves they work together is checked here, once they all
+  // pass. A change of a schema that builds no product code proves nothing about the product.
+  const builds = Object.keys((await loadSchema(made)).workstreams).length > 0;
+  if (builds && !failing.length) {
+    const owner = await ownerOf(made, product);
+    for (const output of await (options.whole ?? realWhole(product))(root)) {
+      const owners = [...new Set(filesNamed(output).flatMap((f) => owner(f) ?? []))];
+      for (const workstream of owners.length ? owners : [name]) failing.push({ workstream, output });
+    }
+  }
+  const e2e = builds ? await (options.e2e ?? realE2e(product))(root) : [];
+  for (const t of e2e.filter((t) => t.result === "failed"))
+    failing.push({ workstream: name, output: t.output ?? `the end-to-end test ${t.test} fails` });
 
   const { config } = product;
   const key = (options.env ?? loadEnv(root, process.env))[config.review.keyVariable];
@@ -204,6 +254,7 @@ export const verify = async (
     failing,
     review,
     procedures,
+    e2e,
   };
   writeEvidence(root, evidence);
 
@@ -270,6 +321,8 @@ export const run = async (args: string[]): Promise<number> => {
   console.log(
     `- review: ${e.review.state === "run" ? `run, ${e.review.warnings.length} warning(s)` : `skipped (${e.review.note})`}`,
   );
+  if (e.e2e?.length)
+    console.log(`- end-to-end: ${e.e2e.filter((t) => t.result === "passed").length} of ${e.e2e.length} passing`);
   for (const p of e.procedures)
     console.log(`- procedure ${p.slug} in ${p.env}: ${p.treatment}${p.outcome ? `, ${p.outcome}` : ""}`);
   console.log(`- evidence: openspec/changes/${name}/evidence.md`);

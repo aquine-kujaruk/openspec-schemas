@@ -5,7 +5,7 @@ export type Operation = (typeof OPERATIONS)[number];
 /** A tag of a block: `@name` or `@name:value`. */
 export type Tag = { name: string; value?: string };
 
-/** A durable block: an architecture decision or a procedure, with the tags under its heading. */
+/** A block of a plan: an architecture decision, a procedure or a screen, with the tags under its heading. */
 export type Block = { slug: string; title: string; tags: Tag[]; body: string };
 
 /** A checkbox of the plan. `workstream` is what it names before the colon, when it names one. */
@@ -17,6 +17,8 @@ export type Plan = {
   openQuestions: string[];
   decisions: Block[];
   procedures: Block[];
+  /** The screens a web change spikes, under `## Screens`. */
+  screens: Block[];
   phases: Phase[];
   /** Checkboxes that sit outside every phase. */
   strayTasks: Task[];
@@ -25,7 +27,7 @@ export type Plan = {
 const TAG = /@([a-z][a-z-]*)(?::(\S+))?/g;
 const TASK = /^\s*[-*] \[([ xX])\] (.*)$/;
 const ITEM = /^(?:[-*]|\d+\.) (.*)$/;
-const BLOCK = /^### (Decision|Procedure): (\S+)(?: · (.*))?$/;
+const BLOCK = /^### (Decision|Procedure|Screen): (\S+)(?: · (.*))?$/;
 const WORKSTREAM = /^([a-z][a-z0-9-]*):\s+\S/;
 
 export const tagsOf = (line: string): Tag[] =>
@@ -46,11 +48,12 @@ const task = (m: RegExpExecArray): Task => ({
 /**
  * Reads a plan by its headings: the items under `## Open questions`, the `### Decision:` blocks
  * under `## Architecture decisions`, the `### Procedure:` blocks under `## Procedures`, the
+ * `### Screen:` blocks under `## Screens`, the
  * `### Phase` blocks under `## Phases` with their checkboxes, and every checkbox anywhere else.
  * Comments and fenced code hold no heading, tag or checkbox.
  */
 export const parsePlan = (text: string): Plan => {
-  const plan: Plan = { openQuestions: [], decisions: [], procedures: [], phases: [], strayTasks: [] };
+  const plan: Plan = { openQuestions: [], decisions: [], procedures: [], screens: [], phases: [], strayTasks: [] };
   let section = "";
   let block: Block | undefined;
   let phase: Phase | undefined;
@@ -85,10 +88,12 @@ export const parsePlan = (text: string): Plan => {
           ? "Decision"
           : section === "procedures"
             ? "Procedure"
-            : undefined;
+            : section === "screens"
+              ? "Screen"
+              : undefined;
       if (durable && durable[1] === kind) {
         block = { slug: durable[2]!, title: durable[3] ?? "", tags: [], body: "" };
-        (kind === "Decision" ? plan.decisions : plan.procedures).push(block);
+        (kind === "Decision" ? plan.decisions : kind === "Procedure" ? plan.procedures : plan.screens).push(block);
         tagging = true;
       } else if (section === "phases" && /^### Phase\b/.test(line)) {
         phase = { title: line.slice(4).trim(), tasks: [] };

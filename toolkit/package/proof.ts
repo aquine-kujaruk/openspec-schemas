@@ -129,6 +129,8 @@ export const run = async (args: string[]): Promise<number> => {
         `${testRunner}@${own.devDependencies[testRunner] ?? "latest"}`,
         `${typeChecker.name}@${typeChecker.version}`,
         ...schemaPackages,
+        // A package that builds a web frontend pins its end-to-end tools; setup reports them missing otherwise.
+        ...Object.entries(installed.project.e2e?.packages ?? {}).map(([name, version]) => `${name}@${version}`),
       ),
     () => factory("setup repairs the project and nothing is lacking", "doctor", "--fix"),
     () => factory("the roots are prepared", "prepare"),

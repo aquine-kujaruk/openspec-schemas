@@ -31,7 +31,7 @@ const repository = (): string => {
       description: "React on the clean core",
       core: "clean-core",
       workstreams: ["react-ui"],
-      defaults: { platform: web, workstreams: { "react-ui": { dependsOn: [] }, integrate: { dependsOn: ["react-ui"] } } },
+      defaults: { platform: web, workstreams: { "react-ui": { dependsOn: [] }, modules: { dependsOn: ["react-ui"] } } },
     })};\n`,
   );
   write("schemas/clean-react/workstreams/react-ui/workstream.ts", "export default { layers: () => [] };\n");
@@ -58,7 +58,7 @@ describe("the examples of a layer are verified with the defaults of whoever hold
 
   it("the core alone builds through its workstreams, with the stand-in framework its examples veto", async () => {
     const core = await loadHolder("clean-core", repository());
-    expect(core.definition.workstreams).toEqual(["app-domain", "infrastructure", "adapters", "modules", "integrate"]);
+    expect(core.definition.workstreams).toEqual(["app-domain", "infrastructure", "adapters", "modules"]);
     expect(core.definition.defaults.frameworks.core.packages).toContain("express");
     expect(core.definition.defaults.frameworks.core.packages).not.toContain("react");
   });
@@ -66,7 +66,7 @@ describe("the examples of a layer are verified with the defaults of whoever hold
   it("the schema with a framework joins its workstreams to the core's", async () => {
     const react = await loadHolder("clean-react", repository());
     expect(react.definition.workstreams.at(-1)).toBe("react-ui");
-    expect(react.definition.defaults.workstreams.integrate!.dependsOn).toEqual(["modules", "react-ui"]);
+    expect(react.definition.defaults.workstreams.modules!.dependsOn).toEqual(["app-domain", "infrastructure", "adapters", "react-ui"]);
   });
 
   it("the repository is not asked which schema its tools are composed from", async () => {

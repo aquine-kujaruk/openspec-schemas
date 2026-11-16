@@ -418,4 +418,70 @@ describe('Feature: package/setup Specification', () => {
       await steps.setupExitStatus('0')
     })
   })
+
+  describe('Rule: Setup reports the end-to-end tools a web product lacks', () => {
+    // Line 155
+    test('a `web` product whose project declares `nothing` is reported `missing`', async () => {
+      const steps = createSteps()
+
+      // Given a product of platform `web`
+      await steps.productOfPlatform('web')
+      // And the project declares `nothing`
+      await steps.projectDeclaresPackages('nothing')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `the end-to-end tool` as `missing`
+      await steps.reportsRequirementAs('the end-to-end tool', 'missing')
+      // And it exits with status `1`
+      await steps.setupExitStatus('1')
+    })
+
+    // Line 155
+    test('a `web` product whose project declares `e2e@0.22.0, @e2e-dev/web@0.15.4, @e2e-dev/acp@0.1.0` is reported `not reported`', async () => {
+      const steps = createSteps()
+
+      // Given a product of platform `web`
+      await steps.productOfPlatform('web')
+      // And the project declares `e2e@0.22.0, @e2e-dev/web@0.15.4, @e2e-dev/acp@0.1.0`
+      await steps.projectDeclaresPackages('e2e@0.22.0, @e2e-dev/web@0.15.4, @e2e-dev/acp@0.1.0')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `the end-to-end tool` as `not reported`
+      await steps.reportsRequirementAs('the end-to-end tool', 'not reported')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+
+    // Line 155
+    test('a `web` product whose project declares `e2e@0.23.1, @e2e-dev/web@0.15.4, @e2e-dev/acp@0.1.0` is reported `missing`', async () => {
+      const steps = createSteps()
+
+      // Given a product of platform `web`
+      await steps.productOfPlatform('web')
+      // And the project declares `e2e@0.23.1, @e2e-dev/web@0.15.4, @e2e-dev/acp@0.1.0`
+      await steps.projectDeclaresPackages('e2e@0.23.1, @e2e-dev/web@0.15.4, @e2e-dev/acp@0.1.0')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `the end-to-end tool` as `missing`
+      await steps.reportsRequirementAs('the end-to-end tool', 'missing')
+      // And it exits with status `1`
+      await steps.setupExitStatus('1')
+    })
+
+    // Line 155
+    test('a `node` product whose project declares `nothing` is reported `not reported`', async () => {
+      const steps = createSteps()
+
+      // Given a product of platform `node`
+      await steps.productOfPlatform('node')
+      // And the project declares `nothing`
+      await steps.projectDeclaresPackages('nothing')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `the end-to-end tool` as `not reported`
+      await steps.reportsRequirementAs('the end-to-end tool', 'not reported')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+  })
 })

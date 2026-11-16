@@ -4,20 +4,21 @@ import { join } from "node:path";
 import { expect } from "vitest";
 import { guard, productRoots as rootsOf, type Refusal } from "./guard.ts";
 import { projectConfig } from "../repository/products.ts";
-import { declareProducts, productsOf, readyChange, scratchProject } from "../core/testing.ts";
+import { change, declareProducts, productsOf, readyChange, scratchProject, write } from "../core/testing.ts";
 
 /**
  * Each scenario judges a write in a project of its own. The project's changes are written when the
  * write is judged: as many in implementation as the scenario says, and the active change it names.
  */
 export function createSteps() {
-  const root = scratchProject("write-guard-");
+  let root = scratchProject("write-guard-");
   let building = 0;
   let made = "clean-backend";
   let active: string | undefined;
   let refusals: Refusal[] = [];
   let declared: Record<string, { root: string; schema: string }> = {};
   let product: string | undefined;
+  let planned: string | undefined;
 
   const project = () => {
     const names = Array.from({ length: building }, (_, i) =>
@@ -25,6 +26,8 @@ export function createSteps() {
     );
     for (const name of names) readyChange(root, name, { schema: made, product });
     if (active && !names.includes(active)) readyChange(root, active, { done: true });
+    // A change being planned: active, with a phase none of whose tasks is done, and never started.
+    if (planned) change(root, "plan-orders", { schema: planned, parts: { phases: [false] } });
   };
 
   return {
@@ -52,6 +55,15 @@ export function createSteps() {
       building = 1;
       product = changeProduct;
       made = declared[changeProduct]!.schema;
+    },
+    async plannedChangeWithSchema(schema: string): Promise<void> {
+      planned = schema;
+      // A frontend project names the schema its tools are composed from. A configuration is read
+      // once per file, so the frontend is a project of its own, with the same product roots.
+      if (schema === "clean-react") {
+        root = scratchProject("write-guard-");
+        write(root, "factory.config.ts", 'export default { schema: "clean-react" };\n');
+      }
     },
 
     // Action

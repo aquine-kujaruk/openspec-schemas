@@ -4,7 +4,7 @@ import { loadDefinition, schemaNames } from "./schema.ts";
 import { declaresProducts, projectProducts } from "./products.ts";
 
 /** A schema of the package as the plan phase chooses among them: its name, when to use it, and what it builds through. */
-export type Listed = { name: string; description: string; workstreams: string[] };
+export type Listed = { name: string; description: string; workstreams: string[]; spike?: string };
 
 /** The schemas of the package the project at `root` has: those it installed, or all of them where the package is developed. */
 export const listSchemas = async (root: string): Promise<Listed[]> => {
@@ -12,8 +12,8 @@ export const listSchemas = async (root: string): Promise<Listed[]> => {
   const names = (readInstalled(root)?.installed.schemas ?? defined).filter((n) => defined.includes(n));
   const listed: Listed[] = [];
   for (const name of names) {
-    const { description, workstreams } = await loadDefinition(name);
-    listed.push({ name, description, workstreams });
+    const { description, workstreams, spike } = await loadDefinition(name);
+    listed.push({ name, description, workstreams, ...(spike ? { spike: spike.workstream } : {}) });
   }
   return listed;
 };
@@ -38,9 +38,9 @@ export const run = async (args: string[]): Promise<number> => {
     console.log(JSON.stringify(products.length ? { schemas: listed, products } : listed, null, 2));
     return 0;
   }
-  for (const { name, description, workstreams } of listed)
+  for (const { name, description, workstreams, spike } of listed)
     console.log(
-      `${name}\n  ${description}\n  ${workstreams.length ? `workstreams: ${workstreams.join(", ")}` : "no workstreams: its tasks name none"}`,
+      `${name}\n  ${description}\n  ${workstreams.length ? `workstreams: ${workstreams.join(", ")}` : "no workstreams: its tasks name none"}${spike ? `\n  spike: ${spike}, built while planning` : ""}`,
     );
   if (products.length) {
     console.log("\nproducts (a change builds one, made with its schema)");

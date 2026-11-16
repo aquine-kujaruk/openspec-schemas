@@ -16,7 +16,7 @@ description: Build the adapters workstream of the implementer: the resource adap
 ## How
 
 1. Read the `## reference` of `adapters.examples.md`. The shared base `http-api.adapter.ts` already exists: the seam step renders it from its scaffold when it is missing.
-2. Per ACL: one adapter per backend (`http-<name>.adapter.ts`, `in-memory-<name>.adapter.ts`), each a class that `implements <Name>Acl`, and `<name>.adapter.ts`, which picks one by environment and exports the ACL-typed instance (`export const <name>Adapter: <Name>Acl`). Every ACL needs at least one adapter.
+2. Per ACL: one adapter per backend (`http-<name>.adapter.ts`, `in-memory-<name>.adapter.ts`), each a class that `implements <Name>Acl`, and `<name>.adapter.ts`, which picks one by environment and exports the ACL-typed instance (`export const <name>Adapter: <Name>Acl`). Every ACL needs at least one adapter. In a web product, the environment `e2e` picks the in-memory adapter, seeded with the literal data the plan's spike painted, so that the end-to-end tests under `test/e2e` see what the person approved.
 3. Speak the resource's shape: parse through the ACL's record schemas, never a domain schema. Translate the resource's failures into domain exceptions with the caught error as `cause`.
 
 No product tests for now: the rules are the check. Contract tests against the real services (testcontainers or similar) are a later decision; when they come, they belong here.

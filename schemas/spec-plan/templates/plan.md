@@ -62,6 +62,18 @@ One block per way of setting the system up, reaching it, diagnosing it or operat
 **Verification** <how to tell it worked>
 -->
 
+## Screens
+
+<!--
+Only in a schema with a spike workstream (a web frontend): one block per screen the change adds or changes, spiked while planning:
+
+### Screen: <slug> · <title>
+
+@approved:<YYYY-MM-DD or declined> @page:<path of the page it spikes>
+
+<What the screen shows and the journeys through it, each with its end-to-end test under test/e2e/<module>/.>
+-->
+
 ## Phases
 
 ### Phase 1: <what this phase leaves working>

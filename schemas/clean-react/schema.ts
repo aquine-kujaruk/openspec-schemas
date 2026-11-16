@@ -29,17 +29,19 @@ export default {
   ),
   core: "clean-core",
   workstreams: ["react-ui", "react-hooks"],
+  // The plan builds react-ui as the spike, against the stub controllers it writes.
+  spike: { workstream: "react-ui", fakes: (o) => [`${o.modules}/framework/controllers/*.controller.ts`] },
   defaults: {
     ...defaults,
     platform: web,
     entry: ["src/*.tsx", "src/*.ts"],
     frameworks: { core, infrastructure },
     allowUnmatched: [...defaults.allowUnmatched, "index.html"],
-    // react-ui runs beside the core's map workstreams; react-hooks replaces its stub controllers; integrate joins both sides.
+    // react-ui runs beside the core's map workstreams; react-hooks replaces its stub controllers.
+    // Nothing joins the two sides: verify proves they work together.
     workstreams: {
       "react-ui": { dependsOn: [] },
       "react-hooks": { dependsOn: ["react-ui"] },
-      integrate: { dependsOn: ["react-hooks"] },
     },
   },
 } satisfies SchemaVariant;

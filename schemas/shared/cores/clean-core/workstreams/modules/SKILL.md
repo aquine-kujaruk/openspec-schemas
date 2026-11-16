@@ -18,3 +18,5 @@ description: Run the modules reduce workstream of the implementer: merge app-dom
 3. Fix what crosses modules: move what two modules share into `shared`, break cycles.
 
 **Check:** `pnpm exec factory check --workstream modules [--module <module>]`, which includes every upstream workstream's check.
+
+No file left unused and duplication under 4 % are checked over the whole product by `pnpm exec factory check` and by the verify phase, not here: halfway through a change some code is not wired yet. When verify sends one back naming a file of this workstream, fix it here.

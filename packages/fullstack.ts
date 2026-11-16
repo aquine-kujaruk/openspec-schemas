@@ -34,5 +34,10 @@ export default {
     },
   ],
   packageManager: { name: "apm", version: "0.35.1" },
-  project: { testRunner: "vitest", typeChecker: { name: "typescript", version: "7.0.2" } },
+  project: {
+    testRunner: "vitest",
+    typeChecker: { name: "typescript", version: "7.0.2" },
+    // A web product's end-to-end tests (e2e-inc/e2e): the newest release two weeks old, and the Node it needs.
+    e2e: { packages: { e2e: "0.22.0", "@e2e-dev/web": "0.15.4", "@e2e-dev/acp": "0.1.0" }, node: "22.22.3" },
+  },
 } satisfies PackageManifest;

@@ -12,6 +12,8 @@ export type Candidate = {
   consolidated: Consolidated;
   /** The workstreams of the change's schema. */
   workstreams: string[];
+  /** The workstream the change's schema builds as the spike while planning, when it has one. */
+  spike?: string;
 };
 
 /** What "ready" means for the schemas that pick this validator: no finding. */

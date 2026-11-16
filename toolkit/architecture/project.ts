@@ -47,6 +47,7 @@ export const architecture: Architecture = {
   review: config.review,
   ignore: config.ignore,
   allowUnmatched: config.allowUnmatched,
+  checks: schema.definition.checks ?? [],
 };
 
 /**

@@ -18,6 +18,9 @@ export type ScenarioResult = {
   by?: "the person";
 };
 
+/** One end-to-end test of a web product, as verify ran it. */
+export type E2eResult = { test: string; result: "passed" | "failed"; output?: string };
+
 /** What verifying a change found, and the state of the project it was found in. */
 export type Evidence = {
   change: string;
@@ -34,6 +37,8 @@ export type Evidence = {
     treatment: "executed" | "reviewed only" | "not executed" | "declined";
     outcome?: "passed" | "failed";
   }>;
+  /** The end-to-end tests of a web product; none for another platform. */
+  e2e?: E2eResult[];
 };
 
 /** A digest of the change's plan and delta specs and of every file under the roots of its product. */
@@ -69,7 +74,7 @@ const table = (head: string[], rows: string[][]): string =>
     : "None.";
 
 export const writeEvidence = (root: string, evidence: Evidence): void => {
-  const { change, verdict, digest, scenarios, failing, review, procedures } = evidence;
+  const { change, verdict, digest, scenarios, failing, review, procedures, e2e = [] } = evidence;
   const body = [
     `# Evidence of ${change}`,
     `## Scenarios\n\n${table(
@@ -81,6 +86,9 @@ export const writeEvidence = (root: string, evidence: Evidence): void => {
         s.by ? `${s.result}, by the person's word` : s.result,
       ]),
     )}`,
+    ...(e2e.length
+      ? [`## End-to-end tests\n\n${table(["Test", "Result"], e2e.map((t) => [t.test.replaceAll("|", "\\|"), t.result]))}`]
+      : []),
     `## Checks\n\n${
       failing.length
         ? failing.map((f) => `### ${f.workstream} fails\n\n\`\`\`\n${f.output}\n\`\`\``).join("\n\n")

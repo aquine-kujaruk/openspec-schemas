@@ -43,4 +43,6 @@ The page infers its props from the stub (`ReturnType<typeof useX>` when a compon
 - `web-design-guidelines`: after the pages exist, review `framework/ui` with it. It fetches the current guidelines at run time, so it needs the network; offline, skip it and say so.
 - Where they disagree with this factory, the factory's rules win. Comparisons and counts stay in the controller (`jsx-neither-compares-nor-counts`). A controller's `isEmpty` or `isSelected` is a value the JSX reads, not a "boolean prop" of a component API.
 
-**Check:** `pnpm exec factory check --workstream react-ui [--module <module>]`, then the web-design review. No product test is prescribed yet.
+**Spike:** `react-ui` is `clean-react`'s spike workstream. The plan phase builds it, where it stays, against the stub controllers, while the person approves each screen; the implementation then starts at `react-hooks`. The end-to-end tests the plan writes under `test/e2e` pass against these pages and their stubs, so keep the roles, labels and texts they check.
+
+**Check:** `pnpm exec factory check --workstream react-ui [--module <module>]`, then the web-design review. The product's end-to-end tests run with `pnpm exec factory test e2e`.

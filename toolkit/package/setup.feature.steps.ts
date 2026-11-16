@@ -27,6 +27,8 @@ import type { Installed } from "../core/types.ts";
  * Given takes one thing away; the project is written, and installed with pnpm, when setup runs.
  */
 const PHASES = ["plan", "implement", "verify", "archive", "feedback"];
+/** The end-to-end packages a package that builds a web frontend pins. */
+const E2E = { e2e: "0.22.0", "@e2e-dev/web": "0.15.4", "@e2e-dev/acp": "0.1.0" };
 const FLOW = "Every intention that changes something enters through the plan skill.";
 const HOOKS = JSON.stringify({
   hooks: {
@@ -86,6 +88,9 @@ export function createSteps() {
   let outcome: Report | undefined;
   let runbookKey: string | undefined;
   let env: NodeJS.ProcessEnv = process.env;
+  // The product's platform, when the package pins end-to-end tools, and the packages the project declares.
+  let productPlatform: string | undefined;
+  let e2eDeclared: Record<string, string> = {};
   let changed = -1;
 
   const command = (version: string) =>
@@ -109,8 +114,14 @@ export function createSteps() {
       instructions: { flow: FLOW },
       guards: ["guards.json"],
       packageManager: { name: "apm", version: "0.35.1" },
-      project: { testRunner: "vitest", typeChecker: { name: "typescript", version: "7.0.2" } },
+      project: {
+        testRunner: "vitest",
+        typeChecker: { name: "typescript", version: "7.0.2" },
+        ...(productPlatform ? { e2e: { packages: E2E, node: "22.22.3" } } : {}),
+      },
     };
+    if (productPlatform)
+      write("factory.config.ts", `export default { schema: "${productPlatform === "web" ? "clean-react" : "clean-backend"}" };\n`);
     const lacks = (piece: string, agent: string) =>
       lackingPiece?.piece === piece && lackingPiece.agent === agent;
     for (const agent of targets) {
@@ -153,6 +164,9 @@ export function createSteps() {
       }
     write("package.json", JSON.stringify({ name: "project", private: true, devDependencies }));
     if (Object.keys(devDependencies).length) pnpm(root, "install");
+    // The end-to-end packages are declared after the install: setup reads what is declared, and nothing fetches them.
+    if (Object.keys(e2eDeclared).length)
+      write("package.json", JSON.stringify({ name: "project", private: true, devDependencies: { ...devDependencies, ...e2eDeclared } }));
     if (before !== named) {
       if (before !== "none") rmSync(at(tarball(before)));
       copyFileSync(command(named), at(tarball(named)));
@@ -224,17 +238,30 @@ export function createSteps() {
       else if (presence === "in the environment") env = { ...process.env, [key]: "present" };
       else expect(presence).toBe("absent");
     },
+    async productOfPlatform(platform: string): Promise<void> {
+      productPlatform = platform;
+    },
+    async projectDeclaresPackages(declared: string): Promise<void> {
+      if (declared === "nothing") return;
+      // Declared only, never installed: setup reads what the project declares.
+      e2eDeclared = Object.fromEntries(
+        declared.split(", ").map((p) => {
+          const at = p.lastIndexOf("@");
+          return [p.slice(0, at), p.slice(at + 1)];
+        }),
+      );
+    },
 
     // Action
     async runSetupWithRepair(): Promise<void> {
       project();
-      for (let i = 0; i < runsBefore; i++) doctor(root, { fix: true, env });
-      outcome = doctor(root, { fix: true, env });
+      for (let i = 0; i < runsBefore; i++) await doctor(root, { fix: true, env });
+      outcome = await doctor(root, { fix: true, env });
     },
     async runSetupWithoutRepair(): Promise<void> {
       project();
       const before = snapshot(root);
-      outcome = doctor(root, { env });
+      outcome = await doctor(root, { env, node: "22.22.3" });
       const after = snapshot(root);
       changed = [...new Set([...Object.keys(before), ...Object.keys(after)])].filter(
         (f) => before[f] !== after[f],
@@ -281,7 +308,7 @@ export function createSteps() {
         return;
       }
       expect(outcome!.items.filter((i) => i.requirement === requirement).map((i) => i.report)).toEqual(
-        [report],
+        report === "not reported" ? [] : [report],
       );
     },
     async setupExitStatus(status: string): Promise<void> {

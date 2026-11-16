@@ -14,6 +14,7 @@ import { DECISIONS, PROCEDURES, readConsolidated } from "../flow/consolidated.ts
 import { loadEnv } from "../architecture/review/env.ts";
 import { capture, COMMAND, INSTALLED, PROJECT_ROOT, SETUP_ASSETS } from "../core/paths.ts";
 import type { Installed } from "../core/types.ts";
+import { projectProducts } from "../repository/products.ts";
 
 /** Where each agent reads what a package deploys for it. */
 type Place = {
@@ -106,7 +107,36 @@ export const unwiredGuards = (root: string, agent: string): string[] => {
   return GUARDS.filter((guard) => !wiring.includes(guard));
 };
 
-const lacks = (root: string, installed: Installed, assets: string): Lack[] => {
+/** Whether `version` is at least `least`, both `major.minor.patch`. */
+const atLeast = (version: string, least: string): boolean => {
+  const [a, b] = [version, least].map((v) => v.replace(/^v/, "").split(".").map(Number));
+  for (let i = 0; i < 3; i++) if ((a![i] ?? 0) !== (b![i] ?? 0)) return (a![i] ?? 0) > (b![i] ?? 0);
+  return true;
+};
+
+/** The end-to-end packages and the Node a web product lacks, when the package pins them. */
+const e2eLacks = (installed: Installed, depends: (name: string) => string | undefined, node: string): Lack[] => {
+  const e2e = installed.project.e2e;
+  if (!e2e) return [];
+  const exact = (v?: string) => v?.replace(/^[\^~=]/, "");
+  const off = Object.entries(e2e.packages).filter(([name, version]) => exact(depends(name)) !== version);
+  return [
+    ...(off.length
+      ? [
+          {
+            requirement: "the end-to-end tool",
+            detail: `a web product runs its end-to-end tests with ${off.map(([n, v]) => `${n}@${v}`).join(", ")}: add ${off.length > 1 ? "them" : "it"} at that version to the project's development dependencies`,
+          },
+        ]
+      : []),
+    // e2e runs on Node 22 from 22.22.3, or on 24.8 and later.
+    ...(atLeast(node, e2e.node) && (node.replace(/^v/, "").startsWith("22.") || atLeast(node, "24.8.0"))
+      ? []
+      : [{ requirement: "the end-to-end tool", detail: `Node ${node} is older than the end-to-end tool needs: use Node ${e2e.node} or 24.8 and later` }]),
+  ];
+};
+
+const lacks = (root: string, installed: Installed, assets: string, web = false, node = process.version): Lack[] => {
   const found: Lack[] = [];
   const at = (path: string) => join(root, path);
   const run = (args: string[]) => {
@@ -184,7 +214,9 @@ const lacks = (root: string, installed: Installed, assets: string): Lack[] => {
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
   };
-  const depends = (name: string) => name in { ...own.dependencies, ...own.devDependencies };
+  const declared = { ...own.dependencies, ...own.devDependencies };
+  const depends = (name: string) => name in declared;
+  if (web) found.push(...e2eLacks(installed, (name) => declared[name], node));
   const { testRunner, typeChecker } = installed.project;
   if (!depends(testRunner))
     found.push({
@@ -317,19 +349,23 @@ const notes = (root: string, installed: Installed, env: NodeJS.ProcessEnv): stri
  * What the flow needs and the project lacks. With `fix`, what the package owns is repaired first
  * and only what is still lacking counts against the project.
  */
-export const doctor = (
+export const doctor = async (
   root: string,
-  { fix = false, env = process.env }: { fix?: boolean; env?: NodeJS.ProcessEnv } = {},
-): Report | undefined => {
+  { fix = false, env = process.env, node = process.version }: { fix?: boolean; env?: NodeJS.ProcessEnv; node?: string } = {},
+): Promise<Report | undefined> => {
   const read = readInstalled(root);
   if (!read) return undefined;
   const { installed, assets } = read;
+  // Only a package that pins end-to-end tools asks which products are web ones.
+  const web = installed.project.e2e
+    ? (await projectProducts(root)).some((p) => p.config.platform.name === "web")
+    : false;
   const id = (lack: Lack) => `${lack.requirement}|${lack.agent ?? ""}|${lack.detail}`;
   const tried = new Map<string, Lack>();
   const failures = new Map<string, string>();
   // A repair changes what the next one stands on (the links lead into the pinned command), so each is diagnosed afresh.
   for (; fix; ) {
-    const next = lacks(root, installed, assets).find((lack) => lack.repair && !tried.has(id(lack)));
+    const next = lacks(root, installed, assets, web, node).find((lack) => lack.repair && !tried.has(id(lack)));
     if (!next) break;
     tried.set(id(next), next);
     try {
@@ -338,7 +374,7 @@ export const doctor = (
       failures.set(id(next), e instanceof Error ? e.message : String(e));
     }
   }
-  const remaining = lacks(root, installed, assets);
+  const remaining = lacks(root, installed, assets, web, node);
   const still = new Set(remaining.map(id));
   const item = ({ repair: _repair, drift: _drift, ...rest }: Lack, report: Item["report"]): Item => ({
     ...rest,
@@ -364,7 +400,7 @@ export const doctor = (
  * is installed.
  */
 export const run = async (args: string[]): Promise<number> => {
-  const report = doctor(PROJECT_ROOT, { fix: args.includes("--fix") });
+  const report = await doctor(PROJECT_ROOT, { fix: args.includes("--fix") });
   if (!report) {
     console.error(
       `no installed package found: install one with the agent package manager, so that an agent's skills hold ${join(SETUP_ASSETS, INSTALLED)}`,

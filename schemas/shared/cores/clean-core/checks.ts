@@ -1,5 +1,5 @@
 import { posix } from "node:path";
-import type { WorkstreamDeclaration } from "../../../../../../toolkit/core/types.ts";
+import type { Check } from "../../../../toolkit/core/types.ts";
 
 const OFF = [
   "unused-exports",
@@ -23,12 +23,11 @@ const OFF = [
 ];
 
 /**
- * Reduce over modules: the whole product wired. No layer of its own; it owns the checks
- * that only make sense once everything is connected.
+ * The checks that only make sense once every workstream's work is joined: no workstream owns them.
+ * `factory check` runs them after every workstream's rules, and verify runs them; a workstream's
+ * own check and the completion gate do not.
  */
-export default {
-  layers: () => [],
-  checks: [
+export const wholeProduct: Check[] = [
     {
       id: "no-unused-files",
       args: ["dead-code", "--quiet"],
@@ -37,6 +36,9 @@ export default {
           ...o.entry,
           `${o.acceptance}/**/*.test.ts`,
           `${o.integration}/**/*.test.ts`,
+          // The end-to-end tests of a web product and the configuration they run with.
+          `${o.e2e}/**/*.e2e.ts`,
+          "e2e.config.ts",
           // The helpers beside the acceptance root (`test/*.ts`), in the product's own folder.
           `${posix.dirname(o.acceptance)}/*.ts`,
           "factory.config.ts",
@@ -49,5 +51,4 @@ export default {
       args: ["dupes", "--threshold", "4", "--quiet"],
       config: (o) => ({ ignorePatterns: [`${o.acceptance}/**/*.feature.test.ts`] }),
     },
-  ],
-} satisfies WorkstreamDeclaration;
+];

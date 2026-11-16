@@ -92,6 +92,8 @@ export type Options = {
   productSpecs: string;
   /** Where the integration tests live (`test/integration`): one folder per module, one test per repository implementation. */
   integration: string;
+  /** Where the end-to-end tests of a web product live (`test/e2e`), run with `factory test e2e`. */
+  e2e: string;
   /**
    * Directories `factory prepare` lays under the module root when it creates it (`["shared/domain"]`).
    * Without it, a `shared` module with `domain`, `application` and `infrastructure`.
@@ -133,6 +135,8 @@ export type Architecture = {
   ignore: string[];
   /** Paths that may stay outside every zone (whatever is not product). */
   allowUnmatched: string[];
+  /** The whole-product checks, which no workstream owns; `factory check` runs them after every rule. */
+  checks?: Check[];
 };
 
 /** One artifact of a schema, as the specification tool reads it. */
@@ -172,6 +176,13 @@ export type SchemaDefinition = {
   /** A policy of `questions/`. */
   questions: string;
   defaults: FactoryConfig;
+  /** The whole-product checks, which no workstream owns: those of its core. */
+  checks?: Check[];
+  /**
+   * The workstream a change of this schema builds while it is planned, as the spike the person sees,
+   * and the files it fakes beside its own layers (the stub controllers). Only a web schema has one.
+   */
+  spike?: { workstream: string; fakes?: (o: Options) => string[] };
 };
 
 /**
@@ -185,6 +196,11 @@ export type CoreDefinition = {
   workstreams: string[];
   /** What each of its workstreams waits for, by default. */
   topology: Topology;
+  /**
+   * The checks that need every workstream's work joined (dead files, duplication): no workstream
+   * owns them; `factory check` and verify run them.
+   */
+  checks?: Check[];
   /**
    * What its own examples are verified with over the defaults of the base every schema naming it
    * extends: a stand-in framework their counterexamples import. It vetoes nothing in a product.
@@ -224,8 +240,16 @@ export type PackageManifest = {
   languageServers: LanguageServer[];
   /** The agent package manager the package was built against. */
   packageManager: { name: string; version: string };
-  /** What a project supplies itself: its test runner, and its type checker at the version the language server needs. */
-  project: { testRunner: string; typeChecker: { name: string; version: string } };
+  /**
+   * What a project supplies itself: its test runner, its type checker at the version the language
+   * server needs, and, for a package that builds a web frontend, the end-to-end packages at their
+   * pinned versions with the oldest Node they run on.
+   */
+  project: {
+    testRunner: string;
+    typeChecker: { name: string; version: string };
+    e2e?: { packages: Record<string, string>; node: string };
+  };
 };
 
 /**

@@ -19,8 +19,9 @@ const option = (args: string[], name: string): string | undefined => {
 /**
  * `factory check`: every rule over the product, the whole-product checks and the freshness of the
  * generated tests. `--layer <layer>` keeps the rules of one layer; `--workstream <workstream>` keeps
- * the rules of the layers that workstream owns, its whole-product checks, and those of every
- * workstream upstream of it. `--module <module>` reports only that module's files.
+ * the rules of the layers that workstream owns, its own checks, and those of every workstream
+ * upstream of it, and never the whole-product checks, which no workstream owns. `--whole` keeps only
+ * the whole-product checks. `--module <module>` reports only that module's files.
  *
  * fallow (imports and calls) reports only the zones of the selected layers, oxlint lints the files
  * of their overrides, archunit runs only their rules.
@@ -60,9 +61,10 @@ export const check = async (args: string[]): Promise<number> => {
       );
       return undefined;
     }
+    if (args.includes("--whole")) return { layers: [], checks: architecture.checks ?? [], whole: false };
     return {
       layers: all.flatMap((w) => w.layers),
-      checks: all.flatMap((w) => w.checks),
+      checks: [...all.flatMap((w) => w.checks), ...(architecture.checks ?? [])],
       whole: true,
     };
   };

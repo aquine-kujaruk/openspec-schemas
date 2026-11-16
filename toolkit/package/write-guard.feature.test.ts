@@ -442,4 +442,90 @@ describe('Feature: package/write-guard Specification', () => {
       await steps.writeVerdict('refused')
     })
   })
+
+  describe('Rule: A change being planned opens the paths of its spike workstream', () => {
+    // Line 130
+    test('planning a `clean-react` change, writing `src/orders/framework/ui/orders-list/orders-list.page.tsx` is `allowed`', async () => {
+      const steps = createSteps()
+
+      // Given the product roots `src/*`
+      await steps.productRoots('src/*')
+      // And an active change made with the schema `clean-react`, not in implementation
+      await steps.plannedChangeWithSchema('clean-react')
+      // When an agent is about to write `src/orders/framework/ui/orders-list/orders-list.page.tsx`
+      await steps.aboutToWrite('src/orders/framework/ui/orders-list/orders-list.page.tsx')
+      // Then the write is `allowed`
+      await steps.writeVerdict('allowed')
+    })
+
+    // Line 130
+    test('planning a `clean-react` change, writing `src/orders/framework/controllers/orders-list.controller.ts` is `allowed`', async () => {
+      const steps = createSteps()
+
+      // Given the product roots `src/*`
+      await steps.productRoots('src/*')
+      // And an active change made with the schema `clean-react`, not in implementation
+      await steps.plannedChangeWithSchema('clean-react')
+      // When an agent is about to write `src/orders/framework/controllers/orders-list.controller.ts`
+      await steps.aboutToWrite('src/orders/framework/controllers/orders-list.controller.ts')
+      // Then the write is `allowed`
+      await steps.writeVerdict('allowed')
+    })
+
+    // Line 130
+    test('planning a `clean-react` change, writing `src/main.tsx` is `allowed`', async () => {
+      const steps = createSteps()
+
+      // Given the product roots `src/*`
+      await steps.productRoots('src/*')
+      // And an active change made with the schema `clean-react`, not in implementation
+      await steps.plannedChangeWithSchema('clean-react')
+      // When an agent is about to write `src/main.tsx`
+      await steps.aboutToWrite('src/main.tsx')
+      // Then the write is `allowed`
+      await steps.writeVerdict('allowed')
+    })
+
+    // Line 130
+    test('planning a `clean-react` change, writing `src/orders/domain/order.entity.ts` is `refused`', async () => {
+      const steps = createSteps()
+
+      // Given the product roots `src/*`
+      await steps.productRoots('src/*')
+      // And an active change made with the schema `clean-react`, not in implementation
+      await steps.plannedChangeWithSchema('clean-react')
+      // When an agent is about to write `src/orders/domain/order.entity.ts`
+      await steps.aboutToWrite('src/orders/domain/order.entity.ts')
+      // Then the write is `refused`
+      await steps.writeVerdict('refused')
+    })
+
+    // Line 130
+    test('planning a `clean-react` change, writing `src/orders/framework/queries/orders.query.ts` is `refused`', async () => {
+      const steps = createSteps()
+
+      // Given the product roots `src/*`
+      await steps.productRoots('src/*')
+      // And an active change made with the schema `clean-react`, not in implementation
+      await steps.plannedChangeWithSchema('clean-react')
+      // When an agent is about to write `src/orders/framework/queries/orders.query.ts`
+      await steps.aboutToWrite('src/orders/framework/queries/orders.query.ts')
+      // Then the write is `refused`
+      await steps.writeVerdict('refused')
+    })
+
+    // Line 130
+    test('planning a `clean-backend` change, writing `src/orders/domain/order.entity.ts` is `refused`', async () => {
+      const steps = createSteps()
+
+      // Given the product roots `src/*`
+      await steps.productRoots('src/*')
+      // And an active change made with the schema `clean-backend`, not in implementation
+      await steps.plannedChangeWithSchema('clean-backend')
+      // When an agent is about to write `src/orders/domain/order.entity.ts`
+      await steps.aboutToWrite('src/orders/domain/order.entity.ts')
+      // Then the write is `refused`
+      await steps.writeVerdict('refused')
+    })
+  })
 })

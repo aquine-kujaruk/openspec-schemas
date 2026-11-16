@@ -1,8 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, isAbsolute, join, relative, resolve } from "node:path";
-import { CHANGES } from "../flow/change.ts";
+import { dirname, isAbsolute, join, matchesGlob, relative, resolve } from "node:path";
+import { activeChanges, CHANGES, isStarted, readChange } from "../flow/change.ts";
 import { DECISIONS, PROCEDURES } from "../flow/consolidated.ts";
 import { type Product, productHolding, projectProducts } from "../repository/products.ts";
+import { loadSchema } from "../repository/schema.ts";
 import type { FactoryConfig } from "../core/types.ts";
 import { type Building, changesInImplementation } from "../flow/validate.ts";
 
@@ -96,12 +97,50 @@ const productRefusal = (path: string, started: Building[], product?: Product): s
  * a project that declares products, a path in a product's folder opens only to a change of that
  * product; otherwise product code opens to a change whose schema builds it.
  */
+/**
+ * The paths a change being planned may write: those of its schema's spike workstream (its layers'
+ * zones, the files it fakes and the entry), for every active change not in implementation whose
+ * schema declares one, in its own product. Each as a test of a path relative to the project.
+ */
+const spikeOpenings = async (root: string, products: Product[]): Promise<Array<(path: string) => boolean>> => {
+  const declared = products.some((p) => p.name !== "");
+  const openings: Array<(path: string) => boolean> = [];
+  for (const name of activeChanges(root).filter((n) => !isStarted(root, n))) {
+    const change = readChange(root, name);
+    if (!change?.schema) continue;
+    let schema;
+    try {
+      schema = await loadSchema(change.schema);
+    } catch {
+      continue;
+    }
+    const spike = schema.definition.spike;
+    if (!spike || !schema.workstreams[spike.workstream]) continue;
+    const product = declared ? products.find((p) => p.name === change.product) : products[0];
+    if (!product) continue;
+    const { config } = product;
+    const patterns = [
+      ...schema.workstreams[spike.workstream]!.layers(config).flatMap((l) => (l.fallow?.zones ?? []).flatMap((z) => z.patterns)),
+      ...(spike.fakes?.(config) ?? []),
+      ...config.entry,
+    ];
+    const inProduct = (path: string) =>
+      !declared || product.root === "." ? path : path.startsWith(`${product.root}/`) ? path.slice(product.root.length + 1) : undefined;
+    openings.push((path) => {
+      const at = inProduct(path);
+      return at !== undefined && patterns.some((p) => matchesGlob(at, p));
+    });
+  }
+  return openings;
+};
+
 export const guard = async (root: string, paths: string[], cwd = root): Promise<Refusal[]> => {
   const products = await projectProducts(root);
   const declared = products.some((p) => p.name !== "");
   const parts = harness(products.map((p) => p.config.acceptance));
   const roots = under(...productRoots(products[0]!.config));
   let started: Building[] | undefined;
+  let spiking: Array<(path: string) => boolean> | undefined;
   const refusals: Refusal[] = [];
   for (const given of paths) {
     const path = relative(root, resolve(cwd, given)).split("\\").join("/");
@@ -121,7 +160,10 @@ export const guard = async (root: string, paths: string[], cwd = root): Promise<
     const opens = holder
       ? started.some((change) => change.product === holder.name)
       : started.some((change) => change.builds);
-    if (!opens) refusals.push({ path, reason: productRefusal(path, started, holder) });
+    if (opens) continue;
+    spiking ??= await spikeOpenings(root, products);
+    if (spiking.some((open) => open(path))) continue;
+    refusals.push({ path, reason: productRefusal(path, started, holder) });
   }
   return refusals;
 };

@@ -118,7 +118,15 @@ const joinTopology = (core: Topology, own: Topology): Topology => {
 export const loadDefinition = async (
   name: string,
   root = PACKAGE_ROOT,
-): Promise<SchemaDefinition> => withCore(await writtenDefinition(name, root), name, root);
+): Promise<SchemaDefinition> => {
+  const definition = await withCore(await writtenDefinition(name, root), name, root);
+  const spike = definition.spike?.workstream;
+  if (spike && !definition.workstreams.includes(spike))
+    throw new Error(
+      `schema ${name} names ${spike} as its spike workstream, which is not one of its workstreams: ${definition.workstreams.join(", ") || "none"}`,
+    );
+  return definition;
+};
 
 /** `written` building through the workstreams of the core it names, then its own. */
 const withCore = async (
@@ -136,6 +144,7 @@ const withCore = async (
   return {
     ...written,
     workstreams: [...core.workstreams, ...written.workstreams],
+    checks: core.checks ?? [],
     defaults: {
       ...written.defaults,
       workstreams: joinTopology(core.topology, written.defaults.workstreams ?? {}),

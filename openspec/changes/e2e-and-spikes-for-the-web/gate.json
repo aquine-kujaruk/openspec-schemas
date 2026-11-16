@@ -1,0 +1,6 @@
+{
+  "phase": "Phase 1: verify joins the product, and integrate goes away",
+  "failures": 0,
+  "waitingFor": "the agent",
+  "findings": []
+}

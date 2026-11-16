@@ -34,6 +34,7 @@ export const validateChange = async (root: string, name: string): Promise<Verdic
           plan: parsePlan(change.plan),
           consolidated: readConsolidated(root),
           workstreams: schema.definition.workstreams,
+          spike: schema.definition.spike?.workstream,
         });
   findings.push(...(await productFindings(root, change)), ...linkFindings(root, change));
   return { change: name, schema: change.schema, ready: findings.length === 0, findings };

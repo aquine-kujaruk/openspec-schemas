@@ -45,7 +45,7 @@ describe("the schema the specification tool sees", () => {
     const plan = openspec(root, "instructions", "plan", "--change", "add-orders");
     expect(plan.template).toBe(schema.templates["plan.md"]);
     expect(plan.instruction).toContain(
-      "Workstreams a task may name: `app-domain`, `infrastructure`, `adapters`, `modules`, `integrate`.",
+      "Workstreams a task may name: `app-domain`, `infrastructure`, `adapters`, `modules`.",
     );
     expect(plan.instruction.trim().endsWith(schema.questions.trim())).toBe(true);
     expect(plan.dependencies).toEqual([]);

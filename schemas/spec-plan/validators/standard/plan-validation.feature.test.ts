@@ -386,8 +386,8 @@ describe('Feature: flow/plan-validation Specification', () => {
     test('a task naming `app-domain` placed `inside a phase` makes the change `ready`', async () => {
       const steps = createSteps()
 
-      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules, integrate`
-      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules, integrate')
+      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules`
+      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules')
       // And its plan has a task naming the workstream `app-domain` placed `inside a phase`
       await steps.taskNamingWorkstreamPlaced('app-domain', 'inside a phase')
       // When the change is validated
@@ -400,8 +400,8 @@ describe('Feature: flow/plan-validation Specification', () => {
     test('a task naming `react-ui` placed `inside a phase` makes the change `not ready`', async () => {
       const steps = createSteps()
 
-      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules, integrate`
-      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules, integrate')
+      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules`
+      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules')
       // And its plan has a task naming the workstream `react-ui` placed `inside a phase`
       await steps.taskNamingWorkstreamPlaced('react-ui', 'inside a phase')
       // When the change is validated
@@ -414,8 +414,8 @@ describe('Feature: flow/plan-validation Specification', () => {
     test('a task naming `app-domain` placed `outside a phase` makes the change `not ready`', async () => {
       const steps = createSteps()
 
-      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules, integrate`
-      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules, integrate')
+      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules`
+      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules')
       // And its plan has a task naming the workstream `app-domain` placed `outside a phase`
       await steps.taskNamingWorkstreamPlaced('app-domain', 'outside a phase')
       // When the change is validated
@@ -428,8 +428,8 @@ describe('Feature: flow/plan-validation Specification', () => {
     test('a task naming `none` placed `inside a phase` makes the change `not ready`', async () => {
       const steps = createSteps()
 
-      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules, integrate`
-      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules, integrate')
+      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules`
+      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules')
       // And its plan has a task naming the workstream `none` placed `inside a phase`
       await steps.taskNamingWorkstreamPlaced('none', 'inside a phase')
       // When the change is validated
@@ -702,6 +702,120 @@ describe('Feature: flow/plan-validation Specification', () => {
 
       // Given a change whose plan has the procedure block `prod-logs` of purpose `diagnose` probed `none`
       await steps.procedureBlockOfPurposeProbed('prod-logs', 'diagnose', 'none')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+  })
+
+  describe('Rule: Every screen a web change lists is approved', () => {
+    // Line 220
+    test('a `clean-react` change with a screen approved `2026-11-16` and `1` spike task(s) is `ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change made with the schema `clean-react`
+      await steps.changeWithSchema('clean-react')
+      // And its plan has the screen `orders-list` approved `2026-11-16`
+      await steps.planScreenApproved('orders-list', '2026-11-16')
+      // And its plan has `1` task(s) of the spike workstream
+      await steps.planSpikeTasks('1')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 220
+    test('a `clean-react` change with a screen approved `declined` and `1` spike task(s) is `ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change made with the schema `clean-react`
+      await steps.changeWithSchema('clean-react')
+      // And its plan has the screen `orders-list` approved `declined`
+      await steps.planScreenApproved('orders-list', 'declined')
+      // And its plan has `1` task(s) of the spike workstream
+      await steps.planSpikeTasks('1')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 220
+    test('a `clean-react` change with a screen approved `none` and `1` spike task(s) is `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change made with the schema `clean-react`
+      await steps.changeWithSchema('clean-react')
+      // And its plan has the screen `orders-list` approved `none`
+      await steps.planScreenApproved('orders-list', 'none')
+      // And its plan has `1` task(s) of the spike workstream
+      await steps.planSpikeTasks('1')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 220
+    test('a `clean-react` change with a screen approved `yesterday` and `1` spike task(s) is `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change made with the schema `clean-react`
+      await steps.changeWithSchema('clean-react')
+      // And its plan has the screen `orders-list` approved `yesterday`
+      await steps.planScreenApproved('orders-list', 'yesterday')
+      // And its plan has `1` task(s) of the spike workstream
+      await steps.planSpikeTasks('1')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 220
+    test('a `clean-react` change with a screen approved `none` and `1` spike task(s) is `not ready` #2', async () => {
+      const steps = createSteps()
+
+      // Given a change made with the schema `clean-react`
+      await steps.changeWithSchema('clean-react')
+      // And its plan has the screen `no screen` approved `none`
+      await steps.planScreenApproved('no screen', 'none')
+      // And its plan has `1` task(s) of the spike workstream
+      await steps.planSpikeTasks('1')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 220
+    test('a `clean-react` change with a screen approved `none` and `0` spike task(s) is `ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change made with the schema `clean-react`
+      await steps.changeWithSchema('clean-react')
+      // And its plan has the screen `no screen` approved `none`
+      await steps.planScreenApproved('no screen', 'none')
+      // And its plan has `0` task(s) of the spike workstream
+      await steps.planSpikeTasks('0')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 220
+    test('a `clean-backend` change with a screen approved `none` and `0` spike task(s) is `ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change made with the schema `clean-backend`
+      await steps.changeWithSchema('clean-backend')
+      // And its plan has the screen `no screen` approved `none`
+      await steps.planScreenApproved('no screen', 'none')
+      // And its plan has `0` task(s) of the spike workstream
+      await steps.planSpikeTasks('0')
       // When the change is validated
       await steps.validateChange()
       // Then the change is reported `ready`

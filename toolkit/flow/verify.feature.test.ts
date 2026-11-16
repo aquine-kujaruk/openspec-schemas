@@ -79,17 +79,17 @@ describe('Feature: flow/verify Specification', () => {
     })
 
     // Line 27
-    test('`integrate` failing its check raises feedback and changes `0` product file(s)', async () => {
+    test('`modules` failing its check raises feedback and changes `0` product file(s)', async () => {
       const steps = createSteps()
 
       // Given a built change with `3` scenario(s)
       await steps.builtChangeWithScenarios('3')
-      // And the workstream `integrate` fails its check
-      await steps.workstreamFailsCheck('integrate')
+      // And the workstream `modules` fails its check
+      await steps.workstreamFailsCheck('modules')
       // When the change is verified
       await steps.verifyChange()
-      // Then feedback is raised naming the workstream `integrate`
-      await steps.feedbackNamesWorkstream('integrate')
+      // Then feedback is raised naming the workstream `modules`
+      await steps.feedbackNamesWorkstream('modules')
       // And the change is reported `not verified`
       await steps.changeReportedAs('not verified')
       // And `0` file(s) of the product changed
@@ -366,6 +366,132 @@ describe('Feature: flow/verify Specification', () => {
       await steps.evidenceRecordsSpecAs('orders/get-order', 'unproved')
       // And the change is reported `not verified`
       await steps.changeReportedAs('not verified')
+    })
+  })
+
+  describe('Rule: Verify proves the product works as a whole', () => {
+    // Line 144
+    test('on a `web` product, `nothing fails` makes the change `verified`, feedback on `nothing`', async () => {
+      const steps = createSteps()
+
+      // Given a built change of a `web` product
+      await steps.builtChangeOfPlatform('web')
+      // And `nothing fails`
+      await steps.wholeProductFailure('nothing fails')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the change is reported `verified`
+      await steps.changeReportedAs('verified')
+      // And feedback is raised on `nothing`
+      await steps.feedbackRaisedOn('nothing')
+    })
+
+    // Line 144
+    test('on a `web` product, `no-unused-files names src/orders/framework/ui/orders-list/old-row.component.tsx` makes the change `not verified`, feedback on `react-ui`', async () => {
+      const steps = createSteps()
+
+      // Given a built change of a `web` product
+      await steps.builtChangeOfPlatform('web')
+      // And `no-unused-files names src/orders/framework/ui/orders-list/old-row.component.tsx`
+      await steps.wholeProductFailure('no-unused-files names src/orders/framework/ui/orders-list/old-row.component.tsx')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the change is reported `not verified`
+      await steps.changeReportedAs('not verified')
+      // And feedback is raised on `react-ui`
+      await steps.feedbackRaisedOn('react-ui')
+    })
+
+    // Line 144
+    test('on a `web` product, `duplication-below-threshold names src/orders/domain/entities/order.entity.ts` makes the change `not verified`, feedback on `app-domain`', async () => {
+      const steps = createSteps()
+
+      // Given a built change of a `web` product
+      await steps.builtChangeOfPlatform('web')
+      // And `duplication-below-threshold names src/orders/domain/entities/order.entity.ts`
+      await steps.wholeProductFailure('duplication-below-threshold names src/orders/domain/entities/order.entity.ts')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the change is reported `not verified`
+      await steps.changeReportedAs('not verified')
+      // And feedback is raised on `app-domain`
+      await steps.feedbackRaisedOn('app-domain')
+    })
+
+    // Line 144
+    test('on a `web` product, `the end-to-end test cancel-order fails` makes the change `not verified`, feedback on `the change`', async () => {
+      const steps = createSteps()
+
+      // Given a built change of a `web` product
+      await steps.builtChangeOfPlatform('web')
+      // And `the end-to-end test cancel-order fails`
+      await steps.wholeProductFailure('the end-to-end test cancel-order fails')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the change is reported `not verified`
+      await steps.changeReportedAs('not verified')
+      // And feedback is raised on `the change`
+      await steps.feedbackRaisedOn('the change')
+    })
+
+    // Line 144
+    test('on a `node` product, `no-unused-files names src/orders/infrastructure/acl/order.acl.ts` makes the change `not verified`, feedback on `infrastructure`', async () => {
+      const steps = createSteps()
+
+      // Given a built change of a `node` product
+      await steps.builtChangeOfPlatform('node')
+      // And `no-unused-files names src/orders/infrastructure/acl/order.acl.ts`
+      await steps.wholeProductFailure('no-unused-files names src/orders/infrastructure/acl/order.acl.ts')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the change is reported `not verified`
+      await steps.changeReportedAs('not verified')
+      // And feedback is raised on `infrastructure`
+      await steps.feedbackRaisedOn('infrastructure')
+    })
+
+    // Line 144
+    test('on a `node` product, `nothing fails, and it has no end-to-end tests` makes the change `verified`, feedback on `nothing`', async () => {
+      const steps = createSteps()
+
+      // Given a built change of a `node` product
+      await steps.builtChangeOfPlatform('node')
+      // And `nothing fails, and it has no end-to-end tests`
+      await steps.wholeProductFailure('nothing fails, and it has no end-to-end tests')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the change is reported `verified`
+      await steps.changeReportedAs('verified')
+      // And feedback is raised on `nothing`
+      await steps.feedbackRaisedOn('nothing')
+    })
+
+    // Line 160
+    test('the end-to-end test `cancel-order` `passes` is recorded `passed`', async () => {
+      const steps = createSteps()
+
+      // Given a built change of a `web` product
+      await steps.builtChangeOfPlatform('web')
+      // And the end-to-end test `cancel-order` `passes`
+      await steps.e2eTestResult('cancel-order', 'passes')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the evidence records `cancel-order` as `passed`
+      await steps.evidenceRecordsE2e('cancel-order', 'passed')
+    })
+
+    // Line 160
+    test('the end-to-end test `cancel-order` `fails` is recorded `failed`', async () => {
+      const steps = createSteps()
+
+      // Given a built change of a `web` product
+      await steps.builtChangeOfPlatform('web')
+      // And the end-to-end test `cancel-order` `fails`
+      await steps.e2eTestResult('cancel-order', 'fails')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the evidence records `cancel-order` as `failed`
+      await steps.evidenceRecordsE2e('cancel-order', 'failed')
     })
   })
 })

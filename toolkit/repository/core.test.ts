@@ -12,13 +12,12 @@ describe("clean-backend builds through the clean core", () => {
   it("its workstreams and their topology are the core's", async () => {
     const d = await loadDefinition("clean-backend");
     expect(d.core).toBe("clean-core");
-    expect(d.workstreams).toEqual(["app-domain", "infrastructure", "adapters", "modules", "integrate"]);
+    expect(d.workstreams).toEqual(["app-domain", "infrastructure", "adapters", "modules"]);
     expect(d.defaults.workstreams).toEqual({
       "app-domain": { dependsOn: [] },
       infrastructure: { dependsOn: [] },
       adapters: { dependsOn: [] },
       modules: { dependsOn: ["app-domain", "infrastructure", "adapters"] },
-      integrate: { dependsOn: ["modules"] },
     });
   });
 
@@ -42,8 +41,6 @@ describe("clean-backend builds through the clean core", () => {
 describe("clean-react joins its workstreams to the core's", () => {
   it.each([
     ["react-hooks", "react-ui"],
-    ["integrate", "react-hooks"],
-    ["integrate", "modules"],
     ["modules", "app-domain"],
   ])("%s waits for %s", async (workstream, dependency) => {
     const d = await loadDefinition("clean-react");
@@ -66,5 +63,28 @@ describe("clean-react joins its workstreams to the core's", () => {
     const { existsSync } = await import("node:fs");
     const owners = Object.entries(workstreamDirs).filter(([, dir]) => existsSync(join(dir, `${layer}.rules.ts`)));
     expect(owners.map(([id]) => id)).toEqual([workstream]);
+  });
+});
+
+/** Spec: `implementer`, "Whole-product checks belong to no workstream". */
+describe("the whole-product checks belong to no workstream", () => {
+  it.each([["clean-backend"], ["clean-react"]])("in %s, no workstream owns them and the schema carries the core's", async (name) => {
+    const schema = await loadSchema(name);
+    const owned = Object.values(schema.workstreams).flatMap((w) => (w.checks ?? []).map((c) => c.id));
+    expect(owned).not.toContain("no-unused-files");
+    expect(owned).not.toContain("duplication-below-threshold");
+    expect((schema.definition.checks ?? []).map((c) => c.id)).toEqual(["no-unused-files", "duplication-below-threshold"]);
+  });
+
+  it("every workstream of the core owns a layer", async () => {
+    const schema = await loadSchema("clean-backend");
+    for (const [id, w] of Object.entries(schema.workstreams))
+      expect(w.layers(schema.definition.defaults).length, id).toBeGreaterThan(0);
+  });
+
+  it("react-hooks and modules may run at the same time in clean-react", async () => {
+    const d = await loadDefinition("clean-react");
+    expect(d.defaults.workstreams["react-hooks"]!.dependsOn).not.toContain("modules");
+    expect(d.defaults.workstreams.modules!.dependsOn).not.toContain("react-hooks");
   });
 });
