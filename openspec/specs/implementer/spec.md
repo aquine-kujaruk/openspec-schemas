@@ -21,7 +21,7 @@ Every workstream SHALL declare its layers in the `workstream.ts` of its folder, 
 
   | workstream | dependency |
   | ---------- | ---------- |
-  | integrate  | moduls     |
+  | modules    | adaptres   |
 
 #### Scenario Outline: the workstream folder `<workstream>` missing from the configuration is rejected
 
@@ -46,7 +46,7 @@ Every workstream SHALL declare its layers in the `workstream.ts` of its folder, 
 
   | workstream | dependency | cycle                         |
   | ---------- | ---------- | ----------------------------- |
-  | modules    | integrate  | modules → integrate → modules |
+  | adapters   | modules    | adapters → modules → adapters |
 
 ### Requirement: Workstreams run in dependency order
 
@@ -65,7 +65,6 @@ A workstream SHALL start only after every workstream it depends on in the config
   | modules    | app-domain     |
   | modules    | infrastructure |
   | modules    | adapters       |
-  | integrate  | modules        |
 
 #### Scenario Outline: `<workstream>` and `<other>` may run at the same time
 
@@ -90,8 +89,8 @@ A workstream SHALL start only after every workstream it depends on in the config
 
   | sequence                                                 | workstream     | dependency     |
   | -------------------------------------------------------- | -------------- | -------------- |
-  | app-domain, infrastructure, adapters, modules, integrate | infrastructure | app-domain     |
-  | app-domain, infrastructure, adapters, modules, integrate | adapters       | infrastructure |
+  | app-domain, infrastructure, adapters, modules            | infrastructure | app-domain     |
+  | app-domain, infrastructure, adapters, modules            | adapters       | infrastructure |
 
 ### Requirement: Every layer belongs to exactly one workstream
 
@@ -154,7 +153,7 @@ For every layer a workstream owns, the workstream's folder (`workstreams/<workst
 
   | workstream | path                                                           |
   | ---------- | -------------------------------------------------------------- |
-  | integrate  | schemas/shared/cores/clean-core/workstreams/integrate/SKILL.md |
+  | modules    | schemas/shared/cores/clean-core/workstreams/modules/SKILL.md   |
 
 ### Requirement: A workstream can be checked alone
 
@@ -175,7 +174,6 @@ For every layer a workstream owns, the workstream's folder (`workstreams/<workst
   | adapters       | adapter-implements-acl       |
   | modules        | modules-are-isolated         |
   | modules        | entity-validates-with-schema |
-  | integrate      | no-unused-files              |
 
 #### Scenario Outline: `<workstream>` leaves `<rule>` out
 
@@ -212,7 +210,7 @@ For every layer a workstream owns, the workstream's folder (`workstreams/<workst
 
   | workstream | status | declared                                                 |
   | ---------- | ------ | -------------------------------------------------------- |
-  | nothing    | 2      | app-domain, infrastructure, adapters, modules, integrate |
+  | nothing    | 2      | app-domain, infrastructure, adapters, modules            |
 
 ### Requirement: Project configuration overrides the implementer's defaults
 
@@ -506,8 +504,6 @@ The workstreams a schema adds SHALL be ordered together with the workstreams of 
   | schema      | workstream  | dependency  |
   | ----------- | ----------- | ----------- |
   | clean-react | react-hooks | react-ui    |
-  | clean-react | integrate   | react-hooks |
-  | clean-react | integrate   | modules     |
   | clean-react | modules     | app-domain  |
 
 #### Scenario Outline: in `<schema>`, `<workstream>` and `<other>` may run at the same time
@@ -523,6 +519,7 @@ The workstreams a schema adds SHALL be ordered together with the workstreams of 
   | clean-react | react-ui   | app-domain     |
   | clean-react | react-ui   | infrastructure |
   | clean-react | react-ui   | adapters       |
+  | clean-react | react-hooks | modules       |
 
 #### Scenario Outline: in `<schema>`, layer `<layer>` belongs to `<workstream>`
 
@@ -538,3 +535,43 @@ The workstreams a schema adds SHALL be ordered together with the workstreams of 
   | clean-react | framework | react-hooks |
   | clean-react | domain    | app-domain  |
   | clean-react | modules   | modules     |
+
+### Requirement: Whole-product checks belong to no workstream
+
+The checks that only make sense once every workstream's work is joined (`no-unused-files`, `duplication-below-threshold`) SHALL belong to no workstream: `factory check --workstream <workstream>` SHALL NOT evaluate them, whatever the workstream, and `factory check` with no workstream SHALL evaluate them after every workstream's rules. A core SHALL NOT list a workstream that owns no layer.
+
+#### Scenario Outline: `<command>` evaluates `<rule>` `<evaluated>`
+
+- **GIVEN** the default workstreams of the implementer <!-- defaultWorkstreams -->
+- **WHEN** `<command>` runs <!-- commandRuns -->
+- **THEN** rule `<rule>` is evaluated `<evaluated>` <!-- ruleEvaluatedOrNot -->
+
+##### Examples:
+
+  | command                               | rule                        | evaluated |
+  | ------------------------------------- | --------------------------- | --------- |
+  | factory check --workstream modules    | no-unused-files             | no        |
+  | factory check --workstream modules    | duplication-below-threshold | no        |
+  | factory check                         | no-unused-files             | yes       |
+  | factory check                         | duplication-below-threshold | yes       |
+
+### Requirement: The end-to-end tests of a web product run through the command
+
+`factory test e2e [--report <file>]` SHALL run the product's end-to-end tests (`test/e2e/**/*.e2e.ts` by default, the configured `e2e` root otherwise) with the pinned end-to-end tool, its telemetry off, and SHALL exit with the tool's status: 0 when every test passes, 1 when a test fails, and 2 when the run could not start (configuration, infrastructure or an internal error), naming the cause. A product whose platform is not `web` SHALL have no end-to-end tests: the command SHALL exit 2 saying so.
+
+#### Scenario Outline: on a `<platform>` product, the tool exiting `<tool>` makes `factory test e2e` exit `<status>`
+
+- **GIVEN** a product of platform `<platform>` with end-to-end tests <!-- productOfPlatformWithE2e -->
+- **AND** the end-to-end tool exits with `<tool>` <!-- e2eToolExits -->
+- **WHEN** `factory test e2e` runs <!-- e2eCommandRuns -->
+- **THEN** it exits with status `<status>` <!-- e2eCommandExit -->
+
+##### Examples:
+
+  | platform | tool | status |
+  | -------- | ---- | ------ |
+  | web      | 0    | 0      |
+  | web      | 1    | 1      |
+  | web      | 2    | 2      |
+  | web      | 3    | 2      |
+  | node     | 0    | 2      |

@@ -194,8 +194,8 @@ A core SHALL list its workstreams and, for each one, the workstreams it waits fo
 
   | package  | listed        | core       | coreWorkstreams                                          | own                   | workstreams                                                                     |
   | -------- | ------------- | ---------- | -------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------- |
-  | backend  | clean-backend | clean-core | app-domain, infrastructure, adapters, modules, integrate | none                  | app-domain, infrastructure, adapters, modules, integrate                        |
-  | frontend | clean-react   | clean-core | app-domain, infrastructure, adapters, modules, integrate | react-ui, react-hooks | app-domain, infrastructure, adapters, modules, integrate, react-ui, react-hooks |
+  | backend  | clean-backend | clean-core | app-domain, infrastructure, adapters, modules            | none                  | app-domain, infrastructure, adapters, modules                                   |
+  | frontend | clean-react   | clean-core | app-domain, infrastructure, adapters, modules            | react-ui, react-hooks | app-domain, infrastructure, adapters, modules, react-ui, react-hooks          |
 
 #### Scenario Outline: `<listed>` naming `<name>`, which its core `<core>` already lists, stops the build
 
@@ -210,7 +210,7 @@ A core SHALL list its workstreams and, for each one, the workstreams it waits fo
 
   | package | listed        | core       | coreWorkstreams                                          | own     | name    | builtPackages |
   | ------- | ------------- | ---------- | -------------------------------------------------------- | ------- | ------- | ------------- |
-  | backend | clean-backend | clean-core | app-domain, infrastructure, adapters, modules, integrate | modules | modules | 0             |
+  | backend | clean-backend | clean-core | app-domain, infrastructure, adapters, modules            | modules | modules | 0             |
 
 ### Requirement: A package declares a skill that lives in a repository of its own
 
