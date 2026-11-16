@@ -30,6 +30,9 @@ export function createSteps() {
   let env: Record<string, string> = {};
   let lines: string[] = [];
   let tagged: string | undefined;
+  let probedAs: string | undefined;
+  // The outcome given for the procedure in its environment; by default, every safe one passed.
+  let givenOutcome: string | undefined;
   let evidence: Evidence | undefined;
   let changed = -1;
   // The scenarios on where a spec's test is written: the layout is the scenario's, the tests stood in for.
@@ -65,6 +68,13 @@ export function createSteps() {
     },
     async planProcedureTaggedFor(env: string): Promise<void> {
       tagged = env;
+    },
+    async planProcedureProbedAs(env: string, probed: string): Promise<void> {
+      tagged = env;
+      probedAs = probed;
+    },
+    async procedureOutcomeIs(outcome: string): Promise<void> {
+      givenOutcome = outcome;
     },
     async changeOfWithDeltaSpec(where: string, spec: string): Promise<void> {
       expect(["a project", "the command's repository"]).toContain(where);
@@ -115,7 +125,15 @@ export function createSteps() {
         parts: {
           phases: [true],
           procedures: tagged
-            ? [block("Procedure", PROCEDURE, ["@adds", "@purpose:operate", "@topic:orders", `@env:${tagged}`])]
+            ? [
+                block("Procedure", PROCEDURE, [
+                  "@adds",
+                  probedAs ? "@purpose:access" : "@purpose:operate",
+                  "@topic:orders",
+                  `@env:${tagged}`,
+                  ...(probedAs ? [`@probed:${probedAs}`] : []),
+                ]),
+              ]
             : [],
         },
       });
@@ -132,7 +150,12 @@ export function createSteps() {
         scenarios: async () => results,
         checks: async () => failing,
         review: async () => lines,
-        procedures: { [`${PROCEDURE}@local`]: "passed", [`${PROCEDURE}@sandbox`]: "passed" },
+        procedures:
+          givenOutcome === undefined
+            ? { [`${PROCEDURE}@local`]: "passed", [`${PROCEDURE}@sandbox`]: "passed" }
+            : givenOutcome === "none"
+              ? {}
+              : { [`${PROCEDURE}@${tagged}`]: givenOutcome as "passed" | "failed" },
       });
       const after = product(root);
       changed = Object.keys({ ...before, ...after }).filter((f) => before[f] !== after[f]).length;

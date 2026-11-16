@@ -10,7 +10,8 @@ import {
 } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { parse, parseDocument } from "yaml";
-import { DECISIONS, PROCEDURES } from "../flow/consolidated.ts";
+import { DECISIONS, PROCEDURES, readConsolidated } from "../flow/consolidated.ts";
+import { loadEnv } from "../architecture/review/env.ts";
 import { capture, COMMAND, INSTALLED, PROJECT_ROOT, SETUP_ASSETS } from "../core/paths.ts";
 import type { Installed } from "../core/types.ts";
 
@@ -269,9 +270,22 @@ const lacks = (root: string, installed: Installed, assets: string): Lack[] => {
   return found;
 };
 
+/** The keys the consolidated procedures name in `@keys` that neither the environment nor `.env` holds. */
+const absentKeys = (root: string, env: NodeJS.ProcessEnv): string[] => {
+  const held = loadEnv(root, env);
+  return [...readConsolidated(root).procedures].flatMap(([slug, { file, keys = [] }]) =>
+    keys
+      .filter((key) => !held[key])
+      .map(
+        (key) =>
+          `the key ${key} that the procedure ${slug} (${file}) needs is in neither the environment nor .env: only the person can add it`,
+      ),
+  );
+};
+
 /** What a person should know and no repair can settle. */
-const notes = (root: string, installed: Installed): string[] => {
-  const found: string[] = [];
+const notes = (root: string, installed: Installed, env: NodeJS.ProcessEnv): string[] => {
+  const found: string[] = absentKeys(root, env);
   const { name, version } = installed.packageManager;
   const lock = parse(text(join(root, `${name}.lock.yaml`)) ?? "") as {
     apm_version?: string;
@@ -303,7 +317,10 @@ const notes = (root: string, installed: Installed): string[] => {
  * What the flow needs and the project lacks. With `fix`, what the package owns is repaired first
  * and only what is still lacking counts against the project.
  */
-export const doctor = (root: string, { fix = false } = {}): Report | undefined => {
+export const doctor = (
+  root: string,
+  { fix = false, env = process.env }: { fix?: boolean; env?: NodeJS.ProcessEnv } = {},
+): Report | undefined => {
   const read = readInstalled(root);
   if (!read) return undefined;
   const { installed, assets } = read;
@@ -336,7 +353,7 @@ export const doctor = (root: string, { fix = false } = {}): Report | undefined =
   ];
   return {
     items,
-    notes: notes(root, installed),
+    notes: notes(root, installed, env),
     status: items.some((i) => i.report !== "repaired") ? 1 : 0,
   };
 };

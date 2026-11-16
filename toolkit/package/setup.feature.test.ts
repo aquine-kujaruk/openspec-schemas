@@ -352,4 +352,70 @@ describe('Feature: package/setup Specification', () => {
       await steps.reportsPieceMissingForAgent('the guards', 'codex')
     })
   })
+
+  describe('Rule: Setup notes a key a runbook needs and the environment lacks', () => {
+    // Line 127
+    test('the key `INVOICES_API_KEY` of `invoices-access`, `absent`, is reported `note` without repair', async () => {
+      const steps = createSteps()
+
+      // Given a consolidated procedure `invoices-access` needing the key `INVOICES_API_KEY`
+      await steps.runbookNeedsKey('invoices-access', 'INVOICES_API_KEY')
+      // And the key `INVOICES_API_KEY` is `absent`
+      await steps.keyPresence('INVOICES_API_KEY', 'absent')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `the key of a runbook` as `note`
+      await steps.reportsRequirementAs('the key of a runbook', 'note')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+
+    // Line 127
+    test('the key `INVOICES_API_KEY` of `invoices-access`, `in .env`, is reported `not reported` without repair', async () => {
+      const steps = createSteps()
+
+      // Given a consolidated procedure `invoices-access` needing the key `INVOICES_API_KEY`
+      await steps.runbookNeedsKey('invoices-access', 'INVOICES_API_KEY')
+      // And the key `INVOICES_API_KEY` is `in .env`
+      await steps.keyPresence('INVOICES_API_KEY', 'in .env')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `the key of a runbook` as `not reported`
+      await steps.reportsRequirementAs('the key of a runbook', 'not reported')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+
+    // Line 127
+    test('the key `INVOICES_API_KEY` of `invoices-access`, `in the environment`, is reported `not reported` without repair', async () => {
+      const steps = createSteps()
+
+      // Given a consolidated procedure `invoices-access` needing the key `INVOICES_API_KEY`
+      await steps.runbookNeedsKey('invoices-access', 'INVOICES_API_KEY')
+      // And the key `INVOICES_API_KEY` is `in the environment`
+      await steps.keyPresence('INVOICES_API_KEY', 'in the environment')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `the key of a runbook` as `not reported`
+      await steps.reportsRequirementAs('the key of a runbook', 'not reported')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+
+    // Line 140
+    test('the key `INVOICES_API_KEY` of `invoices-access`, `absent`, is reported `note` after repair', async () => {
+      const steps = createSteps()
+
+      // Given a consolidated procedure `invoices-access` needing the key `INVOICES_API_KEY`
+      await steps.runbookNeedsKey('invoices-access', 'INVOICES_API_KEY')
+      // And the key `INVOICES_API_KEY` is `absent`
+      await steps.keyPresence('INVOICES_API_KEY', 'absent')
+      // When setup runs with repair
+      await steps.runSetupWithRepair()
+      // Then it reports `the key of a runbook` as `note`
+      await steps.reportsRequirementAs('the key of a runbook', 'note')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+  })
 })

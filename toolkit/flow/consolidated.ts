@@ -6,7 +6,7 @@ export const DECISIONS = "openspec/adr";
 export const PROCEDURES = "openspec/runbooks";
 
 /** A consolidated block: where it lives and the change that last wrote it. */
-export type Standing = { file: string; origin?: string };
+export type Standing = { file: string; origin?: string; keys?: string[] };
 
 /** The consolidated decisions and procedures, by slug. A slug is unique within its tree. */
 export type Consolidated = { decisions: Map<string, Standing>; procedures: Map<string, Standing> };
@@ -22,8 +22,12 @@ const tree = (root: string, dir: string, kind: "Decision" | "Procedure"): Map<st
         current = { file };
         blocks.set(slug, current);
       } else if (line.startsWith("#")) current = undefined;
-      else if (current && line.trim().startsWith("@"))
-        current.origin ??= tagsOf(line).find((t) => t.name === "origin")?.value;
+      else if (current && line.trim().startsWith("@")) {
+        const tags = tagsOf(line);
+        current.origin ??= tags.find((t) => t.name === "origin")?.value;
+        const keys = tags.find((t) => t.name === "keys")?.value;
+        if (keys) current.keys ??= keys.split(",").filter(Boolean);
+      }
     }
   }
   return blocks;

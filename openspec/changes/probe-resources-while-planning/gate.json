@@ -1,0 +1,6 @@
+{
+  "phase": "Phase 1: validation holds an unprobed access procedure, and verify lets a declined one through",
+  "failures": 0,
+  "waitingFor": "the agent",
+  "findings": []
+}

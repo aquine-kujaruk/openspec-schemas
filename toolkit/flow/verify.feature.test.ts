@@ -227,10 +227,64 @@ describe('Feature: flow/verify Specification', () => {
       // Then the evidence records the procedure in `prod` as `reviewed only`
       await steps.evidenceRecordsProcedureAs('prod', 'reviewed only')
     })
+
+    // Line 93
+    test('a procedure in `sandbox` probed `declined` with outcome `none` is recorded as `declined` and the change is `verified`', async () => {
+      const steps = createSteps()
+
+      // Given a built change with `0` scenario(s)
+      await steps.builtChangeWithScenarios('0')
+      // And its plan carries a procedure in `sandbox` probed `declined`
+      await steps.planProcedureProbedAs('sandbox', 'declined')
+      // And the procedure's outcome is `none`
+      await steps.procedureOutcomeIs('none')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the evidence records the procedure in `sandbox` as `declined`
+      await steps.evidenceRecordsProcedureAs('sandbox', 'declined')
+      // And the change is reported `verified`
+      await steps.changeReportedAs('verified')
+    })
+
+    // Line 93
+    test('a procedure in `sandbox` probed `declined` with outcome `passed` is recorded as `executed` and the change is `verified`', async () => {
+      const steps = createSteps()
+
+      // Given a built change with `0` scenario(s)
+      await steps.builtChangeWithScenarios('0')
+      // And its plan carries a procedure in `sandbox` probed `declined`
+      await steps.planProcedureProbedAs('sandbox', 'declined')
+      // And the procedure's outcome is `passed`
+      await steps.procedureOutcomeIs('passed')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the evidence records the procedure in `sandbox` as `executed`
+      await steps.evidenceRecordsProcedureAs('sandbox', 'executed')
+      // And the change is reported `verified`
+      await steps.changeReportedAs('verified')
+    })
+
+    // Line 93
+    test('a procedure in `sandbox` probed `2026-11-16` with outcome `none` is recorded as `not executed` and the change is `not verified`', async () => {
+      const steps = createSteps()
+
+      // Given a built change with `0` scenario(s)
+      await steps.builtChangeWithScenarios('0')
+      // And its plan carries a procedure in `sandbox` probed `2026-11-16`
+      await steps.planProcedureProbedAs('sandbox', '2026-11-16')
+      // And the procedure's outcome is `none`
+      await steps.procedureOutcomeIs('none')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the evidence records the procedure in `sandbox` as `not executed`
+      await steps.evidenceRecordsProcedureAs('sandbox', 'not executed')
+      // And the change is reported `not verified`
+      await steps.changeReportedAs('not verified')
+    })
   })
 
   describe('Rule: A scenario is matched to the test generated from its spec, where generation writes it', () => {
-    // Line 97
+    // Line 111
     test('verifying in `a project`, the scenarios of `orders/get-order` are read from `test/acceptance/orders/get-order.feature.test.ts`', async () => {
       const steps = createSteps()
 
@@ -244,7 +298,7 @@ describe('Feature: flow/verify Specification', () => {
       await steps.scenariosReadFromTest('test/acceptance/orders/get-order.feature.test.ts')
     })
 
-    // Line 97
+    // Line 111
     test('verifying in `the command\'s repository`, the scenarios of `flow/verify` are read from `toolkit/flow/verify.feature.test.ts`', async () => {
       const steps = createSteps()
 
@@ -260,7 +314,7 @@ describe('Feature: flow/verify Specification', () => {
   })
 
   describe('Rule: A spec no test is generated from is proved by the person\'s word', () => {
-    // Line 112
+    // Line 126
     test('in `the command\'s repository`, `flow/plan` with `0` generated test(s) and the person\'s word `none` is `unproved`', async () => {
       const steps = createSteps()
 
@@ -278,7 +332,7 @@ describe('Feature: flow/verify Specification', () => {
       await steps.changeReportedAs('not verified')
     })
 
-    // Line 112
+    // Line 126
     test('in `the command\'s repository`, `flow/plan` with `0` generated test(s) and the person\'s word `proved` is `proved by the person\'s word`', async () => {
       const steps = createSteps()
 
@@ -296,7 +350,7 @@ describe('Feature: flow/verify Specification', () => {
       await steps.changeReportedAs('verified')
     })
 
-    // Line 112
+    // Line 126
     test('in `a project`, `orders/get-order` with `0` generated test(s) and the person\'s word `proved` is `unproved`', async () => {
       const steps = createSteps()
 

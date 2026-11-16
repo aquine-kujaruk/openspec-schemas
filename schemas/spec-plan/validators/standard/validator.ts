@@ -143,6 +143,27 @@ const carries =
         });
       });
 
+/** A probe is recorded with the day it ran, or `declined` when the person chose not to configure the access. */
+const PROBED = /^(?:\d{4}-\d{2}-\d{2}|declined)$/;
+
+const procedureProbed: Rule = (c) =>
+  c.plan.procedures.flatMap((block) => {
+    const operation = operationOf(block);
+    if (tagOf(block, "purpose")?.value !== "access" || !operation || operation.name === "removes") return [];
+    const probed = tagOf(block, "probed")?.value;
+    if (probed && PROBED.test(probed)) return [];
+    return [
+      {
+        rule: "procedure-probed",
+        block: block.slug,
+        tag: "@probed",
+        message: probed
+          ? `the procedure ${block.slug} carries @probed:${probed}: it is the date of the probe (YYYY-MM-DD) or declined`
+          : `the procedure ${block.slug} gives access and lacks @probed: probe it while planning and tag it with the date, or with declined when the person chose not to configure it`,
+      },
+    ];
+  });
+
 const noCredentialInProcedure: Rule = (c) =>
   c.plan.procedures
     .filter((block) => holdsCredential(block.body))
@@ -194,6 +215,7 @@ const RULES: Rule[] = [
   operationRecordsBase,
   carries("decision", "decision-tags", ["area", "topic", "applies", "enforced"], { area: AREAS }),
   carries("procedure", "procedure-tags", ["purpose", "topic", "env"], { purpose: PURPOSES }),
+  procedureProbed,
   noCredentialInProcedure,
   tasksBelong,
   deltaSpecsOrNoBehaviour,

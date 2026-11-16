@@ -84,6 +84,8 @@ export function createSteps() {
   let runsBefore = 0;
   let written = false;
   let outcome: Report | undefined;
+  let runbookKey: string | undefined;
+  let env: NodeJS.ProcessEnv = process.env;
   let changed = -1;
 
   const command = (version: string) =>
@@ -210,17 +212,29 @@ export function createSteps() {
     async projectLacksPieceForAgent(piece: string, agent: string): Promise<void> {
       lackingPiece = { piece, agent };
     },
+    async runbookNeedsKey(slug: string, key: string): Promise<void> {
+      runbookKey = key;
+      write(
+        `openspec/runbooks/access/${slug}.md`,
+        `# ${slug}\n\n### Procedure: ${slug} · Reach the API\n\n@origin:2026-11-16-add-invoices @purpose:access @env:sandbox @probed:2026-11-16 @keys:${key}\n\n**Requires** ${key} in .env.\n`,
+      );
+    },
+    async keyPresence(key: string, presence: string): Promise<void> {
+      if (presence === "in .env") write(".env", `${key}=present\n`);
+      else if (presence === "in the environment") env = { ...process.env, [key]: "present" };
+      else expect(presence).toBe("absent");
+    },
 
     // Action
     async runSetupWithRepair(): Promise<void> {
       project();
-      for (let i = 0; i < runsBefore; i++) doctor(root, { fix: true });
-      outcome = doctor(root, { fix: true });
+      for (let i = 0; i < runsBefore; i++) doctor(root, { fix: true, env });
+      outcome = doctor(root, { fix: true, env });
     },
     async runSetupWithoutRepair(): Promise<void> {
       project();
       const before = snapshot(root);
-      outcome = doctor(root);
+      outcome = doctor(root, { env });
       const after = snapshot(root);
       changed = [...new Set([...Object.keys(before), ...Object.keys(after)])].filter(
         (f) => before[f] !== after[f],
@@ -258,6 +272,14 @@ export function createSteps() {
       expect(config.schema).toBe(defaultAfter);
     },
     async reportsRequirementAs(requirement: string, report: string): Promise<void> {
+      // A key is never an item: it is a note, or nothing.
+      if (requirement === "the key of a runbook") {
+        expect(outcome!.items.filter((i) => i.detail.includes(runbookKey!))).toEqual([]);
+        const noted = outcome!.notes.filter((n) => n.includes(`the key ${runbookKey} `));
+        expect(noted).toHaveLength(report === "note" ? 1 : 0);
+        if (report !== "note") expect(report).toBe("not reported");
+        return;
+      }
       expect(outcome!.items.filter((i) => i.requirement === requirement).map((i) => i.report)).toEqual(
         [report],
       );

@@ -12,6 +12,10 @@ schema: <schema of the change>
 
 <!-- What is true once this change is archived, in two or three sentences. -->
 
+## Findings
+
+<!-- One line per fact the probes observed that the implementation needs: the fact, its source (a command, a file, a URL) and the date it was seen. -->
+
 ## Decisions
 
 <!-- One line per decision that matters only to this change: what was chosen, and the alternative discarded. -->
@@ -45,7 +49,7 @@ One block per way of setting the system up, reaching it, diagnosing it or operat
 
 ### Procedure: <slug> · <title>
 
-@adds @purpose:diagnose @topic:<topic> @env:<environments>
+@adds @purpose:access @topic:<topic> @env:<environments> @probed:<YYYY-MM-DD or declined> @keys:<VAR,VAR>
 
 **When** <the situation that calls for it>
 

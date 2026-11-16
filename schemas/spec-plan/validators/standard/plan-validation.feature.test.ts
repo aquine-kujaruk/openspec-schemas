@@ -646,4 +646,66 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
   })
+
+  describe('Rule: An access procedure records that it was probed', () => {
+    // Line 203
+    test('a procedure of purpose `access` probed `2026-11-16` makes the change `ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose plan has the procedure block `invoices-access` of purpose `access` probed `2026-11-16`
+      await steps.procedureBlockOfPurposeProbed('invoices-access', 'access', '2026-11-16')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 203
+    test('a procedure of purpose `access` probed `declined` makes the change `ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose plan has the procedure block `invoices-access` of purpose `access` probed `declined`
+      await steps.procedureBlockOfPurposeProbed('invoices-access', 'access', 'declined')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 203
+    test('a procedure of purpose `access` probed `none` makes the change `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose plan has the procedure block `invoices-access` of purpose `access` probed `none`
+      await steps.procedureBlockOfPurposeProbed('invoices-access', 'access', 'none')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 203
+    test('a procedure of purpose `access` probed `yesterday` makes the change `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose plan has the procedure block `invoices-access` of purpose `access` probed `yesterday`
+      await steps.procedureBlockOfPurposeProbed('invoices-access', 'access', 'yesterday')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 203
+    test('a procedure of purpose `diagnose` probed `none` makes the change `ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose plan has the procedure block `prod-logs` of purpose `diagnose` probed `none`
+      await steps.procedureBlockOfPurposeProbed('prod-logs', 'diagnose', 'none')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+  })
 })

@@ -28,6 +28,9 @@ Architecture decisions and procedures are durable: archiving copies them to \`op
 - \`@modifies:<slug>\`, \`@replaces:<slug>\`, \`@renames:<slug>\` or \`@removes:<slug>\` for a block a tree has, with \`@base:<origin>\` copied from the \`@origin\` of that block.
 - A decision also carries \`@area:product\` or \`@area:production\`, \`@topic\`, \`@applies\` (the layers it binds) and \`@enforced\` (the rule, check or review that holds it).
 - A procedure also carries \`@purpose\` (\`setup\`, \`access\`, \`diagnose\` or \`operate\`), \`@topic\` and \`@env\` (the environments it runs in). It names where each secret is kept; the secret itself stays out of the plan.
+- An access procedure also carries \`@probed\`: the date its probe answered while planning, or \`declined\` when the person chose not to configure it. When it reads environment variables, it lists them under \`@keys\` (\`@keys:INVOICES_API_KEY\`), so that setup can say when one is missing.
+
+What the probes observed (what a log says, what is deployed, what the repository holds) goes under Findings, one fact per line with its source and the date it was seen.
 
 ${phases}
 

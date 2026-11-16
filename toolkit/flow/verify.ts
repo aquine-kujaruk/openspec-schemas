@@ -177,6 +177,7 @@ export const verify = async (
       review.note = `the review could not run: ${e instanceof Error ? e.message : String(e)}`;
     }
 
+  // A procedure the person declined while planning is not held against the verdict until it is run.
   const procedures: Evidence["procedures"] = plan.procedures.flatMap((block) =>
     (tagOf(block, "env")?.value ?? "").split(",").filter(Boolean).map((env) => {
       const outcome = options.procedures?.[`${block.slug}@${env}`];
@@ -184,7 +185,9 @@ export const verify = async (
         ? { slug: block.slug, env, treatment: "reviewed only" as const }
         : outcome
           ? { slug: block.slug, env, treatment: "executed" as const, outcome }
-          : { slug: block.slug, env, treatment: "not executed" as const };
+          : tagOf(block, "probed")?.value === "declined"
+            ? { slug: block.slug, env, treatment: "declined" as const }
+            : { slug: block.slug, env, treatment: "not executed" as const };
     }),
   );
 

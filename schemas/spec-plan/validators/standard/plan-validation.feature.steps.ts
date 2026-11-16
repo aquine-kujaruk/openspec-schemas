@@ -156,6 +156,12 @@ export function createSteps() {
       files[`openspec/changes/${linked}/.openspec.yaml`] =
         `schema: ${made}\ncreated: 2026-11-13\n${back === "none" ? "" : `x-linked: [${list(back).join(", ")}]\n`}`;
     },
+    async procedureBlockOfPurposeProbed(slug: string, purpose: string, probed: string): Promise<void> {
+      const record = probed === "none" ? [] : [`@probed:${probed}`];
+      procedures.push(
+        procedure(slug, ["@adds", `@purpose:${purpose}`, ...record, ...without(PROCEDURE_TAGS, "@purpose")]),
+      );
+    },
 
     // Action
     async validateChange(): Promise<void> {

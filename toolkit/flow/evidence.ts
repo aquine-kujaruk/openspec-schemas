@@ -31,7 +31,7 @@ export type Evidence = {
   procedures: Array<{
     slug: string;
     env: string;
-    treatment: "executed" | "reviewed only" | "not executed";
+    treatment: "executed" | "reviewed only" | "not executed" | "declined";
     outcome?: "passed" | "failed";
   }>;
 };

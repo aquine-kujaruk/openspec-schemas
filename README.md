@@ -52,7 +52,7 @@ The project needs Node 22.18 or later, pnpm, and the agent package manager APM 0
 2. Pin the command the skills call. The tarball came with the `setup` skill; its file name carries the version:
 
    ```bash
-   pnpm add -D ./.claude/skills/setup/assets/factory-0.5.0.tgz
+   pnpm add -D ./.claude/skills/setup/assets/factory-0.6.0.tgz
    ```
 
 3. Let setup repair what the package owns and list what the project must supply:
@@ -61,7 +61,7 @@ The project needs Node 22.18 or later, pnpm, and the agent package manager APM 0
    pnpm exec factory doctor --fix
    ```
 
-   It links the package's schemas under `openspec/schemas`, sets the default schema when the project has none, creates `openspec/specs`, `openspec/adr` and `openspec/runbooks`, and writes the flow instruction into `AGENTS.md` as one marked section, keeping every line the project wrote there. It reports as `missing` what only the project can add: its test runner (`vitest`) and its type checker (`typescript`).
+   It links the package's schemas under `openspec/schemas`, sets the default schema when the project has none, creates `openspec/specs`, `openspec/adr` and `openspec/runbooks`, and writes the flow instruction into `AGENTS.md` as one marked section, keeping every line the project wrote there. It reports as `missing` what only the project can add: its test runner (`vitest`) and its type checker (`typescript`). It adds a `note` for each key a runbook lists under `@keys` that neither the environment nor `.env` holds; only the person can add it, and the phase goes on.
 
    `apm compile` is not needed for the flow instruction. Setup also switches the project's `apm.yml` to a managed section between the same markers, so a later `apm compile` rewrites that section and nothing else.
 
@@ -95,6 +95,8 @@ A change goes through five skills, each calling the command:
 | `feedback` | Takes a correction back into the change it is about | `factory feedback <change>` |
 
 The implement phase starts every short, rule-fixed file (schemas, entities, value objects, exception families, repository interfaces, ACLs, in-memory repositories and the shared bases) from a scaffold kept in the `## scaffolds` section of its layer's examples, rendered with `pnpm dlx ejs@7.0.2`; the first render on a machine needs the network.
+
+While planning, the agent probes every access the change will use (an API behind an adapter, the repository, what is deployed, the logs) with the minimum that shows it works: the key is there and one authenticated read answers, under the agent's real permissions. It calls `prod` only after the person approves that read. Each access becomes a procedure of purpose `access` tagged `@probed:<date>` and, when it reads environment variables, `@keys:<VAR,VAR>`; archiving turns it into a runbook under `openspec/runbooks/access/`. What the probes saw goes under the plan's `## Findings`. What is missing (a key, the way to authenticate, a permission) is asked as an open question; the person may decline it, and the procedure is then tagged `@probed:declined` and the change goes ready: the implementation will fail on that access, and verify records it as declined instead of failing the change. Validation reports a change not ready while an access procedure carries no `@probed`.
 
 Two guards hold the flow: a write guard lets product code through only for a started change whose schema builds product code and never lets an agent write the harness, and a completion gate holds a turn that would leave a started change failing the checks of its own schema.
 
