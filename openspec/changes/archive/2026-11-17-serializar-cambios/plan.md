@@ -57,6 +57,8 @@ Cada exploración parte del resultado publicado de la anterior. En este reposito
 
 - La persona pide guardar el plan al aprobarlo y dejar limpia la rama. El segundo commit reúne la ejecución, la verificación y el archivo.
 
+- Ensayo con un remoto bare y dos cambios consecutivos. En cada rama, el primer commit dejó limpio el árbol y se pudo retomar después de cambiar de rama. Se conservaron ambos commits al integrar, se recuperó el cierre después del merge y volver a ejecutar el etiquetado reutilizó el tag. `main` terminó sincronizado tras cada cambio.
+
 ## Next step
 
 Tras la aprobación, validar y guardar el plan en el primer commit. Ensayar el procedimiento con un remoto Git desechable: integración normal, reintento después del merge y reintento después de publicar el tag. Comprobar que se puede retomar desde el primer commit con la rama limpia y que, tras el cierre y sus reintentos, siguen existiendo dos commits de trabajo y una etiqueta por cambio. El siguiente cambio debe partir del SHA actualizado. Verificar y archivar para consolidar el procedimiento en `openspec/runbooks/operate/cambios.md`. Al archivar, enlazar el procedimiento desde las instrucciones locales del repositorio. Guardar el archivo y el enlace en el segundo commit y aplicar el cierre al PR de adopción.

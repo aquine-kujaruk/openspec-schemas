@@ -1,3 +1,5 @@
+Before exploring a change in this repository, follow the sequential change runbook in `openspec/runbooks/operate/cambios.md`. Resume any unfinished change at its first pending step.
+
 <!-- apm:start -->
 This project changes through five skills:
 
