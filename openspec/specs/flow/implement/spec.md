@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Implementing a change: one phase of a ready change is built per run, its seams first and then the schema's workstreams, and whatever the plan does not settle goes back as feedback instead of being decided while building.
+Implementing a change: every pending phase of a ready change is built in one run, in order, each one's seams first and then the schema's workstreams, and whatever the plan does not settle goes back as feedback instead of being decided while building.
 
 ## Requirements
 
@@ -24,9 +24,9 @@ The implement phase SHALL start only a change that validation reports as ready. 
   | --------- | ------- | ----------- | ------------ |
   | not ready | 2       | 0           | 2            |
 
-### Requirement: One phase is built per run
+### Requirement: Every pending phase is built in one run, in order
 
-Each run of the implement phase SHALL build the first phase of the plan that has unchecked tasks, SHALL check off its tasks as they are done, and SHALL stop when that phase's verification task passes.
+Once the person has started the implementation of a ready change, a run of the implement phase SHALL build every phase of the plan that has unchecked tasks, in the plan's order, without asking the person between phases. It SHALL check off each task as it is done, SHALL start a phase only once the previous one's verification task passes, and SHALL then start the next phase itself. It SHALL stop before the last phase only when feedback is raised, when a check keeps failing and the agent cannot fix it, or when something only the person can give is missing. Once no task is left, the run SHALL go on to verify the change.
 
 #### Scenario Outline: a run on a change with `<pending>` pending phase(s) leaves `<pendingAfter>`
 
@@ -40,9 +40,42 @@ Each run of the implement phase SHALL build the first phase of the plan that has
 
   | readiness | pending | phasesBuilt | pendingAfter |
   | --------- | ------- | ----------- | ------------ |
-  | ready     | 2       | 1           | 1            |
+  | ready     | 3       | 3           | 0            |
+  | ready     | 2       | 2           | 0            |
   | ready     | 1       | 1           | 0            |
   | ready     | 0       | 0           | 0            |
+
+#### Scenario Outline: a run whose phase `<stoppedAt>` of `<pending>` meets `<obstacle>` builds `<phasesBuilt>` phase(s)
+
+- **GIVEN** a change that validation reports `<readiness>` <!-- changeValidationReports -->
+- **AND** `<pending>` phase(s) of its plan have unchecked tasks <!-- phasesWithUncheckedTasks -->
+- **AND** its phase `<stoppedAt>` meets `<obstacle>` <!-- phaseMeets -->
+- **WHEN** the implementation of the change is started <!-- startImplementation -->
+- **THEN** `<phasesBuilt>` phase(s) are built <!-- phasesBuilt -->
+- **AND** the person was asked `<asked>` time(s) <!-- personAskedTimes -->
+
+##### Examples:
+
+  | readiness | pending | stoppedAt | obstacle                                  | phasesBuilt | asked |
+  | --------- | ------- | --------- | ----------------------------------------- | ----------- | ----- |
+  | ready     | 3       | none      | nothing                                   | 3           | 0     |
+  | ready     | 3       | 2         | a decision the plan does not settle       | 1           | 1     |
+  | ready     | 3       | 3         | a key only the person can add             | 2           | 1     |
+  | ready     | 2       | 1         | a check the agent cannot make pass        | 0           | 1     |
+
+#### Scenario Outline: once `<pendingAfter>` phase(s) are left, the run `<verifies>`
+
+- **GIVEN** a change that validation reports `<readiness>` <!-- changeValidationReports -->
+- **AND** `<pending>` phase(s) of its plan have unchecked tasks <!-- phasesWithUncheckedTasks -->
+- **WHEN** the implementation of the change is started <!-- startImplementation -->
+- **THEN** `<pendingAfter>` phase(s) have unchecked tasks afterwards <!-- phasesPendingAfter -->
+- **AND** the run `<verifies>` <!-- runVerifies -->
+
+##### Examples:
+
+  | readiness | pending | pendingAfter | verifies                    |
+  | --------- | ------- | ------------ | --------------------------- |
+  | ready     | 2       | 0            | verifies the change         |
 
 ### Requirement: The seams of a phase exist before any workstream starts
 

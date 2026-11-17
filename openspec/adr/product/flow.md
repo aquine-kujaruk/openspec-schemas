@@ -15,3 +15,11 @@ The plan phase SHALL smoke-test, with a minimal authenticated read under the age
 A schema whose platform is `web` SHALL declare a spike workstream. The plan of a change that touches what a user sees SHALL spike its screens as self-contained HTML files under the change's `spikes/` folder, SHALL get each screen approved by whoever can decide it (`@approved`), and SHALL write the journeys through it in plain words; it SHALL NOT write the product's code. The spike workstream SHALL be the first the implementation builds for those screens, from the approved spikes and against stub controllers, and SHALL write the end-to-end tests of their journeys; the later workstreams SHALL keep them passing with the real code behind the screens, the doubles sitting at the adapters.
 
 **Why** The person saw the screens only at the end of the implementation, when changing them is expensive. Building the spike in the product asked the planner for a product that may not exist yet, with its framework and tools installed and a way to run it, and opened the product to a change not yet approved. A throwaway page costs an agent little; a plan coupled to the product costs a lot.
+
+### Decision: phases-in-one-run · A started implementation builds every pending phase in one run
+
+@origin:2026-11-17-phases-in-one-run @applies:phases @enforced:implement-skill
+
+Once the person starts the implementation of a ready change, the implement phase SHALL build every phase with unchecked tasks in the plan's order, each closed by its verification task and the completion gate, SHALL start the next phase without asking the person, and SHALL go on to verify once no task is left. It SHALL stop early only when feedback is raised, when a check keeps failing and the agent cannot fix it, or when something only the person can give is missing.
+
+**Why** The person approves a plan so as not to be asked again; a pause between phases asked for an approval that adds nothing, since each phase already ends in a verification and the gate. The person: "¿Por qué tienes que depender de mí para eso?".
