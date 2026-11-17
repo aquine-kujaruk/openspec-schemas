@@ -359,7 +359,12 @@ const stageRepository = (root: string) => new StageHoldRepositoryImplementation(
       process: building.schema,
       line: building.product,
       phases: building.plan.phases,
+      pendingFeedback: feedback.raised(root, building.name).length > 0,
     })),
+    async hasCurrentVerification(name) {
+      const evidence = readEvidence(root, name);
+      return evidence?.verdict === "verified" && evidence.digest === await digestOf(root, name);
+    },
     workstreams: async (building) => {
       const [line, process] = await Promise.all([
         products.productOf(root, building.line),

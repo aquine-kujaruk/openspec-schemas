@@ -9,7 +9,7 @@ Taking in feedback: a finding about a change, whoever raises it, goes back into 
 
 `@by:agent`
 
-The feedback phase SHALL update the plan, and the delta specs when behaviour is affected, of the change the feedback is about, and SHALL open no other change. Feedback SHALL be taken in the same way whether it comes from the person, the completion gate, the verify phase or the archive.
+Feedback SHALL update the affected change regardless of its source. Ordinary findings SHALL stay in that change. For a reproducible defect in the reviewer, a separately tracked repair MAY proceed under a repair plan explicitly approved for that reviewer and rule when a standing spec uniquely determines the outcome and the reviewer is within scope. The repair SHALL prove the failing case and continued rejection of a genuine violation. An ambiguous rule, a change of policy or a repair outside that authorization SHALL go to the person. The original change SHALL resume after the corrected reviewer passes the same cases.
 
 #### Scenario Outline: feedback from `<source>` about `<change>` leaves `<activeAfter>` active change(s)
 
@@ -27,6 +27,21 @@ The feedback phase SHALL update the plan, and the delta specs when behaviour is 
   | 1            | add-orders | 0             | the completion gate | 1           | 1            |
   | 2            | add-orders | 1             | the verify phase    | 2           | 2            |
   | 1            | add-orders | 0             | the archive         | 1           | 1            |
+
+#### Scenario Outline: a reviewer finding with `<authority>` and `<rule>` leads to `<next>`
+
+- **GIVEN** the approved repair scope grants `<authority>` for reviewer repairs <!-- reviewerRepairAuthority -->
+- **AND** the standing rule gives `<rule>` for the reproduced case <!-- standingRuleGives -->
+- **WHEN** the reviewer finding is taken in <!-- takeReviewerFinding -->
+- **THEN** the next action is `<next>` <!-- reviewerFindingAction -->
+
+##### Examples:
+
+  | authority                | rule                  | next                            |
+  | ------------------------ | --------------------- | ------------------------------- |
+  | repair in the owned repo | one specified outcome | track and test a separate repair |
+  | repair in the owned repo | two plausible outcomes | ask which outcome to require    |
+  | no authority             | one specified outcome | ask for the repair decision     |
 
 ### Requirement: Feedback reopens only what it invalidates
 

@@ -17,7 +17,8 @@ export type BuildingStage = {
   name: string;
   process: string;
   line?: string;
-  phases: { title: string; tasks: { done: boolean; workstream?: string }[] }[];
+  pendingFeedback?: boolean;
+  phases: { title: string; tasks: { done: boolean; text?: string; workstream?: string }[] }[];
 };
 export type StageWorkstream = {
   id: string;

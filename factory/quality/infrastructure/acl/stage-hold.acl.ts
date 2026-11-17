@@ -4,7 +4,8 @@ export type BuildingRecord = {
   name: string;
   process: string;
   line?: string;
-  phases: { title: string; tasks: { done: boolean; workstream?: string }[] }[];
+  pendingFeedback?: boolean;
+  phases: { title: string; tasks: { done: boolean; text?: string; workstream?: string }[] }[];
 };
 export type WorkstreamRecord = {
   id: string;
@@ -21,6 +22,7 @@ export type GateRecord = z.infer<typeof GateRecordSchema>;
 
 export interface StageHoldAcl {
   buildingRecords(): Promise<BuildingRecord[]>;
+  hasCurrentVerification(name: string): Promise<boolean>;
   harnessFindings(): Promise<string[]>;
   workstreams(stage: BuildingRecord): Promise<WorkstreamRecord[]>;
   readRecord(name: string): Promise<unknown>;

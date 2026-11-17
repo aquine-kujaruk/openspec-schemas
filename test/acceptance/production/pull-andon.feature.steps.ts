@@ -53,6 +53,9 @@ export function createSteps() {
   let done: number[] = [];
   let named: number | undefined;
   let decisions = 0;
+  let approvedScope = false;
+  let determinateRule = false;
+  let action: string;
 
   return {
     // Context
@@ -63,6 +66,12 @@ export function createSteps() {
     planFeedbackEntriesBefore(change: string, entriesBefore: string): void {
       expect(change).toBe(about);
       entries = Number(entriesBefore);
+    },
+    reviewerRepairAuthority(authority: string): void {
+      approvedScope = authority === "repair in the owned repo";
+    },
+    standingRuleGives(rule: string): void {
+      determinateRule = rule === "one specified outcome";
     },
     phasesDoneBefore(doneBefore: string): void {
       done = doneBefore === "none" ? [] : doneBefore.split(", ").map(Number);
@@ -95,6 +104,9 @@ export function createSteps() {
         ),
       });
     },
+    takeReviewerFinding(): void {
+      action = pull.reviewerRepairAction(approvedScope, determinateRule);
+    },
 
     // Outcome
     activeChangesAfter(activeAfter: string): void {
@@ -104,6 +116,9 @@ export function createSteps() {
       expect(change).toBe(about);
       const feedback = section(await repository.readPlan(change), "Feedback");
       expect(listItems(feedback)).toHaveLength(Number(entriesAfter));
+    },
+    reviewerFindingAction(next: string): void {
+      expect(action).toBe(next);
     },
     async phasesDoneAfter(doneAfter: string): Promise<void> {
       const still = completedPhases(await repository.readPlan(about));

@@ -12,6 +12,8 @@ export class DispatchRepositoryImplementation implements DispatchRepositoryInter
     return this.resource.validateWorkOrder(name);
   }
 
+  checkout(path?: string): string { return this.resource.checkout(path); }
+
   getRunner(): Promise<"session" | {command: string}> {
     return this.resource.getRunner();
   }

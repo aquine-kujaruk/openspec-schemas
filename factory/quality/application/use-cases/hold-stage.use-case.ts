@@ -20,12 +20,25 @@ export class HoldStageUseCase {
     for (const order of building) {
       const previous = await this.records.readRecord(order.name);
       const phase = previous.phase;
+      if (!altered.length && order.pendingFeedback && !helper) {
+        handed.push(`${order.name} has pending feedback. Review it with factory feedback ${order.name}.`);
+        continue;
+      }
       const findings = altered.length ? altered : await this.inspectStage(order, phase);
       if (!findings.length) {
-        if (helper)
-          await this.records.saveRecord(order.name, { phase, failures: 0, waitingFor: "the agent", findings: [] });
-        else
+        const next = order.phases.find(({ tasks }) => tasks.some(({ done }) => !done));
+        if (!helper && !next && await this.records.hasCurrentVerification(order.name)) {
           await this.records.resetRecord(order.name);
+          continue;
+        }
+        await this.records.saveRecord(order.name, { phase, failures: 0, waitingFor: "the agent", findings: [] });
+        if (!helper) {
+          const task = next?.tasks.find(({ done }) => !done)?.text;
+          const action = task ? ` — ${task}` : "";
+          refused.push(next
+            ? `${order.name}: ${next.title === phase || !phase ? "continue" : "start"} ${next.title}${action}`
+            : `${order.name}: verify the change with factory verify ${order.name}`);
+        }
         continue;
       }
 

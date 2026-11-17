@@ -7,6 +7,8 @@ description: Implement a change. Builds every phase of a ready plan that still h
 
 One run builds every phase of the plan that has an unchecked task, in the plan's order, then verifies the change. The phases are the order of the work in coherent blocks: each one is closed by its verification task before the next one starts, and the next one starts without asking the person. The run stops early only when feedback is raised, when a check keeps failing and you cannot make it pass, or when something only the person can give is missing (a key, approval to read `prod`): then tell the person exactly what it is.
 
+Before editing, compare the receiving session’s bound workspace with the `Approved checkout` printed by handoff. If they differ, bind the session to that checkout in the launcher and resume there. Confirm the approved plan and project instructions there. In a consumer, check installed hooks with doctor. In the factory source repository, follow CONTRIBUTING.md.
+
 1. `pnpm exec factory doctor`. When it prints anything as `missing` or `drift`, follow the `setup` skill first. A `note` is for the person: relay it once and go on. So is a `suspect`, a runbook that runs what the project no longer has: relay it once and go on; the `plan` skill investigates it.
 2. `pnpm exec factory implement <change>`. It starts the phase only for a change validation reports ready, generates the acceptance tests of the change's delta specs, each next to its step adapter, and prints the tasks to do. When it prints `not ready`, tell the person what it found and stop. From here until the phase's checks pass, the completion gate holds the turn.
 3. In a project with products, the change builds one product, the one its `.openspec.yaml` names as `x-product`: every path below sits in that product's folder and under its configured roots, and every `factory` command for it takes `--product <product>`.
@@ -26,6 +28,6 @@ Decide alone what only the code needs: a private name, a helper, the order of th
 pnpm exec factory feedback <change> raise --from "the implement phase" --names "<workstream>: <task>" --says "<the decision that is missing>"
 ```
 
-Then tell the person and follow the `feedback` skill.
+Follow the `feedback` skill. Route a reproduced reviewer defect through its repair procedure.
 
-When you end a turn, the completion gate runs the checks of the phase being built and sends you back with what fails. Fix that and go on: a passing gate closes that phase, not the run, which ends at verify or at one of the stops above.
+When you end a turn, the completion gate runs the checks of the phase being built and sends you back with what fails. Fix a reported failure and go on. When the gate names an unfinished phase, continue there. When it requests verification, run verify and check that the evidence is current.

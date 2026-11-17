@@ -14,6 +14,10 @@ export class StageHoldRepositoryImplementation implements StageHoldRepositoryInt
     return this.records.buildingRecords();
   }
 
+  hasCurrentVerification(name: string): Promise<boolean> {
+    return this.records.hasCurrentVerification(name);
+  }
+
   listHarnessFindings() {
     return this.records.harnessFindings();
   }

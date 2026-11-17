@@ -8,6 +8,7 @@ import type { BuildingRecord, GateRecord, StageHoldAcl, WorkstreamRecord } from 
 export type StageHoldResources = {
   active(): Promise<BuildingRecord[]>;
   workstreams(stage: BuildingRecord): Promise<WorkstreamRecord[]>;
+  hasCurrentVerification?(name: string): Promise<boolean>;
   installed(): { schemas: string[]; guards: string[]; agents: string[] } | undefined;
   linked(schema: string): boolean;
   hooks(agent: string): string[];
@@ -33,6 +34,10 @@ export class StageHoldAdapter implements StageHoldAcl {
 
   workstreams(stage: BuildingRecord): Promise<WorkstreamRecord[]> {
     return this.resources.workstreams(stage);
+  }
+
+  hasCurrentVerification(name: string): Promise<boolean> {
+    return this.resources.hasCurrentVerification?.(name) ?? Promise.resolve(false);
   }
 
   async harnessFindings(): Promise<string[]> {
