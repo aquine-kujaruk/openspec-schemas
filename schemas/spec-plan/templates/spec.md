@@ -8,6 +8,8 @@
 
 ### Requirement: <what the software guarantees>
 
+`@by:<person or agent>`
+
 <The rule, with SHALL or MUST.>
 
 #### Scenario Outline: <title carrying its `<placeholders>`>

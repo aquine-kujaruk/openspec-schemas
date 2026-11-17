@@ -48,12 +48,12 @@ const consolidated = (kind: Kind, block: Block, origin: string): string => {
     names.flatMap((n) => (tagOf(block, n)?.value ? [`@${n}:${tagOf(block, n)!.value}`] : []));
   const heading = `### ${kind}: ${block.slug}${block.title ? ` · ${block.title}` : ""}`;
   if (kind === "Procedure")
-    return [heading, [`@origin:${origin}`, ...kept(["env", "probed", "keys"])].join(" "), block.body.trim()].join("\n\n");
+    return [heading, [`@origin:${origin}`, ...kept(["env", "probed", "keys", "by"])].join(" "), block.body.trim()].join("\n\n");
   const statement = block.body.split(/^\*\*[A-Z][a-z]+\*\*/m)[0]!.trim();
   const why = labelled(block.body, "Why");
   return [
     heading,
-    [`@origin:${origin}`, ...kept(["applies", "enforced"])].join(" "),
+    [`@origin:${origin}`, ...kept(["applies", "enforced", "by"])].join(" "),
     statement,
     ...(why ? [`**Why** ${why}`] : []),
   ].join("\n\n");

@@ -1,152 +1,43 @@
 # openspec-schemas
 
-OpenSpec schemas, the resources they are built from, and the packages built from them. `factory build` turns a package's manifest into the folder a project installs.
+Packages that make Claude Code or Codex change a project through one flow: say what you want, review the plan it writes with you, approve, review what it built, archive. Each package carries the phase skills, the OpenSpec schemas they plan with, the guards that hold the flow and the `factory` command they all call.
 
-```
-schemas/
-  spec-plan/       a plan and delta specs, with no architecture: templates, validator, question policy
-  clean-backend/   extends spec-plan: Clean Architecture for a backend, the clean core with no framework
-  clean-react/     extends spec-plan: a React frontend, the clean core plus react-ui and react-hooks, and its rubric
-  shared/          what every package carries: the phase skills, setup, the flow instruction, the guards
-    cores/         the cores schemas build through, each with its workstreams and its rubric
-packages/          one manifest per package: the schemas it carries, the agents, the pinned tools
-toolkit/           the command, `factory`: its entry and one folder per area of the specs
-  core/            what every area uses: paths, types, configuration
-  repository/      schemas and the build
-  package/         setup, the proof and the two guards
-  flow/            plan, validation, implementation, verification, archive, feedback
-  architecture/    the rules, the generated tests, the checks and the review
-openspec/          this repository's own specs and changes
-```
+## Pick a package
 
-Open a schema's folder and you see what only that schema is made of. A schema that builds product code names one core, a folder of `schemas/shared/cores/` that holds the workstreams of an architecture and says which waits for which, and adds the workstreams of its framework, if it has one. `clean-core` is Clean Architecture: `app-domain`, `infrastructure`, `adapters` and `modules` (the rules across modules and the entry). Its workstreams stay decoupled: no workstream owns the checks that need the whole product joined (no file left unused, duplication under 4 %); `factory check` and the verify phase run them, and verify sends each failure back to the workstream that owns the file. A schema's name is its core's short name and what it adds: `clean-backend`, `clean-react`. A resource lives with the definition that names it; one that extends another finds its base's resources in the base's folder; a resource named by two unrelated definitions lives in `schemas/shared/`. The build fails, naming the resource and where it belongs, when one is held anywhere else.
-
-`spec-plan` is for a change no architecture covers: a procedure, a decision, tooling, documents. `clean-backend` builds a backend through the clean core. `clean-react` builds a React frontend through the same core and adds two workstreams: `react-ui` (pages, components, bridges and the entry `src/main.tsx`, built against a stub controller per page) and `react-hooks` (controllers, queries, mutations, view-models and stores; each query or mutation composes its use case over its repository and adapter once). Its rubric adds rows S01–S04, S21 and S22 to the core's.
-
-Three packages carry them, for Claude and Codex: `backend` (`clean-backend`, `spec-plan`), `frontend` (`clean-react`, `spec-plan`) and `fullstack` (`clean-backend`, `clean-react`, `spec-plan`), for a repository that declares a backend and a frontend as products. `frontend` and `fullstack` also declare the skills `composition-patterns` and `web-design-guidelines` of `vercel-labs/agent-skills` at a pinned commit; installing them reaches GitHub.
-
-Why each thing is the way it is lives in `openspec/`: the specs under `openspec/specs`, the change in progress under `openspec/changes`.
-
-## Build a package
-
-```bash
-pnpm install
-```
-
-```bash
-pnpm exec factory build backend
-```
-
-The package lands in `dist/backend`. `pnpm exec factory build backend --check` says whether what is there is still what a build would give, and names every resource that changed.
-
-## Install it in a project
-
-The project needs Node 22.18 or later, pnpm, and the agent package manager APM 0.35.1 (`apm-cli`). Installing reaches the repositories of the package's tools: the skills that ship inside a tool are not copied into the package, they are declared in it at the tool's pinned version and the agent package manager fetches them.
-
-1. Install the package for the agents that will work in the project, from the project's root:
-
-   ```bash
-   apm install <path to this repository>/dist/backend --target claude,codex
-   ```
-
-2. Pin the command the skills call. The tarball came with the `setup` skill; its file name carries the version:
-
-   ```bash
-   pnpm add -D ./.claude/skills/setup/assets/factory-0.11.0.tgz
-   ```
-
-3. Let setup repair what the package owns and list what the project must supply:
-
-   ```bash
-   pnpm exec factory doctor --fix
-   ```
-
-   It links the package's schemas under `openspec/schemas`, sets the default schema when the project has none, creates `openspec/specs`, `openspec/adr` and `openspec/runbooks`, and writes the flow instruction into `AGENTS.md` as one marked section, keeping every line the project wrote there. It reports as `missing` what only the project can add: its test runner (`vitest`) and its type checker (`typescript`). It adds a `note` for each key a runbook lists under `@keys` that neither the environment nor `.env` holds; only the person can add it, and the phase goes on. It prints as `suspect` each runbook that runs a package script, a binary of `node_modules/.bin` or a file of the repository that the project no longer has; the phase goes on, and the plan phase investigates it: it updates or removes the runbook in the change it plans when that change made it stale, opens a change of its own for it when the evidence is conclusive, and otherwise tells the person.
-
-   `apm compile` is not needed for the flow instruction. Setup also switches the project's `apm.yml` to a managed section between the same markers, so a later `apm compile` rewrites that section and nothing else.
-
-   `pnpm exec factory schemas` then lists the schemas the project has and when each is used.
-
-4. Ask the agent for a phase. In Claude Code, `/plan <what you want to change>`; in Codex, `$plan <what you want to change>`. Every phase starts by running `pnpm exec factory doctor` and follows the `setup` skill when it reports anything, so steps 2 and 3 are also what the agent does on its own the first time.
-
-### Or hand it to an agent
-
-Paste this to the agent, in the project's root, with the path filled in:
-
-```text
-Set this project up with the package at <path to this repository>/dist/backend.
-1. Run: apm install <that path> --target claude,codex
-2. Pin the command: pnpm add -D ./.claude/skills/setup/assets/factory-<version>.tgz, with the version the file name carries.
-3. Run pnpm exec factory doctor --fix, then pnpm exec factory doctor, until it prints "nothing is lacking". Add what it reports as missing with pnpm, at the version it names.
-4. Run pnpm exec factory schemas and tell me which schemas the project now has.
-Do not write product code. If the project is used with Codex, remind me that I must trust the project and review its hooks with /hooks myself.
-```
-
-### The flow
-
-A change goes through five skills, each calling the command:
-
-| Skill | What it does | Command behind it |
+| Package | For | Schemas |
 | --- | --- | --- |
-| `plan` | Picks the schema the intention calls for, opens a change with it and writes its plan and delta specs until they are ready | `factory schemas`, `factory validate <change>` |
-| `implement` | Builds every pending phase of a ready change in order, one workstream at a time, then verifies it | `factory implement <change>`, `factory check --workstream <workstream>` |
-| `verify` | Runs every check and test and writes the evidence | `factory verify <change>` |
-| `archive` | Consolidates the change's specs, decisions and procedures and archives it | `factory archive [change]` |
-| `feedback` | Takes a correction back into the change it is about | `factory feedback <change>` |
+| `backend` | a backend in Clean Architecture | `clean-backend`, `spec-plan` |
+| `frontend` | a React frontend | `clean-react`, `spec-plan` |
+| `fullstack` | a repository with a backend and a frontend | `clean-backend`, `clean-react`, `spec-plan` |
 
-The implement phase starts every short, rule-fixed file (schemas, entities, value objects, exception families, repository interfaces, ACLs, in-memory repositories and the shared bases) from a scaffold kept in the `## scaffolds` section of its layer's examples, rendered with `pnpm dlx ejs@7.0.2`; the first render on a machine needs the network.
+`spec-plan` covers a change no architecture does: a procedure, a decision, tooling, documents.
 
-While planning, the agent probes every access the change will use (an API behind an adapter, the repository, what is deployed, the logs) with the minimum that shows it works: the key is there and one authenticated read answers, under the agent's real permissions. It calls `prod` only after the person approves that read. Each access becomes a procedure of purpose `access` tagged `@probed:<date>` and, when it reads environment variables, `@keys:<VAR,VAR>`; archiving turns it into a runbook under `openspec/runbooks/access/`. What the probes saw goes under the plan's `## Findings`. What is missing (a key, the way to authenticate, a permission) is asked as an open question; the person may decline it, and the procedure is then tagged `@probed:declined` and the change goes ready: the implementation will fail on that access, and verify records it as declined instead of failing the change. Validation reports a change not ready while an access procedure carries no `@probed`.
+## Install
 
-A web change is seen before it is built. When a change of `clean-react` touches what a user sees, the plan phase spikes its screens as throwaway HTML pages under the change's `spikes/` folder: self-contained, opened with a double click, painting the literal data the screens will show and walking through each journey in tabs. A screen the person decides gets several structurally different variants behind a floating bar; once approved, its spike keeps only the chosen one. Each screen is listed under the plan's `## Screens` with `@page`, `@spike`, `@approved` and its journeys in plain words: the agent approves the screens a convention or a standing screen settles, the person the others. The plan writes no product code, so a product with no source yet is spiked like any other, and the archive keeps the spikes with the change. The implementation starts with the spike workstream, `react-ui`, which builds each screen from its approved spike against stub controllers and writes the end-to-end test of each journey under `test/e2e/<module>/` with [e2e-inc/e2e](https://github.com/e2e-inc/e2e): actions in natural language (`agent.act`, run on Claude Code or Codex over ACP, recorded once and replayed from the committed `.e2e/cache`) and deterministic checks, passing against the stubs. `react-hooks` keeps them passing with the real controllers over in-memory adapters seeded with the spikes' data. `factory test e2e` runs them, and verify records each in the evidence. A project with `frontend` or `fullstack` declares `e2e@0.22.0`, `@e2e-dev/web@0.15.4` and `@e2e-dev/acp@0.1.0` and runs Node 22.22.3 or later; setup reports what is missing. None of it is React's: a web schema names its spike workstream as `spike` in its definition.
-
-Two guards hold the flow: a write guard lets product code through only for a started change whose schema builds product code and never lets an agent write the harness, and a completion gate holds a turn that would leave a started change failing the checks of its own schema.
-
-### Several products in one repository
-
-A repository can hold several products, each in its own folder and governed by one schema. Declare them in `factory.config.ts`:
-
-```ts
-export default {
-  products: {
-    api: { root: "apps/api", schema: "clean-backend" },
-    worker: { root: "apps/worker", schema: "clean-backend", modules: "lib/*" },
-    contracts: { root: "packages/contracts", schema: "spec-plan" },
-  },
-};
-```
-
-- A product's settings come from its schema's defaults, then the top level of `factory.config.ts`, then its own entry. Its roots (`modules`, `acceptance`, `integration`, `entry`) are read inside its folder.
-- Its specs live at `openspec/specs/<product>/<module>/<use-case>/spec.md`, and the decisions its changes consolidate at `openspec/adr/<product>/`. There is one `openspec/` at the repository root.
-- Every change builds one product, named as `x-product` in its `.openspec.yaml`, and is made with that product's schema. The changes of one intention name each other under `x-linked`. `factory validate` checks both.
-- The write guard opens a product's folder only to a change of that product. The gate, `factory verify` and `factory implement` judge a change by its own product alone.
-- `check`, `generate`, `test`, `prepare` and `review` run once per product, or for one with `--product <name>`. `factory schemas` lists the products.
-
-A project with no `products` has one product at its root and works as before. A project that installs `fullstack` has two schemas that build product code, so it declares its products, or names the one schema it uses as `schema`:
-
-```ts
-export default {
-  products: {
-    api: { root: "apps/api", schema: "clean-backend" },
-    web: { root: "apps/web", schema: "clean-react" },
-  },
-};
-```
-
-### From 0.3 to 0.4
-
-The workstream `clean-architecture` is now called `modules`; it owns the same rules and the entry. A plan written before 0.4 whose tasks name `clean-architecture` is reported not ready: rename those tasks to `modules`. A project's `factory.config.ts` that sets a topology under `workstreams` renames the key the same way. A configuration can now name its platform, `platform: "web"` or `platform: "node"`.
-
-### Codex
-
-Codex loads a project's hooks and its `AGENTS.md` only in a project it trusts, and runs a hook only after it was reviewed. Trust the project, then review each hook with `/hooks`. Do it again after every update of the package that changes a hook: Codex skips a changed hook until it is reviewed.
-
-## Work on this repository
+You need git, curl, Node 22.18 or later (22.22.3 for `frontend` and `fullstack`) and pnpm. In the root of your project (with a `package.json`; `pnpm init` makes one):
 
 ```bash
-pnpm run check
+curl -fsSL https://raw.githubusercontent.com/aquine-kujaruk/openspec-schemas/main/install.sh | sh -s -- backend
 ```
 
-It type-checks, verifies that the generated tests and the schemas under `openspec/schemas` are as fresh as what they come from, and runs the tests. The tests run as one project per holder of workstreams (every core, and every schema with workstreams of its own), each with that holder's defaults (`FACTORY_HOLDER`), so a layer's examples are verified with the defaults of whoever holds its workstream; every other test runs once. `pnpm exec factory generate` writes both; run it once after cloning, since `openspec/schemas` is not in git and the specification tool reads this repository's schemas from there. The repository's own changes are opened with `spec-plan`.
+It installs the agent package manager ([APM](https://github.com/microsoft/apm)) if it is missing, installs the latest release of the package for Claude Code and Codex, pins the `factory` command and sets the project up. It ends by listing what only you can add (the test runner and type checker, at the versions it names). Add `--version <x.y.z>` to install another release, `--agents claude` to install for one agent only.
 
-A change of this repository goes through the same commands as a change of a project: `factory validate`, `factory implement`, `factory verify` and `factory archive`. While a change is ready, the tests of its delta specs are generated straight from the change, each next to the step adapter of its spec; no delta is copied into `openspec/specs` by hand, the archive merges it. Four specs have no step adapter and so no generated test (`implementer`, `architecture/linting`, `flow/plan`, `flow/implement`): when a change touches one, say it is proved with `factory verify <change> --proved <spec>`, and the evidence records it as proved by your word. The repository's own commands are `pnpm exec factory <command>`; `pnpm exec factory` with no command lists them.
+Installing by hand, or handing it to an agent: [docs/install.md](docs/install.md).
+
+## Use it
+
+Open your agent in the project and say what you want to change. You never need to name a skill.
+
+1. **Plan.** The agent writes the plan and the delta specs while it asks you the decisions that are yours, and records each answer in them, so nothing depends on the conversation. Each decision says who took it, you (`@by:person`) or the agent (`@by:agent`).
+2. **Approve.** Its last question is your approval, with links to the plan and the specs themselves. Approving starts the implementation at once: it builds every phase in order, checked at each step, and verifies the change at the end. By default it is built in the same session; [`implement.runner`](docs/flow.md#where-a-change-is-built) can send it elsewhere.
+3. **Archive.** When it reports the change verified, ask it to archive: the specs, decisions and procedures become the project's standing ones.
+
+Correct it at any point and it takes the correction into the change. Setting the project up, verifying and taking feedback run on their own when the flow needs them.
+
+## Learn more
+
+- [The flow](docs/flow.md): the skills and the commands behind them, the probes while planning, the spikes and end-to-end tests of a web change, the guards.
+- [Several products in one repository](docs/products.md).
+- [Codex](docs/codex.md): trusting the project and reviewing its hooks.
+- [Upgrading](docs/upgrading.md).
+- [Contributing](CONTRIBUTING.md): how this repository is laid out, built, released and changed.

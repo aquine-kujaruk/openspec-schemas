@@ -21,7 +21,18 @@ export type ProductEntry = Overrides & { root: string; schema: string };
 export type ProjectConfig = Overrides & {
   schema?: string;
   products?: Record<string, ProductEntry>;
+  /** Where an approved change is built. */
+  implement?: { runner?: Runner };
+  /** The language the agent shows the artifacts of `openspec/` in; `FACTORY_LANGUAGE` overrides it. */
+  language?: string;
 };
+
+/**
+ * Where an approved change is built: `"session"`, the same session through the implement phase, or
+ * a shell command that receives the change's name in place of `{change}` and takes it wherever it
+ * runs.
+ */
+export type Runner = "session" | { command: string };
 
 /** Types a project configuration without changing it: `export default defineFactory({ ... })`. */
 export const defineFactory = (c: ProjectConfig): ProjectConfig => c;
@@ -43,7 +54,8 @@ const merge = (base: unknown, over: unknown): unknown => {
  * Without a project configuration, the defaults as they are.
  */
 export const resolveConfig = (defaults: FactoryConfig, project?: ProjectConfig): FactoryConfig => {
-  const { schema: _schema, products: _products, platform, ...over } = project ?? {};
+  const { schema: _schema, products: _products, implement: _implement, language: _language, platform, ...over } =
+    project ?? {};
   const resolved = merge(defaults, project ? over : undefined) as FactoryConfig;
   return platform === undefined ? resolved : { ...resolved, platform: platformNamed(platform) };
 };

@@ -13,4 +13,6 @@ Decide alone, in the artifact its scope picks, naming the alternative you discar
 - **Change-local.** It matters only while this change is built.
 - **Behaviour the consolidated specs settle.** Follow the spec; quote the requirement if the choice could surprise.
 
-An open question states the decision in one line, the options, and the option you would pick with its reason. Write the rest of the change as if that option had been chosen, so one answer confirms the change or redirects it. When the person answers, record the decision in its artifact and remove the question in the same update.
+An open question states the decision in one line, the options, and the option you would pick with its reason. Write the rest of the change as if that option had been chosen, so one answer confirms the change or redirects it. When the person answers, record the decision in its artifact, tagged `@by:person`, and remove the question in the same update. Every decision you take alone is tagged `@by:agent`.
+
+The last open question is always the person's approval of the plan, with links to the plan, each delta spec and each spike.

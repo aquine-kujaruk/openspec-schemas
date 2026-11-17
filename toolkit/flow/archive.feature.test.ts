@@ -376,4 +376,42 @@ describe('Feature: flow/archive Specification', () => {
       await steps.decisionConsolidatedIn('money-in-cents', 'openspec/adr/api/product/money.md')
     })
   })
+
+  describe('Rule: A consolidated decision keeps who took it', () => {
+    // Line 182
+    test('a `decision` tagged `@by:person` consolidates tagged `@by:person`', async () => {
+      const steps = createSteps()
+
+      // Given a verified change `add-orders` whose `decision` `money-in-cents` is tagged `@by:person`
+      await steps.verifiedChangeWithKindTaggedBy('add-orders', 'decision', 'money-in-cents', '@by:person')
+      // When the change `add-orders` is archived on `2026-11-20`
+      await steps.archiveChange('add-orders', '2026-11-20')
+      // Then the consolidated `decision` `money-in-cents` is tagged `@by:person`
+      await steps.consolidatedKindTagged('decision', 'money-in-cents', '@by:person')
+    })
+
+    // Line 182
+    test('a `procedure` tagged `@by:agent` consolidates tagged `@by:agent`', async () => {
+      const steps = createSteps()
+
+      // Given a verified change `add-orders` whose `procedure` `prod-logs` is tagged `@by:agent`
+      await steps.verifiedChangeWithKindTaggedBy('add-orders', 'procedure', 'prod-logs', '@by:agent')
+      // When the change `add-orders` is archived on `2026-11-20`
+      await steps.archiveChange('add-orders', '2026-11-20')
+      // Then the consolidated `procedure` `prod-logs` is tagged `@by:agent`
+      await steps.consolidatedKindTagged('procedure', 'prod-logs', '@by:agent')
+    })
+
+    // Line 182
+    test('a `requirement` tagged `@by:person` consolidates tagged `@by:person`', async () => {
+      const steps = createSteps()
+
+      // Given a verified change `add-orders` whose `requirement` `Orders are listed` is tagged `@by:person`
+      await steps.verifiedChangeWithKindTaggedBy('add-orders', 'requirement', 'Orders are listed', '@by:person')
+      // When the change `add-orders` is archived on `2026-11-20`
+      await steps.archiveChange('add-orders', '2026-11-20')
+      // Then the consolidated `requirement` `Orders are listed` is tagged `@by:person`
+      await steps.consolidatedKindTagged('requirement', 'Orders are listed', '@by:person')
+    })
+  })
 })

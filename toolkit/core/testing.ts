@@ -31,6 +31,8 @@ Getting one order by its identifier, so that whoever serves a customer sees what
 
 ### Requirement: An order is found by its identifier
 
+\`@by:agent\`
+
 The system SHALL return the order that carries the given identifier.
 
 #### Scenario Outline: looking for \`<id>\` finds \`<found>\`
@@ -46,13 +48,14 @@ The system SHALL return the order that carries the given identifier.
   | A1 | A1    |
 `;
 
-/** A durable block of a plan: its heading, its tags and a body of the given paragraphs. */
+/** A durable block of a plan: its heading, its tags (`@by:agent` unless they say who took it) and a body of the given paragraphs. */
 export const block = (
   kind: "Decision" | "Procedure",
   slug: string,
   tags: string[],
   body = "The system SHALL keep this rule.\n\n**Why** It was agreed.",
-) => `### ${kind}: ${slug} · A standing rule\n\n${tags.join(" ")}\n\n${body}`;
+) =>
+  `### ${kind}: ${slug} · A standing rule\n\n${[...tags, ...(tags.some((t) => t.startsWith("@by:") || t.startsWith("@origin:")) ? [] : ["@by:agent"])].join(" ")}\n\n${body}`;
 
 /** What a plan is made of, beyond its headings. A phase is `true` when its tasks are done. */
 export type PlanParts = {
@@ -63,10 +66,13 @@ export type PlanParts = {
   questions?: string[];
   /** The tasks name no workstream: the plan of a schema that has none. */
   bare?: boolean;
+  /** The day the person approved the plan; `null` when it is not approved. */
+  approved?: string | null;
 };
 
 export const planText = (name: string, parts: PlanParts = {}): string =>
   [
+    `---\nname: ${name}\n${parts.approved === null ? "" : `approved_at: ${parts.approved ?? "2026-11-12"}\n`}---`,
     `# ${name}`,
     "## Goal\n\nOrders can be listed.",
     "## Decisions",

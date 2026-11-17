@@ -3,6 +3,7 @@ name: <change name>
 description: <one sentence>
 created_at: <YYYY-MM-DD>
 created_by: <who stated the intention>
+approved_at: <YYYY-MM-DD the person approved the plan; absent until then>
 schema: <schema of the change>
 ---
 
@@ -18,11 +19,11 @@ schema: <schema of the change>
 
 ## Decisions
 
-<!-- One line per decision that matters only to this change: what was chosen, and the alternative discarded. -->
+<!-- One line per decision that matters only to this change: what was chosen, the alternative discarded, and who took it: @by:person or @by:agent. -->
 
 ## Open questions
 
-<!-- One item per decision only the person can take: the question, the options, and the one you would pick. Empty once the change is ready. -->
+<!-- One item per decision only the person can take: the question, the options, and the one you would pick. The last item is always the person's approval, linking the plan, each delta spec and each spike. Empty once the change is ready. -->
 
 ## Architecture decisions
 
@@ -31,7 +32,7 @@ One block per decision a future change must respect:
 
 ### Decision: <slug> · <title>
 
-@adds @area:product @topic:<topic> @applies:<layers> @enforced:<rule, check or review>
+@adds @area:product @topic:<topic> @applies:<layers> @enforced:<rule, check or review> @by:<person or agent>
 
 <The statement, with SHALL.>
 
@@ -49,7 +50,7 @@ One block per way of setting the system up, reaching it, diagnosing it or operat
 
 ### Procedure: <slug> · <title>
 
-@adds @purpose:access @topic:<topic> @env:<environments> @probed:<YYYY-MM-DD or declined> @keys:<VAR,VAR>
+@adds @purpose:access @topic:<topic> @env:<environments> @probed:<YYYY-MM-DD or declined> @keys:<VAR,VAR> @by:<person or agent>
 
 **When** <the situation that calls for it>
 
@@ -69,7 +70,7 @@ Only in a schema with a spike workstream (a web frontend): one block per screen 
 
 ### Screen: <slug> · <title>
 
-@approved:<YYYY-MM-DD or declined> @page:<path of the page the implementation builds> @spike:spikes/<name>.html
+@approved:<YYYY-MM-DD or declined> @page:<path of the page the implementation builds> @spike:spikes/<name>.html @by:<person or agent>
 
 <What the screen shows, and which variant was approved.>
 

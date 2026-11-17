@@ -890,4 +890,224 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
   })
+
+  describe('Rule: Every decision names who took it', () => {
+    // Line 247
+    test('a `line under Decisions` tagged `@by:person` makes the change `ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose `line under Decisions` `money-in-cents` is tagged `@by:person`
+      await steps.decisionOfKindTaggedBy('line under Decisions', 'money-in-cents', '@by:person')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 247
+    test('a `line under Decisions` tagged `@by:agent` makes the change `ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose `line under Decisions` `money-in-cents` is tagged `@by:agent`
+      await steps.decisionOfKindTaggedBy('line under Decisions', 'money-in-cents', '@by:agent')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 247
+    test('a `line under Decisions` tagged `none` makes the change `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose `line under Decisions` `money-in-cents` is tagged `none`
+      await steps.decisionOfKindTaggedBy('line under Decisions', 'money-in-cents', 'none')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 247
+    test('a `line under Decisions` tagged `@by:person @by:agent` makes the change `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose `line under Decisions` `money-in-cents` is tagged `@by:person @by:agent`
+      await steps.decisionOfKindTaggedBy('line under Decisions', 'money-in-cents', '@by:person @by:agent')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 247
+    test('a `line under Decisions` tagged `@by:someone` makes the change `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose `line under Decisions` `money-in-cents` is tagged `@by:someone`
+      await steps.decisionOfKindTaggedBy('line under Decisions', 'money-in-cents', '@by:someone')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 247
+    test('a `architecture decision` tagged `@by:person` makes the change `ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose `architecture decision` `money-in-cents` is tagged `@by:person`
+      await steps.decisionOfKindTaggedBy('architecture decision', 'money-in-cents', '@by:person')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 247
+    test('a `architecture decision` tagged `none` makes the change `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose `architecture decision` `money-in-cents` is tagged `none`
+      await steps.decisionOfKindTaggedBy('architecture decision', 'money-in-cents', 'none')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 247
+    test('a `procedure` tagged `@by:agent` makes the change `ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose `procedure` `prod-logs` is tagged `@by:agent`
+      await steps.decisionOfKindTaggedBy('procedure', 'prod-logs', '@by:agent')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 247
+    test('a `procedure` tagged `none` makes the change `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose `procedure` `prod-logs` is tagged `none`
+      await steps.decisionOfKindTaggedBy('procedure', 'prod-logs', 'none')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 247
+    test('a `screen` tagged `@by:person` makes the change `ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose `screen` `orders-list` is tagged `@by:person`
+      await steps.decisionOfKindTaggedBy('screen', 'orders-list', '@by:person')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 247
+    test('a `screen` tagged `none` makes the change `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose `screen` `orders-list` is tagged `none`
+      await steps.decisionOfKindTaggedBy('screen', 'orders-list', 'none')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 247
+    test('a `added requirement` tagged `@by:agent` makes the change `ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose `added requirement` `Orders are listed` is tagged `@by:agent`
+      await steps.decisionOfKindTaggedBy('added requirement', 'Orders are listed', '@by:agent')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 247
+    test('a `added requirement` tagged `none` makes the change `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose `added requirement` `Orders are listed` is tagged `none`
+      await steps.decisionOfKindTaggedBy('added requirement', 'Orders are listed', 'none')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 247
+    test('a `modified requirement` tagged `@by:person` makes the change `ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose `modified requirement` `Orders are listed` is tagged `@by:person`
+      await steps.decisionOfKindTaggedBy('modified requirement', 'Orders are listed', '@by:person')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 247
+    test('a `modified requirement` tagged `none` makes the change `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose `modified requirement` `Orders are listed` is tagged `none`
+      await steps.decisionOfKindTaggedBy('modified requirement', 'Orders are listed', 'none')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+  })
+
+  describe('Rule: A change is ready only once the person approved its plan', () => {
+    // Line 276
+    test('a plan approved `2026-11-17` makes the change `ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose plan is approved `2026-11-17`
+      await steps.planApproved('2026-11-17')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 276
+    test('a plan approved `none` makes the change `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose plan is approved `none`
+      await steps.planApproved('none')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 276
+    test('a plan approved `yesterday` makes the change `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose plan is approved `yesterday`
+      await steps.planApproved('yesterday')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+  })
 })

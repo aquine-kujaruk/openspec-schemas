@@ -7,14 +7,15 @@ import { validateChange, type Verdict } from "../../../../toolkit/flow/validate.
 import { declareProducts } from "../../../../toolkit/core/testing.ts";
 
 /**
- * Each scenario validates one change of a temp project. The change starts ready: a plan with one
- * phase, one delta spec, no durable block and no open question; every Given bends one thing.
+ * Each scenario validates one change of a temp project. The change starts ready: a plan the person
+ * approved, with one phase, one delta spec, no durable block and no open question, and every
+ * decision it writes says who took it; every Given bends one thing.
  */
 const CHANGE = "add-orders";
 const ORIGIN = "2026-11-01-add-money";
 
-const DECISION_TAGS = ["@area:product", "@topic:money", "@applies:domain", "@enforced:review"];
-const PROCEDURE_TAGS = ["@purpose:diagnose", "@topic:logs", "@env:prod"];
+const DECISION_TAGS = ["@area:product", "@topic:money", "@applies:domain", "@enforced:review", "@by:person"];
+const PROCEDURE_TAGS = ["@purpose:diagnose", "@topic:logs", "@env:prod", "@by:agent"];
 const without = (tags: string[], name: string) => tags.filter((t) => !t.startsWith(`${name}:`));
 
 const decision = (slug: string, tags: string[]) =>
@@ -38,6 +39,9 @@ export function createSteps() {
   let strayTasks: string[] = [];
   let specCount = 1;
   let noBehaviour = false;
+  let approvedAt: string | undefined = "2026-11-12";
+  const changeDecisions: string[] = [];
+  const extraSpecs: Record<string, string> = {};
   let verdict: Verdict | undefined;
   let name = CHANGE;
   let product: string | undefined;
@@ -46,10 +50,10 @@ export function createSteps() {
 
   const plan = () =>
     [
-      `---\nname: ${CHANGE}\ndescription: Orders can be listed\nschema: ${made}\n---`,
+      `---\nname: ${CHANGE}\ndescription: Orders can be listed\nschema: ${made}\n${approvedAt ? `approved_at: ${approvedAt}\n` : ""}---`,
       "# Add orders",
       "## Goal\n\nOrders can be listed.",
-      "## Decisions",
+      ["## Decisions", ...changeDecisions.map((d) => `- ${d}`)].join("\n\n"),
       ["## Open questions", ...Array.from({ length: openQuestions }, (_, i) => `- Question ${i + 1}?`)].join("\n\n"),
       ["## Architecture decisions", ...decisions].join("\n\n"),
       ["## Procedures", ...procedures].join("\n\n"),
@@ -70,6 +74,7 @@ export function createSteps() {
     files[`${change}/plan.md`] = plan();
     for (let i = 0; i < specCount; i++)
       files[`${change}/specs/orders/use-case-${i}/spec.md`] = "## ADDED Requirements\n";
+    for (const [path, text] of Object.entries(extraSpecs)) files[`${change}/specs/${path}`] = text;
     for (const [path, text] of Object.entries(files)) {
       mkdirSync(dirname(join(root, path)), { recursive: true });
       writeFileSync(join(root, path), text);
@@ -169,7 +174,7 @@ export function createSteps() {
     },
     async planScreenApproved(screen: string, approved: string): Promise<void> {
       if (screen === "no screen") return;
-      const tags = [...(approved === "none" ? [] : [`@approved:${approved}`]), `@page:src/orders/framework/ui/${screen}/${screen}.page.tsx`];
+      const tags = [...(approved === "none" ? [] : [`@approved:${approved}`]), `@page:src/orders/framework/ui/${screen}/${screen}.page.tsx`, "@by:person"];
       screens.push({ name: screen, tags });
     },
     // The spike of the last screen: written in the change's spikes/ folder, named and absent, not
@@ -189,6 +194,22 @@ export function createSteps() {
     },
     async planSpikeTasks(tasks: string): Promise<void> {
       if (Number(tasks)) phaseTasks = ["react-ui: build the orders list page", ...phaseTasks];
+    },
+    async decisionOfKindTaggedBy(kind: string, name: string, by: string): Promise<void> {
+      const tags = by === "none" ? [] : by.split(" ");
+      const requirement = (section: string) =>
+        `## ${section} Requirements\n\n### Requirement: ${name}\n\n${tags.length ? `\`${tags.join(" ")}\`\n\n` : ""}The system SHALL list the orders.\n`;
+      if (kind === "line under Decisions") changeDecisions.push(`${name}: amounts are kept in cents. ${tags.join(" ")}`);
+      else if (kind === "architecture decision") decisions.push(decision(name, ["@adds", ...without(DECISION_TAGS, "@by"), ...tags]));
+      else if (kind === "procedure") procedures.push(procedure(name, ["@adds", ...without(PROCEDURE_TAGS, "@by"), ...tags]));
+      else if (kind === "screen")
+        screens.push({ name, tags: ["@approved:2026-11-16", `@page:src/orders/framework/ui/${name}/${name}.page.tsx`, ...tags] });
+      else if (kind === "added requirement") extraSpecs["orders/list/spec.md"] = requirement("ADDED");
+      else if (kind === "modified requirement") extraSpecs["orders/list/spec.md"] = requirement("MODIFIED");
+      else throw new Error(`unknown kind: ${kind}`);
+    },
+    async planApproved(approved: string): Promise<void> {
+      approvedAt = approved === "none" ? undefined : approved;
     },
 
     // Action

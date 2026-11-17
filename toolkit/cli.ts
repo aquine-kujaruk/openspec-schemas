@@ -16,10 +16,13 @@ const USAGE = {
   guard: "guard [path…]: judges a write an agent is about to make",
   gate: "gate [--helper]: judges an agent's attempt to finish",
   implement: "implement <change>: starts building the next phase of a ready change",
+  handoff: "handoff <change>: hands an approved, ready change to the runner the project configures",
+  reading: "reading [--written] <paths…>: where to show artifacts of openspec/ in the person's language",
   feedback: "feedback <change> [raise|take …]: lists, raises or takes feedback on a change",
   verify: "verify <change> [--proved <spec>]: runs every check and test and writes the evidence",
   archive: "archive [change]: archives the change, or every verified one, consolidating its specs",
   proof: "proof [package]: builds the package and proves it in an empty project",
+  release: "release [--push <remote>]: publishes every package under packages-v<version>",
   openspec: "openspec <args…>: runs the specification tool",
   prepare: "prepare [--product <name>]: creates the product's configured folders",
   review: "review [--product <name>]: reviews the product against its schema's rubric",
@@ -39,10 +42,13 @@ const COMMANDS: Record<Command, (args: string[]) => Promise<number>> = {
   guard: async (args) => (await import("./package/guard.ts")).run(args),
   gate: async (args) => (await import("./package/gate.ts")).run(args),
   implement: async (args) => (await import("./flow/implement.ts")).run(args),
+  handoff: async (args) => (await import("./flow/handoff.ts")).run(args),
+  reading: async (args) => (await import("./flow/reading.ts")).run(args),
   feedback: async (args) => (await import("./flow/feedback.ts")).run(args),
   verify: async (args) => (await import("./flow/verify.ts")).run(args),
   archive: async (args) => (await import("./flow/archive.ts")).run(args),
   proof: async (args) => (await import("./package/proof.ts")).run(args),
+  release: async (args) => (await import("./repository/release.ts")).run(args),
   openspec: async (args) => {
     const { runTool } = await import("./core/paths.ts");
     const env = { ...process.env, OPENSPEC_TELEMETRY: "0", DO_NOT_TRACK: "1" };

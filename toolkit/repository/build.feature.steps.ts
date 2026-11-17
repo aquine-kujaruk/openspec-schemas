@@ -79,7 +79,8 @@ const definition = (name: string, overrides: Record<string, unknown> = {}) => ({
 const module = (value: unknown) => `export default ${JSON.stringify(value, null, 2)};\n`;
 const skillText = (name: string) => `---\nname: ${name}\ndescription: The ${name} skill.\n---\n\n# ${name}\n`;
 
-const repository = (): string => {
+/** A repository laid out as this one, with this repository's command and a handful of resources. */
+export const repository = (): string => {
   const root = mkdtempSync(join(tmpdir(), "build-"));
   const files: Record<string, string> = {
     "package.json": JSON.stringify({ name: "fixture", version: "1.2.0" }),

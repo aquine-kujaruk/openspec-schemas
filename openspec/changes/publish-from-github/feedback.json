@@ -1,0 +1,16 @@
+[
+  {
+    "source": "the verify phase",
+    "names": "github-personal",
+    "findings": [
+      "the procedure github-personal was not executed in local"
+    ]
+  },
+  {
+    "source": "the verify phase",
+    "names": "release",
+    "findings": [
+      "the procedure release was not executed in local"
+    ]
+  }
+]

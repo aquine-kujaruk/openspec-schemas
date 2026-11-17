@@ -4,9 +4,11 @@ description: Every change to this project enters through a phase of the factory
 
 This project changes through five skills:
 
-- `plan` when the person wants something to change: behaviour, code, a standing decision or a procedure. A small change starts there too. It opens each change with the schema the intention calls for; `pnpm exec factory schemas` lists the ones this project has.
-- `implement` to build a change that validation reports ready. Product code is written by this skill.
+- `plan` when the person wants something to change: behaviour, code, a standing decision or a procedure. A small change starts there too. It opens each change with the schema the intention calls for; `pnpm exec factory schemas` lists the ones this project has. Its last question is the person's approval, and an approved plan goes straight on to the implementation the project configures.
+- `implement` to build a change the person approved and validation reports ready. Product code is written by this skill.
 - `verify` when a change has no task left, and `archive` when it is verified.
 - `feedback` when the person corrects a change that is open, or when a guard, `verify` or `archive` sends one back.
 
 A question that changes nothing needs no skill. A write guard lets product code through only for a change the `implement` skill has started and keeps the harness as it was installed; a completion gate holds a turn that would leave a change in implementation failing its checks. When either sends you back, do what it says: the way forward is one of the five skills.
+
+Before you show the person an artifact of `openspec/` (a plan, a delta spec, a decision, a runbook, a consolidated spec), run `pnpm exec factory reading <paths…>`. When it names copies, hand every stale one to a subagent on a small, fast model at low or medium effort: it writes each copy in the language of its path, translating the prose and code comments and keeping in English the code, identifiers, file and repository names, tags such as `@by:person`, the keywords SHALL, MUST, GIVEN, WHEN, THEN and AND, the Markdown headings' keywords (`### Requirement:`, `#### Scenario Outline:`) and the `<!-- step -->` comments, and pointing each link to another artifact at that artifact's copy. Then run `pnpm exec factory reading --written <paths…>` and link the copies instead of the artifacts. When it names none, show the artifacts as they are. Never write a translation in the project.

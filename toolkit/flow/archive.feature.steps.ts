@@ -24,6 +24,8 @@ type Planned = {
   decisions: Array<{ slug: string; tags: string[] }>;
   procedures: string[];
   deltas: number;
+  /** Delta specs written as they are, by use case. */
+  written?: Record<string, string>;
   created: string;
   product?: string;
 };
@@ -78,9 +80,12 @@ export function createSteps() {
         parts,
         created: c.created,
         product: c.product,
-        deltas: Object.fromEntries(
-          Array.from({ length: c.deltas }, (_, i) => [`orders/use-case-${i + 1}`, delta(`use-case-${i + 1}`)]),
-        ),
+        deltas: {
+          ...Object.fromEntries(
+            Array.from({ length: c.deltas }, (_, i) => [`orders/use-case-${i + 1}`, delta(`use-case-${i + 1}`)]),
+          ),
+          ...c.written,
+        },
       });
       if (c.evidence !== "absent")
         writeEvidence(root, {
@@ -180,6 +185,20 @@ export function createSteps() {
       c.product = product;
       c.decisions.push({ slug, tags: ["@adds", `@area:${area}`, `@topic:${topic}`, ...DECISION_TAGS] });
     },
+    async verifiedChangeWithKindTaggedBy(change: string, kind: string, name: string, by: string): Promise<void> {
+      const c = planned(change);
+      if (kind === "decision")
+        c.decisions.push({ slug: name, tags: ["@adds", "@area:product", "@topic:money", ...DECISION_TAGS, by] });
+      else if (kind === "procedure")
+        c.procedures.push(
+          block("Procedure", name, ["@adds", "@purpose:diagnose", "@topic:logs", "@env:prod", by], "**When** Something fails.\n\n**Steps**\n\n1. Look.\n\n**Verification** It shows."),
+        );
+      else if (kind === "requirement")
+        c.written = {
+          "orders/list-orders": `## Purpose\n\nListing a customer's orders.\n\n## ADDED Requirements\n\n### Requirement: ${name}\n\n\`${by}\`\n\nThe system SHALL list the orders of a customer.\n\n#### Scenario Outline: listing \`<count>\` orders\n\n- **GIVEN** a customer with \`<count>\` orders <!-- customerWithOrders -->\n- **WHEN** the orders are listed <!-- listOrders -->\n- **THEN** \`<count>\` orders are shown <!-- ordersShown -->\n\n##### Examples:\n\n  | count |\n  | ----- |\n  | 2     |\n`,
+        };
+      else throw new Error(`unknown kind: ${kind}`);
+    },
 
     // Action
     async archiveChange(change: string, date: string): Promise<void> {
@@ -256,6 +275,19 @@ export function createSteps() {
     },
     async changesStillActive(active: string): Promise<void> {
       expect(activeChanges(root).join(", ") || "none").toBe(active);
+    },
+    async consolidatedKindTagged(kind: string, name: string, consolidated: string): Promise<void> {
+      if (kind === "requirement") {
+        const spec = readFileSync(join(root, "openspec/specs/orders/list-orders/spec.md"), "utf8");
+        const requirement = spec.split(/^(?=### Requirement: )/m).find((r) => r.startsWith(`### Requirement: ${name}`))!;
+        return expect(requirement.split("\n").filter((l) => l.trim())[1]).toBe(`\`${consolidated}\``);
+      }
+      const standing = kind === "decision" ? readConsolidated(root).decisions : readConsolidated(root).procedures;
+      const heading = kind === "decision" ? "Decision" : "Procedure";
+      const text = readFileSync(join(root, standing.get(name)!.file), "utf8")
+        .split(new RegExp(`^(?=### ${heading}: )`, "m"))
+        .find((b) => b.startsWith(`### ${heading}: ${name} `))!;
+      expect(text.split("\n").filter((l) => l.trim())[1]!.split(" ")).toContain(consolidated);
     },
   };
 }

@@ -13,8 +13,15 @@ export type Task = { text: string; done: boolean; workstream?: string };
 
 export type Phase = { title: string; tasks: Task[] };
 
+/** A line under `## Decisions`: a decision that matters only to the change, with its tags. */
+export type ChangeDecision = { text: string; tags: Tag[] };
+
 export type Plan = {
   openQuestions: string[];
+  /** The lines under `## Decisions`. */
+  changeDecisions: ChangeDecision[];
+  /** `approved_at` of the front matter, as written: the day the person approved the plan. */
+  approvedAt?: string;
   decisions: Block[];
   procedures: Block[];
   /** The screens a web change spikes, under `## Screens`. */
@@ -53,7 +60,10 @@ const task = (m: RegExpExecArray): Task => ({
  * Comments and fenced code hold no heading, tag or checkbox.
  */
 export const parsePlan = (text: string): Plan => {
-  const plan: Plan = { openQuestions: [], decisions: [], procedures: [], screens: [], phases: [], strayTasks: [] };
+  const plan: Plan = { openQuestions: [], changeDecisions: [], decisions: [], procedures: [], screens: [], phases: [], strayTasks: [] };
+  const front = /^---\n([\s\S]*?)\n---\n/.exec(text);
+  const approved = front && /^approved_at:[ \t]*(.*)$/m.exec(front[1]!)?.[1]?.trim();
+  if (approved) plan.approvedAt = approved.replace(/^["']|["']$/g, "");
   let section = "";
   let block: Block | undefined;
   let phase: Phase | undefined;
@@ -112,7 +122,44 @@ export const parsePlan = (text: string): Plan => {
     } else if (section === "open questions") {
       const item = ITEM.exec(line);
       if (item) plan.openQuestions.push(item[1]!);
+    } else if (section === "decisions") {
+      const item = ITEM.exec(line);
+      if (item) plan.changeDecisions.push({ text: item[1]!, tags: tagsOf(item[1]!.replace(/`[^`]*`/g, "")) });
     }
   }
   return plan;
+};
+
+/** A requirement a delta spec adds or modifies, with the tags of the first line of its text. */
+export type DeltaRequirement = { name: string; tags: Tag[] };
+
+/**
+ * The requirements under `## ADDED Requirements` and `## MODIFIED Requirements` of a delta spec.
+ * A requirement's tags are the backticked tags of the first line of its text (`` `@by:person` ``).
+ */
+export const deltaRequirementsOf = (text: string): DeltaRequirement[] => {
+  const found: DeltaRequirement[] = [];
+  let counted = false;
+  let current: DeltaRequirement | undefined;
+  let first = false;
+  for (const line of text.replace(/<!--[\s\S]*?-->/g, "").split("\n")) {
+    if (line.startsWith("## ")) {
+      counted = /^## (ADDED|MODIFIED) Requirements\s*$/.test(line);
+      current = undefined;
+      continue;
+    }
+    const heading = /^### Requirement: (.+)$/.exec(line);
+    if (heading) {
+      current = counted ? { name: heading[1]!.trim(), tags: [] } : undefined;
+      if (current) found.push(current);
+      first = true;
+      continue;
+    }
+    if (current && first && line.trim()) {
+      first = false;
+      const tagged = /^`(@[^`]*)`$/.exec(line.trim());
+      if (tagged) current.tags = tagsOf(tagged[1]!);
+    }
+  }
+  return found;
 };

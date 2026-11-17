@@ -20,4 +20,4 @@ Feedback goes back into the change it is about, whoever raised it: `the person`,
 
    Leave `--phase` out when no phase is undone, and give one `--ask` per question. The command adds the entry under Feedback, unchecks the tasks of phase `<n>` and of every phase after it, and lists each question under Open questions.
 5. Update what the feedback changes: the plan's decisions, seams and tasks, and the delta specs when behaviour is affected. Everything goes into this change.
-6. `pnpm exec factory validate <change>`. With open questions the change waits for the person: show them and stop. Once it prints `ready`, the `implement` skill goes on from the first phase with unchecked tasks.
+6. `pnpm exec factory validate <change>`. With open questions the change waits for the person: ask them and stop. Once it prints `ready`, `pnpm exec factory handoff <change>` and do what it prints: the implementation goes on from the first phase with unchecked tasks. A feedback keeps the person's approval of the plan.

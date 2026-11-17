@@ -1,6 +1,6 @@
-import { existsSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { join, normalize } from "node:path";
-import { type Block, operationsOf, tagOf } from "../../../../toolkit/flow/plan.ts";
+import { type Block, deltaRequirementsOf, operationsOf, type Tag, tagOf } from "../../../../toolkit/flow/plan.ts";
 import type { Standing } from "../../../../toolkit/flow/consolidated.ts";
 import type { Candidate, Finding, Validator } from "../../../../toolkit/flow/validation.ts";
 
@@ -267,6 +267,58 @@ const deltaSpecsOrNoBehaviour: Rule = (c) => {
   ];
 };
 
+/** Who took a decision: the person, or the agent alone. */
+const AUTHORS = ["person", "agent"];
+
+/**
+ * Every decision the change writes says who took it, with exactly one `@by:person` or `@by:agent`:
+ * the lines under Decisions, the durable blocks, the screens, and each requirement a delta spec
+ * adds or modifies, on the first line of its text.
+ */
+const decisionAuthored: Rule = (c) => {
+  const judge = (what: string, tags: Tag[], block?: string): Finding[] => {
+    const by = tags.filter((t) => t.name === "by");
+    if (by.length === 1 && AUTHORS.includes(by[0]!.value ?? "")) return [];
+    return [
+      {
+        rule: "decision-authored",
+        ...(block ? { block } : {}),
+        tag: "@by",
+        message: by.length
+          ? `${what} carries ${by.map((t) => `@by${t.value ? `:${t.value}` : ""}`).join(" and ")}: tag it with exactly one of @by:person, @by:agent`
+          : `${what} does not say who took it: tag it with @by:person when the person decided it, @by:agent when you did`,
+      },
+    ];
+  };
+  const requirements = c.change.deltaSpecs.flatMap((spec) =>
+    deltaRequirementsOf(readFileSync(join(c.change.dir, spec), "utf8")).map((r) => ({ spec, ...r })),
+  );
+  return [
+    ...c.plan.changeDecisions.flatMap((d) => judge(`the decision "${d.text.slice(0, 60)}"`, d.tags)),
+    ...c.plan.decisions.flatMap((b) => judge(`the decision ${b.slug}`, b.tags, b.slug)),
+    ...c.plan.procedures.flatMap((b) => judge(`the procedure ${b.slug}`, b.tags, b.slug)),
+    ...c.plan.screens.flatMap((b) => judge(`the screen ${b.slug}`, b.tags, b.slug)),
+    ...requirements.flatMap((r) =>
+      judge(`the requirement "${r.name}" of ${r.spec} (on the first line of its text)`, r.tags),
+    ),
+  ];
+};
+
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** The person approved the plan: its front matter records the day as `approved_at`. */
+const planApproved: Rule = (c) =>
+  c.plan.approvedAt && DAY.test(c.plan.approvedAt)
+    ? []
+    : [
+        {
+          rule: "plan-approved",
+          message: c.plan.approvedAt
+            ? `the plan records approved_at: ${c.plan.approvedAt}: it is the day the person approved it (YYYY-MM-DD)`
+            : "the person has not approved the plan: ask for the approval as the last open question, with links to its artifacts, and record approved_at: <YYYY-MM-DD> in its front matter",
+        },
+      ];
+
 const RULES: Rule[] = [
   noOpenQuestions,
   oneOperationTag,
@@ -279,6 +331,8 @@ const RULES: Rule[] = [
   noCredentialInProcedure,
   tasksBelong,
   deltaSpecsOrNoBehaviour,
+  decisionAuthored,
+  planApproved,
 ];
 
 /** Spec: `flow/plan-validation`. A change is ready when no rule finds anything. */
