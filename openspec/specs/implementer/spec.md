@@ -288,7 +288,9 @@ For every product spec under the configured product specs root (`productSpecs`, 
 
 ### Requirement: The implementer prepares the configured roots before any workstream
 
-The configuration SHALL name the roots the product lives in (`modules`, `acceptance`, `integration`, `entry`), and `factory prepare` SHALL create every configured root that does not exist. The implementer skill SHALL make prepare its first step, before seams and workstreams.
+`@by:agent`
+
+The configuration SHALL name the roots the product lives in (`modules`, `acceptance`, `integration`, `unit`, `entry`), and `factory prepare` SHALL create every configured root that does not exist. The implementer skill SHALL make prepare its first step, before seams and workstreams.
 
 #### Scenario Outline: the missing root `<root>` is created from `<setting>`
 
@@ -305,6 +307,7 @@ The configuration SHALL name the roots the product lives in (`modules`, `accepta
   | modules     | packages/*       | packages         |
   | acceptance  | test/acceptance  | test/acceptance  |
   | integration | test/integration | test/integration |
+  | unit        | test/unit        | test/unit        |
 
 ### Requirement: Prepare lays the agreed base and touches nothing that exists
 
