@@ -11,7 +11,7 @@ description: Build the react-ui workstream of the implementer: the JSX of the fr
 
 **Receives:** the screens of the change and the domain entities and value objects they paint. Nothing from other workstreams: what a page needs from a controller is discovered by writing the page.
 
-**Fakes:** the controller, and only it. Each page destructures one hook, `use<Name>Controller` from `framework/controllers/<name>.controller.ts`. While `react-hooks` has not written it, `react-ui` writes it as a stub that returns literal data and imports nothing:
+**Fakes:** the controller, and only it. Each page destructures one hook, `use<Name>Controller` from `framework/controllers/<name>.controller.ts`. While `react-hooks` has not written it, `react-ui` writes it as a stub that returns literal data and imports nothing but React:
 
 ```ts
 export const useOrdersListController = () => ({
@@ -19,6 +19,16 @@ export const useOrdersListController = () => ({
   isEmpty: false,
   onNext: () => {},
 });
+```
+
+When the screen offers an action that writes (pay, cancel, save), the stub keeps its literal data in local state and the action changes it, so that the journey's end-to-end test sees the result against the spike. It is the minimum that passes the test: no store, no query cache, nothing else. `react-hooks` later replaces it with the mutation and the page's store:
+
+```ts
+import { useState } from "react";
+export const useInvoiceDetailController = () => {
+  const [status, setStatus] = useState("Pending");
+  return { status, canPay: status === "Pending", onPay: () => setStatus("Paid") };
+};
 ```
 
 The page infers its props from the stub (`ReturnType<typeof useX>` when a component needs the type); the controller exports no type. A page reaches the core only through its controller: never a query, a store or the query client.

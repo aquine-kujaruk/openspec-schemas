@@ -43,6 +43,9 @@ export class InMemoryInvoiceRepository implements InvoiceRepositoryInterface {
   async findInvoice(invoiceId: string) {
     return this.invoices.find((invoice) => invoice.id === invoiceId) ?? null;
   }
+  async saveInvoice(invoice: InvoiceProps) {
+    this.invoices = [...this.invoices.filter((stored) => stored.id !== invoice.id), invoice];
+  }
 }
 ```
 
@@ -81,6 +84,71 @@ export const run = async () => {
   await steps.invoicesStored("2");
   await steps.invoicesListed();
   await steps.invoicesReturned("2");
+};
+```
+
+```md openspec/specs/module/pay-invoice/spec.md
+# module/pay-invoice Specification
+
+## Purpose
+
+Paying a pending invoice, so that whoever bills the account knows it is settled.
+
+## Requirements
+
+### Requirement: A pending invoice is paid
+
+The system SHALL mark a pending invoice as paid, and SHALL refuse to pay an invoice that is already paid.
+
+#### Scenario Outline: invoice `<id>`, `<before>`, ends `<after>`
+
+- **GIVEN** the repository holds invoice `<id>` as `<before>` <!-- invoiceStoredAs -->
+- **WHEN** invoice `<id>` is paid <!-- invoicePaid -->
+- **THEN** the payment ends `<after>` <!-- paymentEnds -->
+
+##### Examples:
+
+  | id | before  | after                   |
+  | -- | ------- | ----------------------- |
+  | 2  | pending | paid                    |
+  | 1  | paid    | refused as already paid |
+```
+
+```ts test/acceptance/module/pay-invoice.feature.steps.ts
+import { expect } from "vitest";
+import { PayInvoiceUseCase } from "../../../src/module/application/use-cases/pay-invoice.use-case";
+import { InvoiceAlreadyPaidException } from "../../../src/module/domain/exceptions/invoice.exceptions";
+import { InvoiceSchema } from "../../../src/module/domain/schemas/invoice.schema";
+import { InMemoryInvoiceRepository } from "./repositories/in-memory-invoice.repository";
+export function createSteps() {
+  const invoices = new InMemoryInvoiceRepository();
+  let outcome = "";
+  return {
+    async invoiceStoredAs(id: string, before: string) {
+      invoices.seed([{ id, total: 25, status: InvoiceSchema.shape.status.parse(before) }]);
+    },
+    async invoicePaid(id: string) {
+      try {
+        outcome = (await new PayInvoiceUseCase(invoices).execute(id)).status;
+      } catch (error) {
+        if (!(error instanceof InvoiceAlreadyPaidException)) throw error;
+        outcome = "refused as already paid";
+      }
+    },
+    async paymentEnds(after: string) {
+      expect(outcome).toBe(after);
+    },
+  };
+}
+```
+
+```ts test/acceptance/module/pay-invoice.feature.test.ts
+import { createSteps } from "./pay-invoice.feature.steps";
+export const run = async () => {
+  const steps = createSteps();
+  await steps.invoiceStoredAs("2", "pending");
+  await steps.invoicePaid("2");
+  await steps.paymentEnds("paid");
 };
 ```
 

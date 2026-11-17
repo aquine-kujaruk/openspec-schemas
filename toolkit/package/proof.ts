@@ -44,6 +44,8 @@ const referenceImports = (project: string): string[] => {
       names.add(specifier!.startsWith("@") ? parts.slice(0, 2).join("/") : parts[0]!);
     }
   if (files.some((f) => f.endsWith(".tsx"))) for (const name of ["react", "@types/react"]) names.add(name);
+  // react-dom ships no types of its own; an entry that mounts the app imports it.
+  if (names.has("react-dom")) names.add("@types/react-dom");
   names.add("@types/node");
   return [...names].sort();
 };

@@ -21,6 +21,9 @@ const SAMPLE = {
   Resource: "Invoice",
   resource: "invoice",
   resourceCamel: "invoice",
+  // The query a mutation scaffold invalidates: its key factory.
+  query: "invoice",
+  queryCamel: "invoice",
 };
 
 /** Rules that judge a file by files another workstream writes: an ACL waits for its adapter. */

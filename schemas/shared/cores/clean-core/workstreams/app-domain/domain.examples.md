@@ -64,6 +64,7 @@ export type InvoiceBookProps = z.infer<typeof InvoiceBookSchema>;
 
 ```ts src/module/domain/entities/invoice.entity.ts
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
+import { InvoiceAlreadyPaidException } from "../exceptions/invoice.exceptions";
 import { InvoiceSchema, InvoiceStatus, type InvoiceProps } from "../schemas/invoice.schema";
 export class InvoiceEntity {
   public readonly id!: string;
@@ -74,6 +75,10 @@ export class InvoiceEntity {
   }
   get isPaid() {
     return this.status === InvoiceStatus.PAID;
+  }
+  pay() {
+    if (this.isPaid) throw new InvoiceAlreadyPaidException(this.id);
+    return new InvoiceEntity({ id: this.id, total: this.total, status: InvoiceStatus.PAID });
   }
 }
 ```
@@ -104,6 +109,14 @@ export class InvoiceNotFoundException extends ModuleException {
     options: { cause?: unknown } = {},
   ) {
     super(`Invoice ${invoiceId} does not exist`, options);
+  }
+}
+export class InvoiceAlreadyPaidException extends ModuleException {
+  constructor(
+    public readonly invoiceId: string,
+    options: { cause?: unknown } = {},
+  ) {
+    super(`Invoice ${invoiceId} is already paid`, options);
   }
 }
 export class InvoiceUnavailableException extends ModuleException {

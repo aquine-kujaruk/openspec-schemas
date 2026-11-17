@@ -52,7 +52,7 @@ The project needs Node 22.18 or later, pnpm, and the agent package manager APM 0
 2. Pin the command the skills call. The tarball came with the `setup` skill; its file name carries the version:
 
    ```bash
-   pnpm add -D ./.claude/skills/setup/assets/factory-0.7.0.tgz
+   pnpm add -D ./.claude/skills/setup/assets/factory-0.8.0.tgz
    ```
 
 3. Let setup repair what the package owns and list what the project must supply:

@@ -7,6 +7,7 @@ import type { InvoiceProps } from "../../domain/schemas/invoice.schema";
 export interface InvoiceRepositoryInterface {
   listInvoices(): Promise<InvoiceProps[]>;
   findInvoice(invoiceId: string): Promise<InvoiceProps | null>;
+  saveInvoice(invoice: InvoiceProps): Promise<void>;
 }
 ```
 
@@ -31,6 +32,22 @@ export class GetInvoiceUseCase {
     const props = await this.invoices.findInvoice(invoiceId);
     if (!props) throw new InvoiceNotFoundException(invoiceId);
     return new InvoiceEntity(props);
+  }
+}
+```
+
+```ts src/module/application/use-cases/pay-invoice.use-case.ts
+import { InvoiceEntity } from "../../domain/entities/invoice.entity";
+import { InvoiceNotFoundException } from "../../domain/exceptions/invoice.exceptions";
+import type { InvoiceRepositoryInterface } from "../repository-interfaces/invoice.repository-interface";
+export class PayInvoiceUseCase {
+  constructor(private readonly invoices: InvoiceRepositoryInterface) {}
+  async execute(invoiceId: string) {
+    const props = await this.invoices.findInvoice(invoiceId);
+    if (!props) throw new InvoiceNotFoundException(invoiceId);
+    const paid = new InvoiceEntity(props).pay();
+    await this.invoices.saveInvoice(paid);
+    return paid;
   }
 }
 ```

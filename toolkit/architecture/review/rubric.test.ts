@@ -90,7 +90,7 @@ describe("the rubrics of a schema", () => {
     const rows = readRubric(PACKAGE_ROOT, rubrics);
     const ids = rows.map((r) => r.id);
     expect(ids.slice(0, 16)).toEqual(readRubric(PACKAGE_ROOT, rubrics[0]!).map((r) => r.id));
-    expect(ids.slice(16)).toEqual(["S01", "S02", "S03", "S04", "S21", "S22"]);
+    expect(ids.slice(16)).toEqual(["S01", "S02", "S03", "S04", "S21", "S22", "S23"]);
     expect(rows.slice(16).filter((r) => r.verdict === "rejected")).toEqual([]);
   });
 

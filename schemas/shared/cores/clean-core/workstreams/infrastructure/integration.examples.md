@@ -5,6 +5,7 @@
 ```ts test/integration/module/invoice-repository.test.ts
 import type { InvoiceAcl, InvoiceRecord } from "../../../src/module/infrastructure/acl/invoice.acl";
 import { InvoiceRepositoryImplementation } from "../../../src/module/infrastructure/repository-implementations/invoice.repository-implementation";
+import { InvoiceStatus } from "../../../src/module/domain/schemas/invoice.schema";
 class InMemoryInvoiceAdapter implements InvoiceAcl {
   constructor(private readonly records: InvoiceRecord[]) {}
   async listInvoices() {
@@ -13,8 +14,15 @@ class InMemoryInvoiceAdapter implements InvoiceAcl {
   async findInvoice(invoiceId: string) {
     return this.records.find((r) => r.id === invoiceId) ?? null;
   }
+  async saveInvoice(invoice: InvoiceRecord) {
+    this.records.push(invoice);
+  }
 }
-export const run = () => new InvoiceRepositoryImplementation(new InMemoryInvoiceAdapter([])).listInvoices();
+export const run = async () => {
+  const invoices = new InvoiceRepositoryImplementation(new InMemoryInvoiceAdapter([]));
+  await invoices.saveInvoice({ id: "1", total: 10, status: InvoiceStatus.PAID });
+  return invoices.listInvoices();
+};
 ```
 
 ## integration-test-targets-repository-implementation

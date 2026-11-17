@@ -10,6 +10,7 @@ export type InvoiceRecord = z.infer<typeof InvoiceRecordSchema>;
 export interface InvoiceAcl {
   listInvoices(): Promise<InvoiceRecord[]>;
   findInvoice(invoiceId: string): Promise<InvoiceRecord | null>;
+  saveInvoice(invoice: InvoiceRecord): Promise<void>;
 }
 ```
 
@@ -43,6 +44,18 @@ export class HttpApiAdapter {
     if (!response.ok) throw fail(response);
     return schema.parse(await response.json());
   }
+  async put(
+    path: string,
+    body: unknown,
+    fail: (response: Response) => DomainException,
+  ): Promise<void> {
+    const response = await fetch(`${this.baseUrl}${path}`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) throw fail(response);
+  }
 }
 ```
 
@@ -59,6 +72,9 @@ export class HttpInvoiceAdapter implements InvoiceAcl {
   findInvoice(invoiceId: string): Promise<InvoiceRecord | null> {
     return this.api.find(`/invoices/${invoiceId}`, InvoiceRecordSchema, unavailable);
   }
+  saveInvoice(invoice: InvoiceRecord): Promise<void> {
+    return this.api.put(`/invoices/${invoice.id}`, invoice, unavailable);
+  }
 }
 ```
 
@@ -66,13 +82,20 @@ export class HttpInvoiceAdapter implements InvoiceAcl {
 import { InvoiceRecordSchema, type InvoiceAcl, type InvoiceRecord } from "../acl/invoice.acl";
 const SEED: InvoiceRecord[] = InvoiceRecordSchema.array().parse([
   { id: "1", total: 10, status: "paid" },
+  { id: "2", total: 25, status: "pending" },
 ]);
 export class InMemoryInvoiceAdapter implements InvoiceAcl {
+  private readonly rows = SEED.map((row) => ({ ...row }));
   async listInvoices(): Promise<InvoiceRecord[]> {
-    return SEED;
+    return [...this.rows];
   }
   async findInvoice(invoiceId: string): Promise<InvoiceRecord | null> {
-    return SEED.find((row) => row.id === invoiceId) ?? null;
+    return this.rows.find((row) => row.id === invoiceId) ?? null;
+  }
+  async saveInvoice(invoice: InvoiceRecord): Promise<void> {
+    const at = this.rows.findIndex((row) => row.id === invoice.id);
+    if (at < 0) this.rows.push({ ...invoice });
+    else this.rows[at] = { ...invoice };
   }
 }
 ```
@@ -133,6 +156,18 @@ export class HttpApiAdapter {
     if (response.status === 404) return null;
     if (!response.ok) throw fail(response);
     return schema.parse(await response.json());
+  }
+  async put(
+    path: string,
+    body: unknown,
+    fail: (response: Response) => DomainException,
+  ): Promise<void> {
+    const response = await fetch(`${this.baseUrl}${path}`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) throw fail(response);
   }
 }
 ```

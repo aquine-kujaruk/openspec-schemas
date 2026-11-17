@@ -16,12 +16,16 @@ description: Build the react-hooks workstream of the implementer: the framework 
 ## How
 
 1. Read the `## reference` of `framework.examples.md`: it is the shape of correct code. The other sections show each way of breaking a rule.
-2. Start every query from its scaffold, then fill it in; never write one from nothing. `<ref>` is the folder this skill is in; `<Name>`, `<name>` and `<camel>` are the use case's name in PascalCase, kebab-case and camelCase (`ListInvoices`, `list-invoices`, `listInvoices`), and `<Resource>`, `<resource>` and `<resourceCamel>` the name of the repository implementation and adapter it composes (`Invoice`, `invoice`, `invoice`); the configured module root replaces `src`:
+2. Start every query and every mutation from its scaffold, then fill it in; never write one from nothing. `<ref>` is the folder this skill is in; `<Name>`, `<name>` and `<camel>` are the use case's name in PascalCase, kebab-case and camelCase (`ListInvoices`, `list-invoices`, `listInvoices`), and `<Resource>`, `<resource>` and `<resourceCamel>` the name of the repository implementation and adapter it composes (`Invoice`, `invoice`, `invoice`); for a mutation, `<query>` and `<queryCamel>` name the query whose key it invalidates (`list-invoices`, `listInvoices`); the configured module root replaces `src`:
    ```bash
+   # query
    mkdir -p src/<module>/framework/queries && pnpm dlx ejs@7.0.2 <(sed -n '\#^```ejs src/<module>/framework/queries/<name>.query.ts$#,/^```$/{//!p}' <ref>/framework.examples.md) -o src/<module>/framework/queries/<name>.query.ts Name=<Name> name=<name> camel=<camel> Resource=<Resource> resource=<resource> resourceCamel=<resourceCamel> module=<module>
+   # mutation
+   mkdir -p src/<module>/framework/mutations && pnpm dlx ejs@7.0.2 <(sed -n '\#^```ejs src/<module>/framework/mutations/<name>.mutation.ts$#,/^```$/{//!p}' <ref>/framework.examples.md) -o src/<module>/framework/mutations/<name>.mutation.ts Name=<Name> name=<name> camel=<camel> Resource=<Resource> resource=<resource> resourceCamel=<resourceCamel> query=<query> queryCamel=<queryCamel> module=<module>
    ```
-3. Per use case: one query or mutation that bridges it (keys from a factory), then the view-models the screens need.
-4. Per stub controller: the real one. It imports domain, queries, mutations, stores, view-models and other controllers; never the JSX, never the query client, never a platform global. It exports no type.
+3. Per use case: one query or mutation that bridges it (keys from a factory), then the view-models the screens need. A mutation invalidates, on success, every query whose data it changed, through the key factories those queries export; the screen then reads again what the server says.
+4. Per URL page whose state changes (a filter, a step, a draft, a selection, a message): one store, `stores/<page>.store.ts` named after the page, that holds every such state of that page and nothing that came from a fetch or a mutation. Where the stub kept local state (`useState`, `useReducer`), the real controller reads the page's store instead; keep local state only where the store cannot hold it, and expect the review to ask why (S23).
+5. Per stub controller: the real one. It imports domain, queries, mutations, stores, view-models and other controllers; never the JSX, never the query client, never a platform global. It exports no type.
 
 **Declared skill:** `composition-patterns` (installed with the package, at the commit its manifest pins; never edit it), section 2 (state management: decouple the implementation, the context interface, lift state) for stores. The rest is about JSX and belongs to `react-ui`.
 

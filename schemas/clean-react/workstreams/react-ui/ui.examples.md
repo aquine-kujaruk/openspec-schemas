@@ -40,6 +40,7 @@ export const validateSchema = <S extends z.ZodType>(
 
 ```ts src/module/domain/entities/invoice.entity.ts
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
+import { InvoiceAlreadyPaidException } from "../exceptions/invoice.exceptions";
 import { InvoiceSchema, InvoiceStatus, type InvoiceProps } from "../schemas/invoice.schema";
 export class InvoiceEntity {
   public readonly id!: string;
@@ -50,6 +51,10 @@ export class InvoiceEntity {
   }
   get isPaid() {
     return this.status === InvoiceStatus.PAID;
+  }
+  pay() {
+    if (this.isPaid) throw new InvoiceAlreadyPaidException(this.id);
+    return new InvoiceEntity({ id: this.id, total: this.total, status: InvoiceStatus.PAID });
   }
 }
 ```
@@ -70,37 +75,183 @@ export type InvoiceProps = z.infer<typeof InvoiceSchema>;
 
 ```ts src/module/framework/view-models/invoice-row.view-model.ts
 import type { InvoiceEntity } from "../../domain/entities/invoice.entity";
-export const invoiceRowViewModel = (invoice: InvoiceEntity) => ({ label: `#${invoice.id}` });
+import { invoiceStatusLabel } from "./invoice-status.view-model";
+export const invoiceRowViewModel = (invoice: InvoiceEntity) => ({
+  id: invoice.id,
+  label: `#${invoice.id}`,
+  status: invoiceStatusLabel(invoice.status),
+});
 ```
 
 ```ts src/module/framework/controllers/invoices.controller.ts
+import { InvoiceStatus } from "../../domain/schemas/invoice.schema";
 import { useListInvoicesQuery } from "../queries/list-invoices.query";
+import { useInvoicesStore } from "../stores/invoices.store";
 import { invoiceRowViewModel } from "../view-models/invoice-row.view-model";
+import { invoiceStatusOptions } from "../view-models/invoice-status.view-model";
+const ALL = "all";
 export const useInvoicesController = () => {
+  const { status, setStatus } = useInvoicesStore();
   const query = useListInvoicesQuery();
-  const rows = (query.data ?? []).map(invoiceRowViewModel);
-  return { rows, isEmpty: !query.data };
+  const rows = (query.data ?? [])
+    .filter((invoice) => !status || invoice.status === status)
+    .map(invoiceRowViewModel);
+  return {
+    rows,
+    isEmpty: query.isSuccess && rows.length === 0,
+    filter: status ?? ALL,
+    filterOptions: [{ value: ALL, label: "All" }, ...invoiceStatusOptions()],
+    onFilter: (value: string) =>
+      setStatus(Object.values(InvoiceStatus).find((s) => s === value) ?? null),
+  };
 };
 ```
 
 ```tsx src/module/framework/ui/invoices/invoices.page.tsx
+import type { ComponentProps } from "react";
 import { useInvoicesController } from "../../controllers/invoices.controller";
-export const InvoicesPage = () => {
-  const { rows, isEmpty } = useInvoicesController();
+export const InvoicesPage = (props: { invoiceLink: (invoiceId: string) => ComponentProps<"a"> }) => {
+  const { rows, isEmpty, filter, filterOptions, onFilter } = useInvoicesController();
   return (
-    <ul>
-      {isEmpty && <li>No invoices</li>}
-      {rows.map((row) => (
-        <li key={row.label}>{row.label}</li>
-      ))}
-    </ul>
+    <main>
+      <h1>Invoices</h1>
+      <label>
+        Status
+        <select value={filter} onChange={(event) => onFilter(event.target.value)}>
+          {filterOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <ul>
+        {isEmpty && <li>No invoices</li>}
+        {rows.map((row) => (
+          <li key={row.id}>
+            <a {...props.invoiceLink(row.id)}>{row.label}</a> · {row.status}
+          </li>
+        ))}
+      </ul>
+    </main>
   );
 };
 ```
 
 ```tsx src/main.tsx
-import { InvoicesPage } from "./module/framework/ui/invoices/invoices.page";
-export const App = () => <InvoicesPage />;
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { InvoicesRouteBridge } from "./module/framework/bridges/invoices-route.bridge";
+const queryClient = new QueryClient();
+createRoot(document.getElementById("app")!).render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <InvoicesRouteBridge />
+    </QueryClientProvider>
+  </StrictMode>,
+);
+```
+
+```ts src/module/framework/view-models/invoice-status.view-model.ts
+import { InvoiceStatus } from "../../domain/schemas/invoice.schema";
+const LABEL: Record<InvoiceStatus, string> = {
+  [InvoiceStatus.PAID]: "Paid",
+  [InvoiceStatus.PENDING]: "Pending",
+};
+export const invoiceStatusLabel = (status: InvoiceStatus) => LABEL[status];
+export const invoiceStatusOptions = () =>
+  Object.values(InvoiceStatus).map((value) => ({ value, label: LABEL[value] }));
+```
+
+```ts src/module/framework/view-models/invoice-detail.view-model.ts
+import type { InvoiceEntity } from "../../domain/entities/invoice.entity";
+import { invoiceStatusLabel } from "./invoice-status.view-model";
+export const invoiceDetailViewModel = (invoice: InvoiceEntity) => ({
+  title: `Invoice #${invoice.id}`,
+  total: String(invoice.total),
+  status: invoiceStatusLabel(invoice.status),
+});
+```
+
+```ts src/module/framework/controllers/invoice-detail.controller.ts
+import { ModuleException } from "../../domain/exceptions/invoice.exceptions";
+import { usePayInvoiceMutation } from "../mutations/pay-invoice.mutation";
+import { useGetInvoiceQuery } from "../queries/get-invoice.query";
+import { invoiceDetailViewModel } from "../view-models/invoice-detail.view-model";
+export const useInvoiceDetailController = (invoiceId: string) => {
+  const query = useGetInvoiceQuery(invoiceId);
+  const payment = usePayInvoiceMutation();
+  const failure = query.error ?? payment.error;
+  return {
+    invoice: query.data ? invoiceDetailViewModel(query.data) : null,
+    notice: failure instanceof ModuleException ? failure.message : null,
+    canPay: query.data ? !query.data.isPaid : false,
+    isPaying: payment.isPending,
+    onPay: () => payment.mutate(invoiceId),
+  };
+};
+```
+
+```tsx src/module/framework/ui/invoice-detail/invoice-detail.page.tsx
+import type { ComponentProps } from "react";
+import { useInvoiceDetailController } from "../../controllers/invoice-detail.controller";
+export const InvoiceDetailPage = (props: { invoiceId: string; listLink: ComponentProps<"a"> }) => {
+  const { invoice, notice, canPay, isPaying, onPay } = useInvoiceDetailController(props.invoiceId);
+  return (
+    <main>
+      <a {...props.listLink}>Back to the invoices</a>
+      {notice && <p role="alert">{notice}</p>}
+      {invoice && (
+        <section>
+          <h1>{invoice.title}</h1>
+          <p>
+            {invoice.total} · {invoice.status}
+          </p>
+          {canPay && (
+            <button type="button" disabled={isPaying} onClick={onPay}>
+              {isPaying ? "Paying…" : "Pay"}
+            </button>
+          )}
+        </section>
+      )}
+    </main>
+  );
+};
+```
+
+```tsx src/module/framework/bridges/invoices-route.bridge.tsx
+import { type MouseEvent, useEffect, useState } from "react";
+import { InvoiceDetailPage } from "../ui/invoice-detail/invoice-detail.page";
+import { InvoicesPage } from "../ui/invoices/invoices.page";
+const LIST = "/invoices";
+const invoiceIdOf = (path: string) =>
+  path.startsWith(`${LIST}/`) ? decodeURIComponent(path.slice(LIST.length + 1)) : null;
+const opensElsewhere = (event: MouseEvent) =>
+  event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+export const InvoicesRouteBridge = () => {
+  const [path, setPath] = useState(() => window.location.pathname);
+  useEffect(() => {
+    const onPop = () => setPath(window.location.pathname);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  const link = (to: string) => ({
+    href: to,
+    onClick: (event: MouseEvent<HTMLAnchorElement>) => {
+      if (opensElsewhere(event)) return;
+      event.preventDefault();
+      window.history.pushState(null, "", to);
+      setPath(to);
+    },
+  });
+  const invoiceId = invoiceIdOf(path);
+  return invoiceId ? (
+    <InvoiceDetailPage invoiceId={invoiceId} listLink={link(LIST)} />
+  ) : (
+    <InvoicesPage invoiceLink={(id) => link(`${LIST}/${encodeURIComponent(id)}`)} />
+  );
+};
 ```
 
 

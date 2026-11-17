@@ -10,6 +10,7 @@ export type InvoiceRecord = z.infer<typeof InvoiceRecordSchema>;
 export interface InvoiceAcl {
   listInvoices(): Promise<InvoiceRecord[]>;
   findInvoice(invoiceId: string): Promise<InvoiceRecord | null>;
+  saveInvoice(invoice: InvoiceRecord): Promise<void>;
 }
 ```
 
@@ -24,6 +25,9 @@ export class InvoiceRepositoryImplementation implements InvoiceRepositoryInterfa
   }
   findInvoice(invoiceId: string): Promise<InvoiceProps | null> {
     return this.invoices.findInvoice(invoiceId);
+  }
+  saveInvoice(invoice: InvoiceProps): Promise<void> {
+    return this.invoices.saveInvoice(invoice);
   }
 }
 ```
