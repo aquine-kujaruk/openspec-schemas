@@ -237,7 +237,7 @@ The plan phase SHALL write each fact its probes observed under the plan's Findin
 
 ### Requirement: A web change's screens are spiked while planning
 
-When the change's schema declares a spike workstream and the change touches what a user sees, the plan phase SHALL build that workstream's part of the change as the spike, where it will stay, against stub controllers that return the literal data the screens paint, SHALL mount it with the product's local-run procedure, and SHALL list each screen under `## Screens`. A screen is a visual decision: when a convention or a standing screen settles it, the agent SHALL approve it and say so under Decisions; when it is the person's, it SHALL be an open question with the spike mounted, and the person approves it or asks for changes, which the plan phase applies before asking again. The person MAY decline to see it; the screen is then tagged `@approved:declined`.
+When the change's schema declares a spike workstream and the change touches what a user sees, the plan phase SHALL spike its screens as throwaway HTML files under the change's `spikes/` folder: each one self-contained, opened without a build, a server or the product, painting the literal data the screens show in the product's own words, and walking through each journey. The plan phase SHALL list each screen under `## Screens`, naming its spike and the page the implementation will build, with every journey through it written in plain words. The plan phase SHALL NOT write the product's code: a product with no source yet is spiked like any other. A screen is a visual decision: when a convention or a standing screen settles it, the agent SHALL approve it from a spike with one variant and say so under Decisions; when it is the person's, its spike SHALL offer several structurally different variants and it SHALL be an open question; the person picks one or asks for changes, which the plan phase applies before asking again, and once approved the spike keeps only the variant the person approved. The person MAY decline to see it; the screen is then tagged `@approved:declined`. The data a spike paints SHALL be the data the in-memory adapters of the end-to-end environment are seeded with.
 
 #### Scenario Outline: a screen `<settledBy>` is approved by `<approver>` and leaves `<open>` open question(s)
 
@@ -254,35 +254,36 @@ When the change's schema declares a spike workstream and the change touches what
   | orders-list | a standing screen of the product  | the agent  | 0    |
   | orders-list | the person's judgment             | nobody yet | 1    |
 
-### Requirement: The plan writes the end-to-end tests and leaves them passing against the spike
+#### Scenario Outline: a screen settled by `<settledBy>` is spiked with `<variants>` variant(s), and `<kept>` kept once approved
 
-For every journey through the screens of a web change, the plan phase SHALL write an end-to-end test under `test/e2e/<module>/`: natural-language actions (`agent.act`) and deterministic checks on what the spike shows, and SHALL run it against the mounted spike until it passes. The data the spike paints SHALL be the data the doubles of the end-to-end environment are seeded with, so that the same test passes once the implementation puts the real controllers, use cases and in-memory adapters behind the screens. When a journey writes, the stub controller behind its screen SHALL keep that literal data in its own local state and apply the write to it, with no store and no query cache, so that the screen shows the result of the action against the spike.
+- **GIVEN** an intention whose web change adds the screen `<screen>` <!-- intentionAddingScreen -->
+- **AND** the screen is settled by `<settledBy>` <!-- screenSettledBy -->
+- **WHEN** the screen is approved <!-- screenIsApproved -->
+- **THEN** its spike offered `<variants>` variant(s) <!-- spikeOfferedVariants -->
+- **AND** its spike keeps `<kept>` <!-- spikeKeeps -->
 
-#### Scenario Outline: the journey `<journey>` against the spike leaves its test `<state>`
+##### Examples:
 
-- **GIVEN** a web change whose approved spike holds the journey `<journey>` <!-- spikeHoldsJourney -->
+  | screen      | settledBy                         | variants | kept                       |
+  | ----------- | --------------------------------- | -------- | -------------------------- |
+  | orders-list | a standing screen of the product  | 1        | that variant               |
+  | orders-list | the person's judgment             | 3        | the variant the person chose |
+
+#### Scenario Outline: spiking `<screen>` in a product that `<product>` writes `<spike>` and no product file
+
+- **GIVEN** an intention whose web change adds the screen `<screen>` <!-- intentionAddingScreen -->
+- **AND** a product that `<product>` <!-- productThat -->
 - **WHEN** the plan phase writes the first proposal <!-- writeFirstProposal -->
-- **THEN** the end-to-end test of `<journey>` exists and is `<state>` against the spike <!-- e2eTestStateAgainstSpike -->
+- **THEN** the change holds the spike `<spike>` <!-- changeHoldsSpike -->
+- **AND** no file of the product was written <!-- noProductFileWritten -->
+- **AND** the screen lists `<journeys>` journey(s) in plain words <!-- screenListsJourneys -->
 
 ##### Examples:
 
-  | journey             | state   |
-  | ------------------- | ------- |
-  | cancel a pending order | passing |
-
-#### Scenario Outline: the stub behind `<action>` paints `<after>` once the action is done
-
-- **GIVEN** a spiked screen that paints `<before>` and offers `<action>` <!-- spikedScreenOffersAction -->
-- **WHEN** the end-to-end test performs `<action>` against the spike <!-- e2eTestPerformsAction -->
-- **THEN** the screen paints `<after>` <!-- screenPaints -->
-- **AND** the stub controller keeps the written value in its own local state, with no store and no query cache <!-- stubKeepsWriteLocally -->
-
-##### Examples:
-
-  | before  | action              | after |
-  | ------- | ------------------- | ----- |
-  | Pending | pay invoice 2       | Paid  |
-  | Pending | cancel order O-1    | Cancelled |
+  | screen        | product                          | spike                    | journeys |
+  | ------------- | -------------------------------- | ------------------------ | -------- |
+  | orders-list   | already serves other screens     | spikes/orders.html       | 2        |
+  | invoices-list | has no source yet                | spikes/invoices.html     | 1        |
 
 ### Requirement: A runbook setup flags as suspect is investigated while planning
 

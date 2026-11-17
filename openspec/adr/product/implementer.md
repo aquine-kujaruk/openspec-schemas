@@ -18,8 +18,8 @@ No workstream SHALL own the checks that need the whole product joined. A core SH
 
 ### Decision: page-store · The state of a page lives in its store
 
-@origin:2026-11-17-the-reference-writes @applies:schemas @enforced:review
+@origin:2026-11-17-throwaway-spikes @applies:schemas @enforced:review
 
-In a schema whose framework layer has stores, every state that changes on a URL page SHALL live in that page's store, one store per page named after it, and what comes from a fetch or a mutation SHALL live in the query cache, never in a store. Once implemented, pages, components and controllers SHALL NOT keep such state in local component state where the page's store can hold it. A stub controller of the spike is the exception: it keeps its literal data in local state, with no store and no query cache.
+In a schema whose framework layer has stores, every state that changes on a URL page SHALL live in that page's store, one store per page named after it, and what comes from a fetch or a mutation SHALL live in the query cache, never in a store. Once implemented, pages, components and controllers SHALL NOT keep such state in local component state where the page's store can hold it. A stub controller the spike workstream writes, before the real one replaces it, is the exception: it keeps its literal data in local state, with no store and no query cache.
 
-**Why** The person: "las stores son por página, pero por página de URL [...] para guardar todos esos estados que van cambiando, ni tener useReducer ni nada de eso, para lo que se usa un store". A page's state then survives its components and the page's own unmount, and one file per page says where to look for it. The spike stays the minimum that passes its tests.
+**Why** The person: "las stores son por página, pero por página de URL [...] para guardar todos esos estados que van cambiando, ni tener useReducer ni nada de eso, para lo que se usa un store". A page's state then survives its components and the page's own unmount, and one file per page says where to look for it. The stub stays the minimum that passes the end-to-end tests.
