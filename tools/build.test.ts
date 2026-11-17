@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
 import manifest from "../packages/backend.ts";
 import { build } from "./build.ts";
-import { PACKAGE_ROOT } from "../factory/shared/infrastructure/adapters/paths.ts";
+import { PACKAGE_ROOT } from "../factory/shared/infrastructure/adapters/paths.adapter.ts";
 
 /** Every file under `dir` with the hash of its content. */
 const tree = (dir: string): Record<string, string> =>

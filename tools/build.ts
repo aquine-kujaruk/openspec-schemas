@@ -25,17 +25,17 @@ import {
   PROJECT_ROOT,
   SETUP_ASSETS,
   SOURCE_EXT,
-} from "../factory/shared/infrastructure/adapters/paths.ts";
-import type { Schema } from "../factory/repository/domain/schema.ts";
-import { schema as repositoryschema } from "../factory/repository.ts";
+} from "../factory/shared/infrastructure/adapters/paths.adapter.ts";
+import type { Schema } from "../factory/engineering.ts";
+import { schema as repositoryschema } from "../factory/engineering.ts";
 const { definitionFiles, loadSchema, misplaced, SCHEMAS, SHARED } =
   repositoryschema;
-import { schemaYaml as repositoryschemaYaml } from "../factory/repository.ts";
+import { schemaYaml as repositoryschemaYaml } from "../factory/engineering.ts";
 const { schemaFiles } = repositoryschemaYaml;
 import type {
   Installed,
   PackageManifest,
-} from "../factory/shared/domain/types.ts";
+} from "../factory/shared/domain/schemas/line-types.schema.ts";
 
 /** What a build wrote down about itself: what the package carries and every resource it was built from. */
 export type BuildRecord = {
@@ -293,8 +293,8 @@ export const build = async (
     const command = join(building, "command");
     const compiled = reached(root, [
       "factory/main.ts",
-      "factory/shared/domain/config.ts",
-      "factory/sdk/index.ts",
+      "factory/shared/domain/schemas/configuration.schema.ts",
+      "factory/sdk.ts",
       ...definitions.map((file) => relative(root, file)),
       ...found(["core", "workstream", "validator"]),
     ]);
@@ -333,12 +333,12 @@ export const build = async (
           bin: { [COMMAND]: "./factory/main.js" },
           exports: {
             ".": {
-              types: "./factory/shared/domain/config.d.ts",
-              default: "./factory/shared/domain/config.js",
+              types: "./factory/shared/domain/schemas/configuration.schema.d.ts",
+              default: "./factory/shared/domain/schemas/configuration.schema.js",
             },
             "./sdk": {
-              types: "./factory/sdk/index.d.ts",
-              default: "./factory/sdk/index.js",
+              types: "./factory/sdk.d.ts",
+              default: "./factory/sdk.js",
             },
             "./package.json": "./package.json",
           },

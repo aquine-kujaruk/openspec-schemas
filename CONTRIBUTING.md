@@ -15,26 +15,30 @@ packages/          one manifest per package: the schemas it carries, the agents,
 factory/           the command and its engine
   main.ts          composes the CLI host and the modules' commands
   <module>.ts      composes the module's resource capabilities, use cases and commands
-  repository/      schemas, products, installed packages and generated-test locations
-  flow/            implementation, validation, evidence, archive and feedback
-  architecture/    checks, generation, examples and review
-  package/         diagnosis and the write and completion hooks
-  shared/          configuration, platforms and contracts used by several modules
-  sdk/             re-exports only; schemas/ and packages/ import factory/sdk
-  # Each module and shared uses:
-    domain/        types, capability contracts and pure algorithms
-    application/   functions built from explicit capabilities
+  engineering/     plant, lines, processes and work centers
+  production/      work orders, stage starts, handoffs, andon pulls and closing
+  quality/         standards, gauges, audits, final inspection and stage holds
+  change-control/  authorization for agent writes
+  maintenance/     equipment, installation and runbook checks
+  shared/          configuration and resources used by the departments
+  sdk.ts           public contract used by schemas and packages
+  # Each department keeps its domain model, use cases and resource implementations in:
+    domain/
+    application/   use cases and repository interfaces
     infrastructure/
       adapters/    filesystem, processes, environment and network resources
-      acl/         resource-to-domain translations, when needed
-      repository-implementations/  persistence implementations, when needed
-    framework/     command parsing, hooks and presentation
-  # Feature tests stay at each module's root; other tests sit next to their code.
+      acl/         translations between resources and the domain
+      repository-implementations/
+test/
+  acceptance/      generated scenarios and in-memory repositories by department
+  unit/            domain and application tests
+  integration/     repository implementation tests
+  schemas/         this repository's schema and SDK tests
 tools/             build, release, proof and expect; never shipped in a package
 openspec/          this repository's own specs and changes
 ```
 
-Imports between modules follow `repository ← flow ← architecture, package`; every module may use `shared`, which imports no module. Domain imports domain; application imports domain; infrastructure and framework import application and domain. Composition entries wire the layers. Only resource adapters access files, processes, environment variables or the network. `factory/shared/application/layout.test.ts` checks the shape, every import (including types), cycles, resource access and the SDK boundary.
+A department's use cases declare the repository interfaces they need. The entry files wire those interfaces to the resources or other departments that provide them. `factory check` enforces the clean-backend layout and department boundaries from `factory.config.ts`.
 
 Open a schema's folder and you see what only that schema is made of. A schema that builds product code names one core, a folder of `schemas/shared/cores/` that holds the workstreams of an architecture and says which waits for which, and adds the workstreams of its framework, if it has one. `clean-core` is Clean Architecture: `app-domain`, `infrastructure`, `adapters` and `modules` (the rules across modules and the entry). Its workstreams stay decoupled: no workstream owns the checks that need the whole product joined (no file left unused, duplication under 4 %); `factory check` and the verify phase run them, and verify sends each failure back to the workstream that owns the file. A schema's name is its core's short name and what it adds: `clean-backend`, `clean-react`. A resource lives with the definition that names it; one that extends another finds its base's resources in the base's folder; a resource named by two unrelated definitions lives in `schemas/shared/`. The build fails, naming the resource and where it belongs, when one is held anywhere else.
 

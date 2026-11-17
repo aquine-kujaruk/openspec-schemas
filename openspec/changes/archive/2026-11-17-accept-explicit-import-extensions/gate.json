@@ -1,0 +1,6 @@
+{
+  "phase": "Phase 1: Check the target of the import",
+  "failures": 0,
+  "waitingFor": "the agent",
+  "findings": []
+}

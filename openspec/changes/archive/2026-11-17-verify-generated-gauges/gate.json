@@ -1,0 +1,6 @@
+{
+  "phase": "Phase 1: Match the generated tests",
+  "failures": 0,
+  "waitingFor": "the agent",
+  "findings": []
+}

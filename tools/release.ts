@@ -11,7 +11,7 @@ import {
   capture,
   COMMAND,
   PROJECT_ROOT,
-} from "../factory/shared/infrastructure/adapters/paths.ts";
+} from "../factory/shared/infrastructure/adapters/paths.adapter.ts";
 import { build, packageNames } from "./build.ts";
 
 /** What a release published: the repository's version, the ref it published under and the packages there. */

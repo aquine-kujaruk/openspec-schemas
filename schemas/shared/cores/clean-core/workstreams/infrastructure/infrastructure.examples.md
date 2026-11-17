@@ -18,10 +18,15 @@ export interface InvoiceAcl {
 import type { InvoiceRepositoryInterface } from "../../application/repository-interfaces/invoice.repository-interface";
 import type { InvoiceProps } from "../../domain/schemas/invoice.schema";
 import type { InvoiceAcl } from "../acl/invoice.acl";
+import { InvoiceUnavailableException } from "../../domain/exceptions/invoice.exceptions.ts";
 export class InvoiceRepositoryImplementation implements InvoiceRepositoryInterface {
   constructor(private readonly invoices: InvoiceAcl) {}
-  listInvoices(): Promise<InvoiceProps[]> {
-    return this.invoices.listInvoices();
+  async listInvoices(): Promise<InvoiceProps[]> {
+    try {
+      return await this.invoices.listInvoices();
+    } catch (cause) {
+      throw new InvoiceUnavailableException({ cause });
+    }
   }
   findInvoice(invoiceId: string): Promise<InvoiceProps | null> {
     return this.invoices.findInvoice(invoiceId);
@@ -209,6 +214,34 @@ export const invoiceAdapter: InvoiceAcl = { listInvoices: async () => [] };
 ```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
 import type { InvoiceAcl } from "../acl/invoice.acl";
 import { invoiceAdapter } from "../adapters/invoice.adapter";
+export class InvoiceRepositoryImplementation {
+  constructor(private readonly invoices: InvoiceAcl = invoiceAdapter) {}
+  listInvoices() {
+    return this.invoices.listInvoices();
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
+```
+
+### imports-adapter-with-extension
+
+```ts src/module/infrastructure/acl/invoice.acl.ts
+export interface InvoiceAcl {
+  listInvoices(): Promise<string[]>;
+}
+```
+
+```ts src/module/infrastructure/adapters/invoice.adapter.ts
+import type { InvoiceAcl } from "../acl/invoice.acl";
+export const invoiceAdapter: InvoiceAcl = { listInvoices: async () => [] };
+```
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+import type { InvoiceAcl } from "../acl/invoice.acl";
+import { invoiceAdapter } from "../adapters/invoice.adapter.ts";
 export class InvoiceRepositoryImplementation {
   constructor(private readonly invoices: InvoiceAcl = invoiceAdapter) {}
   listInvoices() {

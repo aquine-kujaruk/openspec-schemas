@@ -35,6 +35,7 @@ export const wholeProduct: Check[] = [
         entry: [
           ...o.entry,
           `${o.acceptance}/**/*.test.ts`,
+          `${o.unit}/**/*.test.ts`,
           `${o.integration}/**/*.test.ts`,
           // The end-to-end tests of a web product and the configuration they run with.
           `${o.e2e}/**/*.e2e.ts`,

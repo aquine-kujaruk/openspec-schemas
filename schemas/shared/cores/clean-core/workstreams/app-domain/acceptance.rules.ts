@@ -1,3 +1,4 @@
+import { sourceStem } from "../../source-path.ts";
 import { existsSync, globSync } from "node:fs";
 import {
   classesOf,
@@ -72,7 +73,7 @@ export const acceptance = (o: Options): Layer => ({
               const imported = importsOf(f).some(
                 (i) =>
                   i.names.includes(contract) &&
-                  i.resolved.endsWith(
+                  sourceStem(i.resolved).endsWith(
                     `${root}/${module}/application/repository-interfaces/${name}.repository-interface`,
                   ),
               );
@@ -101,7 +102,7 @@ export const acceptance = (o: Options): Layer => ({
                 importsOf(f)
                   .filter((i) =>
                     new RegExp(`${root}/${m[1]}/domain/exceptions/[\\w-]+\\.exceptions$`).test(
-                      i.resolved,
+                      sourceStem(i.resolved),
                     ),
                   )
                   .flatMap((i) => i.names),

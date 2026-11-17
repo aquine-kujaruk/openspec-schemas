@@ -22,7 +22,7 @@ import {
   freshness as checkFresh,
   type Freshness,
 } from "./build.ts";
-import { PACKAGE_ROOT } from "../factory/shared/infrastructure/adapters/paths.ts";
+import { PACKAGE_ROOT } from "../factory/shared/infrastructure/adapters/paths.adapter.ts";
 
 /**
  * Each scenario builds from a repository of its own: this repository's command over a handful of

@@ -4,70 +4,90 @@ import {
   cleanTestEnvironment,
   createHost,
   exit,
-} from "./shared/infrastructure/adapters/cli.ts";
-import { runCli } from "./shared/framework/cli.ts";
-import { runtime } from "./shared/infrastructure/adapters/runtime.ts";
+} from "./shared/infrastructure/adapters/cli.adapter.ts";
+import { runCli } from "./cli.ts";
+import { runtime } from "./shared/infrastructure/adapters/runtime.adapter.ts";
 import {
   PACKAGE_ROOT,
   PROJECT_ROOT,
   SOURCE_EXT,
   runTool,
   capture,
-} from "./shared/infrastructure/adapters/paths.ts";
-import { createCommands as createRepositoryCommands } from "./repository/framework/commands.ts";
-import { createCommands as createFlowCommands } from "./flow/framework/commands.ts";
-import { createCommands as createArchitectureCommands } from "./architecture/framework/commands.ts";
-import { createCommands as createPackageCommands } from "./package/framework/commands.ts";
+} from "./shared/infrastructure/adapters/paths.adapter.ts";
 cleanTestEnvironment();
 const host = createHost(
   PACKAGE_ROOT,
   PROJECT_ROOT,
   SOURCE_EXT,
   async () =>
-    (await import("./repository.ts")).products.projectProducts(PROJECT_ROOT),
+    (await import("./engineering.ts")).products.projectProducts(PROJECT_ROOT),
   capture,
 );
 const commands = {
-  ...createRepositoryCommands({
-    schemas: async (args) =>
-      (await import("./repository.ts")).commands.schemas!.run(args),
-  }),
-  ...createFlowCommands({
-    implement: async (args) =>
-      (await import("./flow.ts")).commands.implement!.run(args),
-    handoff: async (args) =>
-      (await import("./flow.ts")).commands.handoff!.run(args),
-    reading: async (args) =>
-      (await import("./flow.ts")).commands.reading!.run(args),
-    feedback: async (args) =>
-      (await import("./flow.ts")).commands.feedback!.run(args),
-    verify: async (args) =>
-      (await import("./flow.ts")).commands.verify!.run(args),
-    archive: async (args) =>
-      (await import("./flow.ts")).commands.archive!.run(args),
-    validate: async (args) =>
-      (await import("./flow.ts")).commands.validate!.run(args),
-  }),
-  ...createArchitectureCommands({
-    check: async (args) =>
-      (await import("./architecture.ts")).commands.check!.run(args),
-    generate: async (args) =>
-      (await import("./architecture.ts")).commands.generate!.run(args),
-    test: async (args) =>
-      (await import("./architecture.ts")).commands.test!.run(args),
-    review: async (args) =>
-      (await import("./architecture.ts")).commands.review!.run(args),
-    prepare: async (args) =>
-      (await import("./architecture.ts")).commands.prepare!.run(args),
-  }),
-  ...createPackageCommands({
-    doctor: async (args) =>
-      (await import("./package.ts")).commands.doctor!.run(args),
-    guard: async (args) =>
-      (await import("./package.ts")).commands.guard!.run(args),
-    gate: async (args) =>
-      (await import("./package.ts")).commands.gate!.run(args),
-  }),
+  schemas: {
+    usage: "schemas [--json]: the schemas a change can be opened with, and the products the project declares",
+    run: async (args: string[]) => (await import("./engineering.ts")).listProcessesCommand(args),
+  },
+  implement: {
+    usage: "implement <change>: starts building the next phase of a ready change",
+    run: async (args: string[]) => (await import("./production.ts")).startStage(args),
+  },
+  handoff: {
+    usage: "handoff <change>: hands an approved, ready change to the runner the project configures",
+    run: async (args: string[]) => (await import("./production.ts")).dispatchWorkOrder(args),
+  },
+  reading: {
+    usage: "reading [--written] <paths…>: where to show artifacts of openspec/ in the person's language",
+    run: async (args: string[]) => (await import("./production.ts")).makeReadingCopies(args),
+  },
+  feedback: {
+    usage: "feedback <change> [raise|take …]: lists, raises or takes feedback on a change",
+    run: async (args: string[]) => (await import("./production.ts")).pullAndon(args),
+  },
+  verify: {
+    usage: "verify <change> [--proved <spec>]: runs every check and test and writes the evidence",
+    run: async (args: string[]) => (await import("./quality.ts")).inspectWorkOrder(args),
+  },
+  archive: {
+    usage: "archive [change]: archives the change, or every verified one, consolidating its specs",
+    run: async (args: string[]) => (await import("./production.ts")).closeWorkOrders(args),
+  },
+  validate: {
+    usage: "validate <change>: says whether the change is ready and, when not, every reason",
+    run: async (args: string[]) => (await import("./production.ts")).validateWorkOrder(args),
+  },
+  check: {
+    usage: "check [--workstream <id>] [--product <name>]: checks the product's rules",
+    run: async (args: string[]) => (await import("./quality.ts")).runQualityControl(args),
+  },
+  generate: {
+    usage: "generate [--check] [--product <name>]: writes the acceptance tests generated from the specs",
+    run: async (args: string[]) => (await import("./quality.ts")).makeGauges(args),
+  },
+  test: {
+    usage: "test <acceptance|integration|unit|e2e> [--report <file>] [--product <name>]: runs the product's tests of one kind",
+    run: async (args: string[]) => (await import("./quality.ts")).runGauges(args),
+  },
+  review: {
+    usage: "review [--product <name>]: reviews the product against its schema's rubric",
+    run: async () => (await import("./quality.ts")).audit(),
+  },
+  prepare: {
+    usage: "prepare [--product <name>]: creates the product's configured folders",
+    run: async () => (await import("./engineering.ts")).prepareLineCommand(),
+  },
+  doctor: {
+    usage: "doctor [--fix]: lists what the flow needs and the project lacks",
+    run: async (args: string[]) => (await import("./maintenance.ts")).maintainEquipment(args),
+  },
+  guard: {
+    usage: "guard [path…]: judges a write an agent is about to make",
+    run: async (args: string[]) => (await import("./change-control.ts")).authorizeWrite(args),
+  },
+  gate: {
+    usage: "gate [--helper]: judges an agent's attempt to finish",
+    run: async (args: string[]) => (await import("./quality.ts")).holdStage(args),
+  },
   openspec: {
     usage: "openspec <args…>: runs the specification tool",
     run: async (args: string[]) =>

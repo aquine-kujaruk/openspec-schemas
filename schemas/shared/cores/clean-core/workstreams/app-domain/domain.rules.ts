@@ -1,3 +1,4 @@
+import { sourceStem } from "../../source-path.ts";
 import { globSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import {
@@ -40,7 +41,7 @@ export const domain = (o: Options): Layer => {
     importsOf(f).some(
       (i) =>
         i.names.includes(name) &&
-        new RegExp(`^${root}/shared/domain/${folder}/[\\w-]+\\.[\\w-]+$`).test(i.resolved),
+        new RegExp(`^${root}/shared/domain/${folder}/[\\w-]+\\.[\\w-]+$`).test(sourceStem(i.resolved)),
     );
   return {
     name: "domain",
@@ -81,7 +82,9 @@ export const domain = (o: Options): Layer => {
             .should()
             .adhereTo(
               (f) =>
-                /from "\.\.\/schemas\/[\w-]+\.schema"/.test(f.content) &&
+                importsOf(f).some(({ specifier }) =>
+                  /^\.\.\/schemas\/[\w-]+\.schema$/.test(sourceStem(specifier)),
+                ) &&
                 fromShared(f, "validateSchema", "schemas") &&
                 /\bvalidateSchema\(\s*this\s*,\s*\w+Schema\s*,/.test(
                   constructorBody(f.content) ?? "",
@@ -101,7 +104,7 @@ export const domain = (o: Options): Layer => {
             .adhereTo((f) => {
               const composed = importsOf(f)
                 .filter((i) =>
-                  /\/(entities|value-objects)\/[\w-]+\.(entity|value-object)$/.test(i.resolved),
+                  /\/(entities|value-objects)\/[\w-]+\.(entity|value-object)$/.test(sourceStem(i.resolved)),
                 )
                 .flatMap((i) => i.names);
               return composed.some((name) =>

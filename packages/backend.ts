@@ -15,6 +15,7 @@ export default {
     oxlint: "1.93.0",
     typescript: "6.0.3",
     yaml: "2.9.1",
+    zod: "4.6.7",
   },
   skills: [
     { tool: "feat2test", path: "skills/gherkin-craft" },

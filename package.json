@@ -8,9 +8,9 @@
     "factory": "./factory/main.ts"
   },
   "exports": {
-    ".": "./factory/shared/domain/config.ts",
+    ".": "./factory/shared/domain/schemas/configuration.schema.ts",
     "./package.json": "./package.json",
-    "./sdk": "./factory/sdk/index.ts"
+    "./sdk": "./factory/sdk.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -25,7 +25,8 @@
     "opsx-gherkin": "1.0.1",
     "oxlint": "1.93.0",
     "typescript": "6.0.3",
-    "yaml": "2.9.1"
+    "yaml": "2.9.1",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/ejs": "3.1.5",

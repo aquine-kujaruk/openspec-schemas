@@ -11,9 +11,9 @@ import {
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { build, packageNames } from "./build.ts";
-import { doctor as packagedoctor } from "../factory/package.ts";
+import { doctor as packagedoctor } from "../factory/maintenance.ts";
 const { PLACES } = packagedoctor;
-import { exampleFile as architectureexampleFile } from "../factory/architecture.ts";
+import { exampleFile as architectureexampleFile } from "../factory/quality.ts";
 const { parseExampleFile } = architectureexampleFile;
 import {
   capture,
@@ -22,10 +22,10 @@ import {
   PROJECT_ROOT,
   SETUP_ASSETS,
   SOURCE_EXT,
-} from "../factory/shared/infrastructure/adapters/paths.ts";
-import { schema as repositoryschema } from "../factory/repository.ts";
+} from "../factory/shared/infrastructure/adapters/paths.adapter.ts";
+import { schema as repositoryschema } from "../factory/engineering.ts";
 const { loadCore, loadDefinition, loadSchema } = repositoryschema;
-import type { Installed } from "../factory/shared/domain/types.ts";
+import type { Installed } from "../factory/shared/domain/schemas/line-types.schema.ts";
 
 const TSCONFIG = {
   compilerOptions: {
