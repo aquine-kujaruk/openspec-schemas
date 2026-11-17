@@ -1,3 +1,9 @@
+## Purpose
+
+Unit tests: one hand-written Vitest file per domain or application file that needs proving apart from the use cases, at `test/unit/<module>/<path>.test.ts`, mirroring the path of the file it tests. Nothing is faked: a unit test exercises the domain and the application directly and never reaches a resource; what needs one is proved by an integration test, and the whole by acceptance. They are written by the workstream that owns domain and application and run with `factory test unit`, outside `factory check`.
+
+Every rule is verified against the cases in `schemas/<schema>/workstreams/<workstream>/<layer>.examples.md`: under each rule, one case per way of breaking it, and a `reference` section. What the tools report on each case, file by file with the tools that reported it, is recorded in the case's `expect` block by `factory expect`, and every case is compared with that record. A case prefixed `todo.` is a known gap that the rule does not catch yet. The reference sections of the workstream and of the workstreams it depends on together form a correct module that breaks no rule of that workstream.
+
 ## ADDED Requirements
 
 ### Requirement: unit-test-targets-core-file · unit tests target an existing file of the domain or the application
