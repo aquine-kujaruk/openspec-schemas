@@ -79,17 +79,28 @@ for agent in $(printf '%s' "$agents" | tr ',' ' '); do
   esac
 done
 
-# The agent package manager, at the version the package names, when it is missing.
+# The agent package manager, at the version the package names, when it is missing: APM's own
+# installer first; when its binary cannot run here (an older glibc), the Python package through uv,
+# which brings its own Python, installing uv first when it is missing.
 PATH="$HOME/.local/bin:$PATH"
-if ! command -v apm >/dev/null 2>&1; then
+apm_runs() { command -v apm >/dev/null 2>&1 && apm --version >/dev/null 2>&1; }
+if ! apm_runs; then
   say "installing the agent package manager $apm_version"
   if [ -n "${APM_INSTALLER:-}" ]; then
     $APM_INSTALLER "@v$apm_version"
   else
     command -v curl >/dev/null 2>&1 || fail "this machine lacks: curl, to install the agent package manager"
-    curl -sSL https://aka.ms/apm-unix | sh -s -- "@v$apm_version"
+    if ! { curl -fsSL https://aka.ms/apm-unix | APM_NO_MODIFY_PATH=1 sh -s -- "@v$apm_version" >"$work/apm-install.log" 2>&1 && apm_runs; }; then
+      say "its binary does not run on this machine; installing it with uv instead"
+      if ! command -v uv >/dev/null 2>&1; then
+        curl -LsSf https://astral.sh/uv/install.sh | UV_NO_MODIFY_PATH=1 sh >"$work/uv-install.log" 2>&1 \
+          || { cat "$work/uv-install.log" >&2; fail "could not install uv"; }
+      fi
+      uv tool install --quiet --force --python 3.12 "apm-cli==$apm_version" \
+        || fail "could not install the agent package manager; see https://github.com/microsoft/apm"
+    fi
   fi
-  command -v apm >/dev/null 2>&1 || fail "the agent package manager did not install; see https://github.com/microsoft/apm"
+  apm_runs || fail "the agent package manager did not install; see https://github.com/microsoft/apm"
 fi
 
 say "installing $package $version for $agents"
