@@ -3,6 +3,7 @@ name: factory-in-clean-core
 description: The command's code moves from toolkit/ to factory/, split by role and laid out in the clean core's layers, and what only this repository runs moves to tools/, which no package carries
 created_at: 2026-11-17
 created_by: the person
+approved_at: 2026-11-17
 schema: spec-plan
 ---
 
@@ -46,8 +47,6 @@ The command's code reads as the system it is. `factory/` holds the command: an e
 - Planned while `publish-from-github` and `approve-then-implement` were open; both were archived (5ea062f, decbafd) before this plan was written, so nothing waits for them. @by:agent
 
 ## Open questions
-
-- Approve the plan? Read [plan.md](plan.md) and the delta specs [package/write-guard](specs/package/write-guard/spec.md), [flow/verify](specs/flow/verify/spec.md) and [repository/build](specs/repository/build/spec.md). I propose: approve.
 
 ## Architecture decisions
 
@@ -101,13 +100,13 @@ export type { CoreDefinition, SchemaVariant, WorkstreamDeclaration, Layer, Rule,
 - The tests generated from the modified `package/write-guard` and `flow/verify`.
 - `pnpm exec factory proof backend`: the built package works in an empty project from its new path.
 
-- [ ] Move `toolkit/` to `factory/`, `cli.ts` to `main.ts` and `core/` to `shared/`; point `package.json` (`bin`, `exports`), the build (entry, declarations, `bin` of the built command), `vitest.config.ts` and `tsconfig.json` at the new paths
-- [ ] Write `factory/sdk/index.ts`, export it as `./sdk` here and from the built command, and import it as `factory/sdk` in every file of `schemas/` and `packages/` that imports the factory
-- [ ] Move `build`, `release`, `proof` and `expect`, with their tests and step adapters, to `tools/`; register them from `factory/main.ts` only when `tools/` exists; the build carries nothing of `tools/`
-- [ ] Write the step adapter `builtCommandOffers` for "A built package's command offers only what a project runs", update the step adapters of `package/write-guard` and `flow/verify` to the new paths, and run `pnpm exec factory generate`
-- [ ] Rewrite the layout test for this shape and for imports through `factory/sdk`; update the layout of `CONTRIBUTING.md` and every doc naming `toolkit/`
-- [ ] Raise `version` in `package.json` to `0.14.0`
-- [ ] Verify the phase: `pnpm run check`, `pnpm exec factory build backend`, `pnpm exec factory proof backend`
+- [x] Move `toolkit/` to `factory/`, `cli.ts` to `main.ts` and `core/` to `shared/`; point `package.json` (`bin`, `exports`), the build (entry, declarations, `bin` of the built command), `vitest.config.ts` and `tsconfig.json` at the new paths
+- [x] Write `factory/sdk/index.ts`, export it as `./sdk` here and from the built command, and import it as `factory/sdk` in every file of `schemas/` and `packages/` that imports the factory
+- [x] Move `build`, `release`, `proof` and `expect`, with their tests and step adapters, to `tools/`; register them from `factory/main.ts` only when `tools/` exists; the build carries nothing of `tools/`
+- [x] Write the step adapter `builtCommandOffers` for "A built package's command offers only what a project runs", update the step adapters of `package/write-guard` and `flow/verify` to the new paths, and run `pnpm exec factory generate`
+- [x] Rewrite the layout test for this shape and for imports through `factory/sdk`; update the layout of `CONTRIBUTING.md` and every doc naming `toolkit/`
+- [x] Raise `version` in `package.json` to `0.14.0`
+- [x] Verify the phase: `pnpm run check`, `pnpm exec factory build backend`, `pnpm exec factory proof backend`
 
 ### Phase 2: No module imports another in a cycle
 
@@ -127,9 +126,9 @@ const MAY_IMPORT = {
 
 - The layout test: every import between modules follows `MAY_IMPORT`; `shared` imports no module.
 
-- [ ] Move `productRoots` out of `package/guard.ts` and `readInstalled` out of `package/doctor.ts` into `repository`; move the type `Validator` into `repository`; move `loadEnv` into `shared`
-- [ ] Add the module graph to the layout test
-- [ ] Verify the phase: `pnpm run check`
+- [x] Move `productRoots` out of `package/guard.ts` and `readInstalled` out of `package/doctor.ts` into `repository`; move the type `Validator` into `repository`; move `loadEnv` into `shared`
+- [x] Add the module graph to the layout test
+- [x] Verify the phase: `pnpm run check`
 
 ### Phase 3: `shared` and `repository` in layers
 
@@ -156,10 +155,10 @@ const PENDING = ["flow", "architecture", "package"];
 - The layout test: every module outside `PENDING`, and `shared`, holds only layer folders and feature tests, follows `MAY_IMPORT_LAYER`, and touches the environment only in `infrastructure/adapters`.
 - The tests of `shared` and `repository`, moved next to their code, pass unchanged in what they assert.
 
-- [ ] Lay out `shared`: configuration, platforms and types in `domain/`; paths, processes and the environment in `infrastructure/adapters/`
-- [ ] Lay out `repository`: schemas, products and the installed package; reading them from disk behind `acl/`, `repository-implementations/` and `adapters/`; `factory schemas` in `framework/`; its composition file under `factory/`
-- [ ] Add the layer rules to the layout test, with `flow`, `architecture` and `package` pending
-- [ ] Verify the phase: `pnpm run check`
+- [x] Lay out `shared`: configuration, platforms and types in `domain/`; paths, processes and the environment in `infrastructure/adapters/`
+- [x] Lay out `repository`: schemas, products and the installed package; reading them from disk behind `acl/`, `repository-implementations/` and `adapters/`; `factory schemas` in `framework/`; its composition file under `factory/`
+- [x] Add the layer rules to the layout test, with `flow`, `architecture` and `package` pending
+- [x] Verify the phase: `pnpm run check`
 
 ### Phase 4: `flow` in layers
 
@@ -175,9 +174,9 @@ export const flow: Record<"validate" | "implement" | "handoff" | "reading" | "fe
 - The layout test with `flow` out of `PENDING`.
 - The feature tests of `flow` (archive, feedback, handoff, reading, verify), at the module's root, pass.
 
-- [ ] Lay out `flow`: changes, plans, evidence, validation and merged specs in `domain/`; validate, implement, handoff, reading, feedback, verify and archive in `application/`; the change folders, git and the specification tool behind `infrastructure/`; the commands in `framework/`
-- [ ] Remove `flow` from `PENDING`
-- [ ] Verify the phase: `pnpm run check`
+- [x] Lay out `flow`: changes, plans, evidence, validation and merged specs in `domain/`; validate, implement, handoff, reading, feedback, verify and archive in `application/`; the change folders, git and the specification tool behind `infrastructure/`; the commands in `framework/`
+- [x] Remove `flow` from `PENDING`
+- [x] Verify the phase: `pnpm run check`
 
 ### Phase 5: `architecture` in layers
 
@@ -193,9 +192,9 @@ export const architecture: Record<"check" | "generate" | "test" | "prepare" | "r
 - The layout test with `architecture` out of `PENDING`.
 - The per-holder tests (`case-ids`, `factory`, `module-rules`, `record-findings`, `rule-ids`, `scaffolds`) and the review's feature test pass, with `vitest.config.ts` pointing at their new paths.
 
-- [ ] Lay out `architecture`: rules, examples, expectations, the workstream graph and the review's rubric and funnel in `domain/` and `application/`; oxlint, fallow, archunit, the test runners and the decision model behind `infrastructure/`; check, generate, test, prepare and review in `framework/`
-- [ ] Remove `architecture` from `PENDING`
-- [ ] Verify the phase: `pnpm run check`
+- [x] Lay out `architecture`: rules, examples, expectations, the workstream graph and the review's rubric and funnel in `domain/` and `application/`; oxlint, fallow, archunit, the test runners and the decision model behind `infrastructure/`; check, generate, test, prepare and review in `framework/`
+- [x] Remove `architecture` from `PENDING`
+- [x] Verify the phase: `pnpm run check`
 
 ### Phase 6: `package` in layers
 
@@ -212,10 +211,10 @@ export const pkg: Record<"doctor" | "guard" | "gate", Command>;
 - The feature tests of `package` (completion-gate, install, setup, write-guard) pass.
 - `pnpm exec factory proof backend` and `pnpm exec factory proof fullstack`: the built packages work in an empty project.
 
-- [ ] Lay out `package`: what the guard and the gate judge and what doctor diagnoses in `domain/` and `application/`; the project's files and installed skills behind `infrastructure/`; the hooks `guard` and `gate` and the command `doctor` in `framework/`
-- [ ] Remove `package` from `PENDING` and the list itself
-- [ ] Describe the layers and the module graph in the layout of `CONTRIBUTING.md`
-- [ ] Verify the phase: `pnpm run check`, `pnpm exec factory proof backend`, `pnpm exec factory proof fullstack`
+- [x] Lay out `package`: what the guard and the gate judge and what doctor diagnoses in `domain/` and `application/`; the project's files and installed skills behind `infrastructure/`; the hooks `guard` and `gate` and the command `doctor` in `framework/`
+- [x] Remove `package` from `PENDING` and the list itself
+- [x] Describe the layers and the module graph in the layout of `CONTRIBUTING.md`
+- [x] Verify the phase: `pnpm run check`, `pnpm exec factory proof backend`, `pnpm exec factory proof fullstack`
 
 ## Feedback
 

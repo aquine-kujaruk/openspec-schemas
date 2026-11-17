@@ -1,11 +1,11 @@
-import { DEFAULTS as review } from "../../toolkit/architecture/review/defaults.ts";
-import { node } from "../../toolkit/core/platform.ts";
+import { DEFAULTS as review } from "factory/sdk";
+import { node } from "factory/sdk";
 import type {
   ArtifactDefinition,
   FactoryConfig,
   SchemaDefinition,
   Vetoed,
-} from "../../toolkit/core/types.ts";
+} from "factory/sdk";
 
 /** What a plan says about its phases when its tasks name no workstream. */
 const PHASES = `A phase is a part of the change worth having on its own. It declares its tests and its tasks. Only tasks are checkboxes, and the last task of a phase verifies it. A change that builds nothing has no phase.`;

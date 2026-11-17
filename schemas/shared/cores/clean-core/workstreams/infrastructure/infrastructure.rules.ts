@@ -8,11 +8,11 @@ import {
   not,
   throwsDomainExceptionsRule,
   vocabularyRules,
-} from "../../../../../../toolkit/architecture/archunit.ts";
-import { coreRules, restrictedGlobals, restrictedImports } from "../../../../../../toolkit/architecture/oxlint.ts";
-import type { Layer } from "../../../../../../toolkit/core/types.ts";
-import type { Options } from "../../../../../../toolkit/core/types.ts";
-import { schemaPackageVeto } from "../../../../../../toolkit/architecture/oxlint.ts";
+} from "factory/sdk";
+import { coreRules, restrictedGlobals, restrictedImports } from "factory/sdk";
+import type { Layer } from "factory/sdk";
+import type { Options } from "factory/sdk";
+import { schemaPackageVeto } from "factory/sdk";
 
 /** Classes of the module's `infrastructure/repository-implementations` of `path`, by name (the first declaration wins). */
 const repositoryClasses = (path: string): Map<string, ClassDecl> => {

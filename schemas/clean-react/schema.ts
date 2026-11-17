@@ -1,5 +1,5 @@
-import type { SchemaVariant, Vetoed } from "../../toolkit/core/types.ts";
-import { web } from "../../toolkit/core/platform.ts";
+import type { SchemaVariant, Vetoed } from "factory/sdk";
+import { web } from "factory/sdk";
 import { artifacts, defaults, planInstruction } from "../spec-plan/schema.ts";
 
 const REACT = ["react", "react-dom", "react-router-dom", "@tanstack/react-query", "zustand"];

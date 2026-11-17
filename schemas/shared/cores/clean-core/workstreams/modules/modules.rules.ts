@@ -1,8 +1,8 @@
 import { globSync, statSync } from "node:fs";
 import { basename } from "node:path";
-import { codeOnly, not } from "../../../../../../toolkit/architecture/archunit.ts";
-import type { Layer } from "../../../../../../toolkit/core/types.ts";
-import type { Options } from "../../../../../../toolkit/core/types.ts";
+import { codeOnly, not } from "factory/sdk";
+import type { Layer } from "factory/sdk";
+import type { Options } from "factory/sdk";
 
 /** Where the core declares no `any`: adapters and the entry are the boundary and keep their freedom. */
 const NO_ANY_FOLDERS = [

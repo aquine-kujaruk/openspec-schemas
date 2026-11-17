@@ -12,8 +12,14 @@ const CORES = "schemas/shared/cores";
 const folders = (dir: string, holds: (name: string) => boolean): string[] =>
   existsSync(dir) ? readdirSync(dir).filter(holds).sort() : [];
 const holders = [
-  ...folders(CORES, (c) => existsSync(join(CORES, c, "core.ts"))).map((c) => ({ name: c, dir: join(CORES, c) })),
-  ...folders("schemas", (s) => s !== "shared" && existsSync(join("schemas", s, "workstreams"))).map((s) => ({
+  ...folders(CORES, (c) => existsSync(join(CORES, c, "core.ts"))).map((c) => ({
+    name: c,
+    dir: join(CORES, c),
+  })),
+  ...folders(
+    "schemas",
+    (s) => s !== "shared" && existsSync(join("schemas", s, "workstreams")),
+  ).map((s) => ({
     name: s,
     dir: join("schemas", s),
   })),
@@ -26,25 +32,41 @@ const PER_HOLDER = [
   "record-findings",
   "rule-ids",
   "scaffolds",
-].map((t) => `toolkit/architecture/${t}.test.ts`);
+].map(
+  (t) =>
+    `factory/architecture/${["graph", "compose", "archunit", "oxlint"].includes(t) ? "domain" : "application"}/${t}.test.ts`,
+);
 
 export default defineConfig({
   test: {
     globals: true,
+    setupFiles: ["tools/test-setup.ts"],
     environment: "node",
     testTimeout: 120_000,
     hookTimeout: 120_000,
     projects: [
       ...holders.map(({ name, dir }) => ({
         extends: true as const,
-        test: { name, include: [`${dir}/workstreams/**/*.test.ts`, ...PER_HOLDER], env: { FACTORY_HOLDER: name } },
+        test: {
+          name,
+          include: [`${dir}/workstreams/**/*.test.ts`, ...PER_HOLDER],
+          env: { FACTORY_HOLDER: name },
+        },
       })),
       {
         extends: true as const,
         test: {
           name: "repository",
-          include: ["toolkit/**/*.test.ts", "schemas/**/*.test.ts"],
-          exclude: [...PER_HOLDER, ...holders.map(({ dir }) => `${dir}/workstreams/**`), "**/node_modules/**"],
+          include: [
+            "factory/**/*.test.ts",
+            "tools/**/*.test.ts",
+            "schemas/**/*.test.ts",
+          ],
+          exclude: [
+            ...PER_HOLDER,
+            ...holders.map(({ dir }) => `${dir}/workstreams/**`),
+            "**/node_modules/**",
+          ],
         },
       },
     ],

@@ -13,6 +13,6 @@
     "verbatimModuleSyntax": true,
     "erasableSyntaxOnly": true
   },
-  "include": ["schemas", "toolkit", "packages", "*.ts"],
+  "include": ["schemas", "factory", "tools", "packages", "*.ts"],
   "exclude": ["node_modules", "dist", "**/*.feature.test.ts"]
 }

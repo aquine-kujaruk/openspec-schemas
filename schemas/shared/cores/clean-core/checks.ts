@@ -1,5 +1,5 @@
 import { posix } from "node:path";
-import type { Check } from "../../../../toolkit/core/types.ts";
+import type { Check } from "factory/sdk";
 
 const OFF = [
   "unused-exports",

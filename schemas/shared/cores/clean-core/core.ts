@@ -1,4 +1,4 @@
-import type { CoreDefinition, Vetoed } from "../../../../toolkit/core/types.ts";
+import type { CoreDefinition, Vetoed } from "factory/sdk";
 import { wholeProduct } from "./checks.ts";
 
 /** The framework the core's counterexamples import to break no-framework-import: an HTTP delivery package. */

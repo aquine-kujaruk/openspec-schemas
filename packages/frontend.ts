@@ -1,4 +1,4 @@
-import type { PackageManifest } from "../toolkit/core/types.ts";
+import type { PackageManifest } from "factory/sdk";
 
 const VERCEL = "1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62";
 

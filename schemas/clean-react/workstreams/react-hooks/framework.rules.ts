@@ -1,8 +1,8 @@
 import { globSync, readFileSync } from "node:fs";
-import { not, vocabularyRules } from "../../../../toolkit/architecture/archunit.ts";
-import { restrictedGlobals, restrictedImports } from "../../../../toolkit/architecture/oxlint.ts";
-import type { Layer } from "../../../../toolkit/core/types.ts";
-import type { Options } from "../../../../toolkit/core/types.ts";
+import { not, vocabularyRules } from "factory/sdk";
+import { restrictedGlobals, restrictedImports } from "factory/sdk";
+import type { Layer } from "factory/sdk";
+import type { Options } from "factory/sdk";
 
 /** Folder → file suffix (framework-vocabulary). ui holds only JSX: pages and components. */
 const VOCABULARY = {

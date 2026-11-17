@@ -1,8 +1,8 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join, normalize } from "node:path";
-import { type Block, deltaRequirementsOf, operationsOf, type Tag, tagOf } from "../../../../toolkit/flow/plan.ts";
-import type { Standing } from "../../../../toolkit/flow/consolidated.ts";
-import type { Candidate, Finding, Validator } from "../../../../toolkit/flow/validation.ts";
+import { type Block, deltaRequirementsOf, operationsOf, type Tag, tagOf } from "factory/sdk";
+import type { Standing } from "factory/sdk";
+import type { Candidate, Finding, Validator } from "factory/sdk";
 
 type Rule = (candidate: Candidate) => Finding[];
 type Kind = "decision" | "procedure";

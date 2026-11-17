@@ -1,4 +1,4 @@
-import type { PackageManifest } from "../toolkit/core/types.ts";
+import type { PackageManifest } from "factory/sdk";
 
 /** Clean Architecture for a backend, for Claude and Codex. */
 export default {

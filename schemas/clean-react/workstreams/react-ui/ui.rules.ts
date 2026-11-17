@@ -1,6 +1,6 @@
-import { not } from "../../../../toolkit/architecture/archunit.ts";
-import { restrictedGlobals } from "../../../../toolkit/architecture/oxlint.ts";
-import type { Layer, Options } from "../../../../toolkit/core/types.ts";
+import { not } from "factory/sdk";
+import { restrictedGlobals } from "factory/sdk";
+import type { Layer, Options } from "factory/sdk";
 
 const CORE = ["application", "infrastructure", "adapters", "domain"];
 const REACT_QUERY_HOOKS = [
