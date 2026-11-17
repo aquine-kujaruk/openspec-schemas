@@ -7,7 +7,7 @@ description: Implement a change. Builds the first phase of a ready plan that sti
 
 One run builds one phase: the first phase of the plan that has an unchecked task.
 
-1. `pnpm exec factory doctor`. When it prints anything as `missing` or `drift`, follow the `setup` skill first. A `note` is for the person: relay it once and go on.
+1. `pnpm exec factory doctor`. When it prints anything as `missing` or `drift`, follow the `setup` skill first. A `note` is for the person: relay it once and go on. So is a `suspect`, a runbook that runs what the project no longer has: relay it once and go on; the `plan` skill investigates it.
 2. `pnpm exec factory implement <change>`. It starts the phase only for a change validation reports ready, generates the acceptance tests of the change's delta specs, each next to its step adapter, and prints the tasks to do. When it prints `not ready`, tell the person what it found and stop. From here until the phase's checks pass, the completion gate holds the turn.
 3. In a project with products, the change builds one product, the one its `.openspec.yaml` names as `x-product`: every path below sits in that product's folder and under its configured roots, and every `factory` command for it takes `--product <product>`.
 4. Look at the tasks it printed. Tasks written `<workstream>: <task>` belong to a schema that builds product code: the roots are prepared, product code can now be written, and every step below applies. Tasks that name no workstream belong to a schema that builds none: product code stays closed to this change, so do the tasks in order, tick each one, let the phase's last task verify it the way the plan says, and skip steps 6 to 9.

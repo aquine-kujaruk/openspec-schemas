@@ -6,7 +6,7 @@ export const DECISIONS = "openspec/adr";
 export const PROCEDURES = "openspec/runbooks";
 
 /** A consolidated block: where it lives and the change that last wrote it. */
-export type Standing = { file: string; origin?: string; keys?: string[] };
+export type Standing = { file: string; origin?: string; keys?: string[]; body: string };
 
 /** The consolidated decisions and procedures, by slug. A slug is unique within its tree. */
 export type Consolidated = { decisions: Map<string, Standing>; procedures: Map<string, Standing> };
@@ -16,13 +16,22 @@ const tree = (root: string, dir: string, kind: "Decision" | "Procedure"): Map<st
   const heading = new RegExp(`^### ${kind}: (\\S+)`);
   for (const file of globSync(`${dir}/**/*.md`, { cwd: root }).sort()) {
     let current: Standing | undefined;
+    // A line of a fenced block (a shell comment, say) is never a heading.
+    let fenced = false;
     for (const line of readFileSync(join(root, file), "utf8").split("\n")) {
-      const slug = heading.exec(line)?.[1];
+      const slug = fenced ? undefined : heading.exec(line)?.[1];
       if (slug) {
-        current = { file };
+        current = { file, body: "" };
         blocks.set(slug, current);
-      } else if (line.startsWith("#")) current = undefined;
-      else if (current && line.trim().startsWith("@")) {
+        continue;
+      }
+      if (!fenced && line.startsWith("#")) {
+        current = undefined;
+        continue;
+      }
+      if (/^\s*(```|~~~)/.test(line)) fenced = !fenced;
+      if (current) current.body += `${line}\n`;
+      if (current && !fenced && line.trim().startsWith("@")) {
         const tags = tagsOf(line);
         current.origin ??= tags.find((t) => t.name === "origin")?.value;
         const keys = tags.find((t) => t.name === "keys")?.value;

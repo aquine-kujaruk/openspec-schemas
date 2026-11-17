@@ -7,7 +7,7 @@ description: Take feedback into a change. Updates the plan, and the delta specs 
 
 Feedback goes back into the change it is about, whoever raised it: `the person`, `the completion gate`, `the verify phase`, `the archive` or `the implement phase`.
 
-1. `pnpm exec factory doctor`. When it prints anything as `missing` or `drift`, follow the `setup` skill first. A `note` is for the person: relay it once and go on.
+1. `pnpm exec factory doctor`. When it prints anything as `missing` or `drift`, follow the `setup` skill first. A `note` is for the person: relay it once and go on. So is a `suspect`, a runbook that runs what the project no longer has: relay it once and go on; the `plan` skill investigates it.
 2. `pnpm exec factory feedback <change>` lists what was raised and is waiting. What the person just said is feedback from `the person`.
 3. For each piece of feedback, settle two things:
    - the earliest phase whose work it undoes, or none when it only adds to what is left;

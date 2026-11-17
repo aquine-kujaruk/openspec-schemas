@@ -14,7 +14,8 @@ import { DECISIONS, PROCEDURES, readConsolidated } from "../flow/consolidated.ts
 import { loadEnv } from "../architecture/review/env.ts";
 import { capture, COMMAND, INSTALLED, PROJECT_ROOT, SETUP_ASSETS } from "../core/paths.ts";
 import type { Installed } from "../core/types.ts";
-import { projectProducts } from "../repository/products.ts";
+import { projectProducts, readProjectConfig } from "../repository/products.ts";
+import { holdingsOf, suspectsOf } from "./suspects.ts";
 
 /** Where each agent reads what a package deploys for it. */
 type Place = {
@@ -46,7 +47,8 @@ export type Item = {
   report: "missing" | "drift" | "repaired";
   detail: string;
 };
-export type Report = { items: Item[]; notes: string[]; status: 0 | 1 };
+/** `suspects` are consolidated runbooks that run what the project no longer has: the agent investigates them. */
+export type Report = { items: Item[]; notes: string[]; suspects: string[]; status: 0 | 1 };
 
 /** Something the flow needs and the project lacks; `repair` exists when the package owns it. */
 type Lack = Omit<Item, "report"> & { drift?: true; repair?: () => void };
@@ -315,6 +317,13 @@ const absentKeys = (root: string, env: NodeJS.ProcessEnv): string[] => {
   );
 };
 
+/** The consolidated procedures that run a script, a binary or a file the project no longer has. */
+const suspects = async (root: string): Promise<string[]> => {
+  const products = (await readProjectConfig(root))?.products ?? {};
+  const roots = Object.values(products).map((p) => p.root);
+  return suspectsOf(readConsolidated(root).procedures, holdingsOf(root, roots));
+};
+
 /** What a person should know and no repair can settle. */
 const notes = (root: string, installed: Installed, env: NodeJS.ProcessEnv): string[] => {
   const found: string[] = absentKeys(root, env);
@@ -390,6 +399,7 @@ export const doctor = async (
   return {
     items,
     notes: notes(root, installed, env),
+    suspects: await suspects(root),
     status: items.some((i) => i.report !== "repaired") ? 1 : 0,
   };
 };
@@ -413,5 +423,6 @@ export const run = async (args: string[]): Promise<number> => {
     );
   if (!report.items.length) console.log("nothing is lacking");
   for (const note of report.notes) console.log(`note: ${note}`);
+  for (const suspect of report.suspects) console.log(`suspect: ${suspect}`);
   return report.status;
 };

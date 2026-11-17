@@ -484,4 +484,166 @@ describe('Feature: package/setup Specification', () => {
       await steps.setupExitStatus('0')
     })
   })
+
+  describe('Rule: Setup flags a runbook that runs what the project no longer has', () => {
+    // Line 173
+    test('a runbook that runs `pnpm run start` where the project holds `the script dev` is reported `suspect`', async () => {
+      const steps = createSteps()
+
+      // Given a consolidated procedure `local-run` whose steps run `pnpm run start`
+      await steps.runbookRuns('local-run', 'pnpm run start')
+      // And the project holds `the script dev`
+      await steps.projectHolds('the script dev')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `a suspect runbook` as `suspect`
+      await steps.reportsRequirementAs('a suspect runbook', 'suspect')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+
+    // Line 173
+    test('a runbook that runs `pnpm run dev` where the project holds `the script dev` is reported `not reported`', async () => {
+      const steps = createSteps()
+
+      // Given a consolidated procedure `local-run` whose steps run `pnpm run dev`
+      await steps.runbookRuns('local-run', 'pnpm run dev')
+      // And the project holds `the script dev`
+      await steps.projectHolds('the script dev')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `a suspect runbook` as `not reported`
+      await steps.reportsRequirementAs('a suspect runbook', 'not reported')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+
+    // Line 173
+    test('a runbook that runs `pnpm dev` where the project holds `the script dev` is reported `not reported`', async () => {
+      const steps = createSteps()
+
+      // Given a consolidated procedure `local-run` whose steps run `pnpm dev`
+      await steps.runbookRuns('local-run', 'pnpm dev')
+      // And the project holds `the script dev`
+      await steps.projectHolds('the script dev')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `a suspect runbook` as `not reported`
+      await steps.reportsRequirementAs('a suspect runbook', 'not reported')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+
+    // Line 173
+    test('a runbook that runs `pnpm exec react-scripts start` where the project holds `the binary vite` is reported `suspect`', async () => {
+      const steps = createSteps()
+
+      // Given a consolidated procedure `local-run` whose steps run `pnpm exec react-scripts start`
+      await steps.runbookRuns('local-run', 'pnpm exec react-scripts start')
+      // And the project holds `the binary vite`
+      await steps.projectHolds('the binary vite')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `a suspect runbook` as `suspect`
+      await steps.reportsRequirementAs('a suspect runbook', 'suspect')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+
+    // Line 173
+    test('a runbook that runs `pnpm exec vite` where the project holds `the binary vite` is reported `not reported`', async () => {
+      const steps = createSteps()
+
+      // Given a consolidated procedure `local-run` whose steps run `pnpm exec vite`
+      await steps.runbookRuns('local-run', 'pnpm exec vite')
+      // And the project holds `the binary vite`
+      await steps.projectHolds('the binary vite')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `a suspect runbook` as `not reported`
+      await steps.reportsRequirementAs('a suspect runbook', 'not reported')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+
+    // Line 173
+    test('a runbook that runs `npx create-vite@5.5.0 web` where the project holds `nothing` is reported `not reported`', async () => {
+      const steps = createSteps()
+
+      // Given a consolidated procedure `local-run` whose steps run `npx create-vite@5.5.0 web`
+      await steps.runbookRuns('local-run', 'npx create-vite@5.5.0 web')
+      // And the project holds `nothing`
+      await steps.projectHolds('nothing')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `a suspect runbook` as `not reported`
+      await steps.reportsRequirementAs('a suspect runbook', 'not reported')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+
+    // Line 173
+    test('a runbook that runs `node scripts/seed.mjs` where the project holds `the file scripts/load.mjs` is reported `suspect`', async () => {
+      const steps = createSteps()
+
+      // Given a consolidated procedure `seed-local` whose steps run `node scripts/seed.mjs`
+      await steps.runbookRuns('seed-local', 'node scripts/seed.mjs')
+      // And the project holds `the file scripts/load.mjs`
+      await steps.projectHolds('the file scripts/load.mjs')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `a suspect runbook` as `suspect`
+      await steps.reportsRequirementAs('a suspect runbook', 'suspect')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+
+    // Line 173
+    test('a runbook that runs `./scripts/seed.sh` where the project holds `the file scripts/seed.sh` is reported `not reported`', async () => {
+      const steps = createSteps()
+
+      // Given a consolidated procedure `seed-local` whose steps run `./scripts/seed.sh`
+      await steps.runbookRuns('seed-local', './scripts/seed.sh')
+      // And the project holds `the file scripts/seed.sh`
+      await steps.projectHolds('the file scripts/seed.sh')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `a suspect runbook` as `not reported`
+      await steps.reportsRequirementAs('a suspect runbook', 'not reported')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+
+    // Line 173
+    test('a runbook that runs `kubectl logs deploy/api` where the project holds `nothing` is reported `not reported`', async () => {
+      const steps = createSteps()
+
+      // Given a consolidated procedure `prod-logs` whose steps run `kubectl logs deploy/api`
+      await steps.runbookRuns('prod-logs', 'kubectl logs deploy/api')
+      // And the project holds `nothing`
+      await steps.projectHolds('nothing')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `a suspect runbook` as `not reported`
+      await steps.reportsRequirementAs('a suspect runbook', 'not reported')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+
+    // Line 192
+    test('a runbook that runs `pnpm run start` is still reported `suspect` after repair', async () => {
+      const steps = createSteps()
+
+      // Given a consolidated procedure `local-run` whose steps run `pnpm run start`
+      await steps.runbookRuns('local-run', 'pnpm run start')
+      // And the project holds `the script dev`
+      await steps.projectHolds('the script dev')
+      // When setup runs with repair
+      await steps.runSetupWithRepair()
+      // Then it reports `a suspect runbook` as `suspect`
+      await steps.reportsRequirementAs('a suspect runbook', 'suspect')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+  })
 })

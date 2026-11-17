@@ -91,6 +91,10 @@ export function createSteps() {
   // The product's platform, when the package pins end-to-end tools, and the packages the project declares.
   let productPlatform: string | undefined;
   let e2eDeclared: Record<string, string> = {};
+  // The runbook a scenario judges, and the scripts and binaries the project holds besides the defaults.
+  let suspectSlug: string | undefined;
+  const scripts: Record<string, string> = {};
+  const binaries: string[] = [];
   let changed = -1;
 
   const command = (version: string) =>
@@ -162,11 +166,12 @@ export function createSteps() {
         copyFileSync(stub(name, version), at(`stubs/${name}-${version}.tgz`));
         devDependencies[name] = `file:stubs/${name}-${version}.tgz`;
       }
-    write("package.json", JSON.stringify({ name: "project", private: true, devDependencies }));
+    write("package.json", JSON.stringify({ name: "project", private: true, scripts, devDependencies }));
     if (Object.keys(devDependencies).length) pnpm(root, "install");
+    for (const name of binaries) write(join("node_modules/.bin", name), "#!/bin/sh\n");
     // The end-to-end packages are declared after the install: setup reads what is declared, and nothing fetches them.
     if (Object.keys(e2eDeclared).length)
-      write("package.json", JSON.stringify({ name: "project", private: true, devDependencies: { ...devDependencies, ...e2eDeclared } }));
+      write("package.json", JSON.stringify({ name: "project", private: true, scripts, devDependencies: { ...devDependencies, ...e2eDeclared } }));
     if (before !== named) {
       if (before !== "none") rmSync(at(tarball(before)));
       copyFileSync(command(named), at(tarball(named)));
@@ -251,6 +256,21 @@ export function createSteps() {
         }),
       );
     },
+    async runbookRuns(slug: string, command: string): Promise<void> {
+      suspectSlug = slug;
+      // A shell comment inside the fence must not end the block.
+      write(
+        `openspec/runbooks/setup/${slug}.md`,
+        `# ${slug}\n\n### Procedure: ${slug} · Run it\n\n@origin:2026-11-16-add-invoices @purpose:setup @topic:${slug} @env:local\n\n**Steps**\n\n1. Run it:\n\n   \`\`\`bash\n   # from the repository root\n   ${command}\n   \`\`\`\n\n**Verification** It answers.\n`,
+      );
+    },
+    async projectHolds(holding: string): Promise<void> {
+      const [, kind, name] = /^the (script|binary|file) (\S+)$/.exec(holding) ?? [];
+      if (kind === "script") scripts[name!] = "true";
+      else if (kind === "binary") binaries.push(name!);
+      else if (kind === "file") write(name!, "#!/bin/sh\n");
+      else expect(holding).toBe("nothing");
+    },
 
     // Action
     async runSetupWithRepair(): Promise<void> {
@@ -299,6 +319,14 @@ export function createSteps() {
       expect(config.schema).toBe(defaultAfter);
     },
     async reportsRequirementAs(requirement: string, report: string): Promise<void> {
+      // A suspect is never an item nor a note: it is a suspect, or nothing.
+      if (requirement === "a suspect runbook") {
+        expect(outcome!.items.filter((i) => i.detail.includes(`procedure ${suspectSlug} `))).toEqual([]);
+        const flagged = outcome!.suspects.filter((n) => n.includes(`the procedure ${suspectSlug} `));
+        expect(flagged, JSON.stringify(outcome!.suspects)).toHaveLength(report === "suspect" ? 1 : 0);
+        if (report !== "suspect") expect(report).toBe("not reported");
+        return;
+      }
       // A key is never an item: it is a note, or nothing.
       if (requirement === "the key of a runbook") {
         expect(outcome!.items.filter((i) => i.detail.includes(runbookKey!))).toEqual([]);

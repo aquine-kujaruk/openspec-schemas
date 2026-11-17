@@ -52,7 +52,7 @@ The project needs Node 22.18 or later, pnpm, and the agent package manager APM 0
 2. Pin the command the skills call. The tarball came with the `setup` skill; its file name carries the version:
 
    ```bash
-   pnpm add -D ./.claude/skills/setup/assets/factory-0.8.0.tgz
+   pnpm add -D ./.claude/skills/setup/assets/factory-0.9.0.tgz
    ```
 
 3. Let setup repair what the package owns and list what the project must supply:
@@ -61,7 +61,7 @@ The project needs Node 22.18 or later, pnpm, and the agent package manager APM 0
    pnpm exec factory doctor --fix
    ```
 
-   It links the package's schemas under `openspec/schemas`, sets the default schema when the project has none, creates `openspec/specs`, `openspec/adr` and `openspec/runbooks`, and writes the flow instruction into `AGENTS.md` as one marked section, keeping every line the project wrote there. It reports as `missing` what only the project can add: its test runner (`vitest`) and its type checker (`typescript`). It adds a `note` for each key a runbook lists under `@keys` that neither the environment nor `.env` holds; only the person can add it, and the phase goes on.
+   It links the package's schemas under `openspec/schemas`, sets the default schema when the project has none, creates `openspec/specs`, `openspec/adr` and `openspec/runbooks`, and writes the flow instruction into `AGENTS.md` as one marked section, keeping every line the project wrote there. It reports as `missing` what only the project can add: its test runner (`vitest`) and its type checker (`typescript`). It adds a `note` for each key a runbook lists under `@keys` that neither the environment nor `.env` holds; only the person can add it, and the phase goes on. It prints as `suspect` each runbook that runs a package script, a binary of `node_modules/.bin` or a file of the repository that the project no longer has; the phase goes on, and the plan phase investigates it: it updates or removes the runbook in the change it plans when that change made it stale, opens a change of its own for it when the evidence is conclusive, and otherwise tells the person.
 
    `apm compile` is not needed for the flow instruction. Setup also switches the project's `apm.yml` to a managed section between the same markers, so a later `apm compile` rewrites that section and nothing else.
 
