@@ -1,4 +1,4 @@
-import type { Command } from "../factory/shared/domain/command.ts";
+import type { Command } from "../factory/shared/infrastructure/adapters/cli-contract.adapter.ts";
 export const commands: Record<string, Command> = {
   build: {
     usage: "build <package> [--check]: builds the package",
@@ -15,7 +15,7 @@ export const commands: Record<string, Command> = {
   expect: {
     usage: "expect: records the rule examples",
     run: async (args) => {
-      await (await import("../factory/architecture.ts")).project.initialize();
+      await (await import("../factory/engineering.ts")).project.initialize();
       return (await import("./expect.ts")).expect(args);
     },
   },

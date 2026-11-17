@@ -1,15 +1,15 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, relative } from "node:path";
-import type { Recorded } from "../factory/architecture/domain/example-file.ts";
-import { exampleFile as architectureexampleFile } from "../factory/architecture.ts";
+import type { Recorded } from "../factory/quality/infrastructure/adapters/sample-file-contract.adapter.ts";
+import { exampleFile as architectureexampleFile } from "../factory/quality.ts";
 const { parseExampleText, recordFindings } = architectureexampleFile;
-import { examples as architectureexamples } from "../factory/architecture.ts";
+import { examples as architectureexamples } from "../factory/quality.ts";
 const { examples } = architectureexamples;
 import {
   DEVELOPING,
   PACKAGE_ROOT,
-} from "../factory/shared/infrastructure/adapters/paths.ts";
-import { project as architectureproject } from "../factory/architecture.ts";
+} from "../factory/shared/infrastructure/adapters/paths.adapter.ts";
+import { project as architectureproject } from "../factory/engineering.ts";
 const { EXAMPLE_FILES, exampleArchitecture } = architectureproject;
 
 /**

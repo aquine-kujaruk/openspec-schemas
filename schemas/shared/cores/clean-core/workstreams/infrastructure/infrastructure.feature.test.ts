@@ -134,7 +134,7 @@ describe('Feature: Build the infrastructure layer', () => {
   })
 
   describe('Rule: repository-depends-on-acl · infrastructure repositories receive their adapters typed by the anti-corruption layer', () => {
-    // Line 83
+    // Line 85
     test('`typed-by-adapter-class` breaks repository-depends-on-acl', async () => {
       const steps = createSteps()
 
@@ -146,7 +146,7 @@ describe('Feature: Build the infrastructure layer', () => {
       await steps.brokenAsExpected()
     })
 
-    // Line 83
+    // Line 85
     test('`imports-adapter-file` breaks repository-depends-on-acl', async () => {
       const steps = createSteps()
 
@@ -157,10 +157,22 @@ describe('Feature: Build the infrastructure layer', () => {
       // Then it is broken in the files the expectation records
       await steps.brokenAsExpected()
     })
+
+    // Line 85
+    test('`imports-adapter-with-extension` breaks repository-depends-on-acl', async () => {
+      const steps = createSteps()
+
+      // Given the example `imports-adapter-with-extension`
+      await steps.exampleFolder('imports-adapter-with-extension')
+      // When rule `repository-depends-on-acl` is checked
+      await steps.ruleChecked('repository-depends-on-acl')
+      // Then it is broken in the files the expectation records
+      await steps.brokenAsExpected()
+    })
   })
 
   describe('Rule: repository-never-news-adapter · infrastructure repositories construct no adapter', () => {
-    // Line 97
+    // Line 100
     test('`news-adapter-in-default` breaks repository-never-news-adapter', async () => {
       const steps = createSteps()
 
@@ -172,7 +184,7 @@ describe('Feature: Build the infrastructure layer', () => {
       await steps.brokenAsExpected()
     })
 
-    // Line 97
+    // Line 100
     test('`news-adapter-in-method` breaks repository-never-news-adapter', async () => {
       const steps = createSteps()
 
@@ -186,7 +198,7 @@ describe('Feature: Build the infrastructure layer', () => {
   })
 
   describe('Rule: infrastructure-names-the-role · infrastructure names every object by its role', () => {
-    // Line 111
+    // Line 114
     test('`class-named-helper` breaks infrastructure-names-the-role', async () => {
       const steps = createSteps()
 
@@ -198,7 +210,7 @@ describe('Feature: Build the infrastructure layer', () => {
       await steps.brokenAsExpected()
     })
 
-    // Line 111
+    // Line 114
     test('`file-named-util` breaks infrastructure-names-the-role', async () => {
       const steps = createSteps()
 
@@ -212,7 +224,7 @@ describe('Feature: Build the infrastructure layer', () => {
   })
 
   describe('Rule: infrastructure-throws-domain-exceptions · infrastructure throws only domain exceptions', () => {
-    // Line 125
+    // Line 128
     test('`throws-raw-error` breaks infrastructure-throws-domain-exceptions', async () => {
       const steps = createSteps()
 
@@ -224,7 +236,7 @@ describe('Feature: Build the infrastructure layer', () => {
       await steps.brokenAsExpected()
     })
 
-    // Line 125
+    // Line 128
     test('`throws-own-exception-class` breaks infrastructure-throws-domain-exceptions', async () => {
       const steps = createSteps()
 
@@ -236,7 +248,7 @@ describe('Feature: Build the infrastructure layer', () => {
       await steps.brokenAsExpected()
     })
 
-    // Line 125
+    // Line 128
     test('`throws-without-cause` breaks infrastructure-throws-domain-exceptions', async () => {
       const steps = createSteps()
 
@@ -248,7 +260,7 @@ describe('Feature: Build the infrastructure layer', () => {
       await steps.brokenAsExpected()
     })
 
-    // Line 125
+    // Line 128
     test('`throws-shared-exception` breaks infrastructure-throws-domain-exceptions', async () => {
       const steps = createSteps()
 
@@ -262,7 +274,7 @@ describe('Feature: Build the infrastructure layer', () => {
   })
 
   describe('Rule: A reference module satisfies the whole layer', () => {
-    // Line 141
+    // Line 144
     test('`reference` breaks no rule', async () => {
       const steps = createSteps()
 

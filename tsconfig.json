@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2023",
-    "paths": { "factory/sdk": ["./factory/sdk/index.ts"] },
+    "paths": { "factory/sdk": ["./factory/sdk.ts"] },
     "lib": ["es2023"],
     "module": "nodenext",
     "moduleResolution": "nodenext",
@@ -14,6 +14,6 @@
     "verbatimModuleSyntax": true,
     "erasableSyntaxOnly": true
   },
-  "include": ["schemas", "factory", "tools", "packages", "*.ts"],
+  "include": ["schemas", "factory", "test", "tools", "packages", "*.ts"],
   "exclude": ["node_modules", "dist", "**/*.feature.test.ts"]
 }

@@ -32,13 +32,10 @@ const PER_HOLDER = [
   "record-findings",
   "rule-ids",
   "scaffolds",
-].map(
-  (t) =>
-    `factory/architecture/${["graph", "compose", "archunit", "oxlint"].includes(t) ? "domain" : "application"}/${t}.test.ts`,
-);
+].map((name) => `test/schemas/${name}.test.ts`);
 
 export default defineConfig({
-  resolve: { alias: { "factory/sdk": new URL("./factory/sdk/index.ts", import.meta.url).pathname } },
+  resolve: { alias: { "factory/sdk": new URL("./factory/sdk.ts", import.meta.url).pathname } },
   test: {
     globals: true,
     setupFiles: ["tools/test-setup.ts"],
@@ -59,7 +56,7 @@ export default defineConfig({
         test: {
           name: "repository",
           include: [
-            "factory/**/*.test.ts",
+            "test/**/*.test.ts",
             "tools/**/*.test.ts",
             "schemas/**/*.test.ts",
           ],

@@ -1,3 +1,4 @@
+import { sourceStem } from "../../source-path.ts";
 import { globSync, readFileSync } from "node:fs";
 import {
   type ClassDecl,
@@ -138,7 +139,7 @@ export const infrastructure = (o: Options): Layer => {
             .should()
             .adhereTo(
               (f) =>
-                importsOf(f).every((i) => !/\/adapters\/[\w-]+\.adapter$/.test(i.resolved)) &&
+                importsOf(f).every((i) => !/\/adapters\/[\w-]+\.adapter$/.test(sourceStem(i.resolved))) &&
                 constructorParams(f.content).every((params) =>
                   params.every((p) => /^\w+Acl$/.test(p.type ?? "")),
                 ),

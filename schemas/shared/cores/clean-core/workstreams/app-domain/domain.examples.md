@@ -63,9 +63,9 @@ export type InvoiceBookProps = z.infer<typeof InvoiceBookSchema>;
 ```
 
 ```ts src/module/domain/entities/invoice.entity.ts
-import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
+import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
 import { InvoiceAlreadyPaidException } from "../exceptions/invoice.exceptions";
-import { InvoiceSchema, InvoiceStatus, type InvoiceProps } from "../schemas/invoice.schema";
+import { InvoiceSchema, InvoiceStatus, type InvoiceProps } from "../schemas/invoice.schema.ts";
 export class InvoiceEntity {
   public readonly id!: string;
   public readonly total!: number;
@@ -85,8 +85,8 @@ export class InvoiceEntity {
 
 ```ts src/module/domain/aggregates/invoice-book.aggregate.ts
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
-import { InvoiceEntity } from "../entities/invoice.entity";
-import { InvoiceBookSchema, type InvoiceBookProps } from "../schemas/invoice-book.schema";
+import { InvoiceEntity } from "../entities/invoice.entity.ts";
+import { InvoiceBookSchema, type InvoiceBookProps } from "../schemas/invoice-book.schema.ts";
 export class InvoiceBookAggregate {
   public readonly year!: number;
   public readonly invoices: InvoiceEntity[];
@@ -101,7 +101,7 @@ export class InvoiceBookAggregate {
 ```
 
 ```ts src/module/domain/exceptions/invoice.exceptions.ts
-import { DomainException } from "../../../shared/domain/exceptions/domain.exceptions";
+import { DomainException } from "../../../shared/domain/exceptions/domain.exceptions.ts";
 export class ModuleException extends DomainException {}
 export class InvoiceNotFoundException extends ModuleException {
   constructor(

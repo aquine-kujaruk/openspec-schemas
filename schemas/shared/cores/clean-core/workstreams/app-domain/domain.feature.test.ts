@@ -42,7 +42,7 @@ describe('Feature: Build the domain layer', () => {
   })
 
   describe('Rule: entity-validates-with-schema · domain entities, aggregates and value objects validate with their schema', () => {
-    // Line 28
+    // Line 30
     test('`no-schema` breaks entity-validates-with-schema', async () => {
       const steps = createSteps()
 
@@ -54,7 +54,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.brokenAsExpected()
     })
 
-    // Line 28
+    // Line 30
     test('`parses-directly` breaks entity-validates-with-schema', async () => {
       const steps = createSteps()
 
@@ -66,7 +66,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.brokenAsExpected()
     })
 
-    // Line 28
+    // Line 30
     test('`validates-elsewhere` breaks entity-validates-with-schema', async () => {
       const steps = createSteps()
 
@@ -80,7 +80,7 @@ describe('Feature: Build the domain layer', () => {
   })
 
   describe('Rule: domain-imports-only-domain · domain imports no other layer', () => {
-    // Line 43
+    // Line 45
     test('`imports-infrastructure` breaks domain-imports-only-domain', async () => {
       const steps = createSteps()
 
@@ -94,7 +94,7 @@ describe('Feature: Build the domain layer', () => {
   })
 
   describe('Rule: no-framework-import · domain imports no framework package', () => {
-    // Line 56
+    // Line 58
     test('`imports-framework-package` breaks no-framework-import', async () => {
       const steps = createSteps()
 
@@ -108,7 +108,7 @@ describe('Feature: Build the domain layer', () => {
   })
 
   describe('Rule: no-environment · domain never touches the environment', () => {
-    // Line 69
+    // Line 71
     test('`calls-environment` breaks no-environment', async () => {
       const steps = createSteps()
 
@@ -122,7 +122,7 @@ describe('Feature: Build the domain layer', () => {
   })
 
   describe('Rule: aggregate-composes-domain-objects · domain aggregates compose entities or value objects', () => {
-    // Line 82
+    // Line 84
     test('`composes-nothing` breaks aggregate-composes-domain-objects', async () => {
       const steps = createSteps()
 
@@ -134,7 +134,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.brokenAsExpected()
     })
 
-    // Line 82
+    // Line 84
     test('`imports-but-holds-none` breaks aggregate-composes-domain-objects', async () => {
       const steps = createSteps()
 
@@ -148,7 +148,7 @@ describe('Feature: Build the domain layer', () => {
   })
 
   describe('Rule: exception-extends-domain-exception · domain exceptions extend the common base', () => {
-    // Line 96
+    // Line 98
     test('`extends-error` breaks exception-extends-domain-exception', async () => {
       const steps = createSteps()
 
@@ -160,7 +160,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.brokenAsExpected()
     })
 
-    // Line 96
+    // Line 98
     test('`extends-nothing` breaks exception-extends-domain-exception', async () => {
       const steps = createSteps()
 
@@ -172,7 +172,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.brokenAsExpected()
     })
 
-    // Line 96
+    // Line 98
     test('`redeclares-base` breaks exception-extends-domain-exception', async () => {
       const steps = createSteps()
 
@@ -184,7 +184,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.brokenAsExpected()
     })
 
-    // Line 96
+    // Line 98
     test('`two-module-bases` breaks exception-extends-domain-exception', async () => {
       const steps = createSteps()
 
@@ -198,7 +198,7 @@ describe('Feature: Build the domain layer', () => {
   })
 
   describe('Rule: closed-set-lives-in-schema · domain closed sets are enums declared in schemas', () => {
-    // Line 112
+    // Line 114
     test('`enum-in-entity` breaks closed-set-lives-in-schema', async () => {
       const steps = createSteps()
 
@@ -210,7 +210,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.brokenAsExpected()
     })
 
-    // Line 112
+    // Line 114
     test('`enum-in-use-case` breaks closed-set-lives-in-schema', async () => {
       const steps = createSteps()
 
@@ -222,7 +222,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.brokenAsExpected()
     })
 
-    // Line 112
+    // Line 114
     test('`enum-in-repository` breaks closed-set-lives-in-schema', async () => {
       const steps = createSteps()
 
@@ -236,7 +236,7 @@ describe('Feature: Build the domain layer', () => {
   })
 
   describe('Rule: no-magic-closed-set-strings · domain compares closed sets through their enum', () => {
-    // Line 127
+    // Line 129
     test('`compares-status-literal` breaks no-magic-closed-set-strings', async () => {
       const steps = createSteps()
 
@@ -248,7 +248,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.brokenAsExpected()
     })
 
-    // Line 127
+    // Line 129
     test('`switches-on-type-literal` breaks no-magic-closed-set-strings', async () => {
       const steps = createSteps()
 
@@ -262,7 +262,7 @@ describe('Feature: Build the domain layer', () => {
   })
 
   describe('Rule: domain-service-named-by-policy · domain services are named by the policy they implement', () => {
-    // Line 141
+    // Line 143
     test('`named-helper` breaks domain-service-named-by-policy', async () => {
       const steps = createSteps()
 
@@ -274,7 +274,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.brokenAsExpected()
     })
 
-    // Line 141
+    // Line 143
     test('`exports-no-class` breaks domain-service-named-by-policy', async () => {
       const steps = createSteps()
 
@@ -288,7 +288,7 @@ describe('Feature: Build the domain layer', () => {
   })
 
   describe('Rule: A reference module satisfies the whole layer', () => {
-    // Line 155
+    // Line 157
     test('`reference` breaks no rule', async () => {
       const steps = createSteps()
 

@@ -30,7 +30,7 @@ The system SHALL list every invoice the repository holds.
 ```
 
 ```ts test/acceptance/module/repositories/in-memory-invoice.repository.ts
-import type { InvoiceRepositoryInterface } from "../../../../src/module/application/repository-interfaces/invoice.repository-interface";
+import type { InvoiceRepositoryInterface } from "../../../../src/module/application/repository-interfaces/invoice.repository-interface.ts";
 import type { InvoiceProps } from "../../../../src/module/domain/schemas/invoice.schema";
 export class InMemoryInvoiceRepository implements InvoiceRepositoryInterface {
   private invoices: InvoiceProps[] = [];

@@ -238,4 +238,48 @@ describe('Feature: Keep the modules apart', () => {
       await steps.noBrokenFiles()
     })
   })
+
+  describe('Rule: A module check reports findings on the selected module', () => {
+    // Line 149
+    test('the check for `shared` reports `neither the rule violation nor the unused file`', async () => {
+      const steps = createSteps()
+
+      // Given a line where a different module imports from shared and breaks a rule
+      await steps.anotherModuleHasFinding()
+      // And the line has an unused file
+      await steps.lineHasUnusedFile()
+      // When the check for `shared` runs
+      await steps.moduleScopeChecked('shared')
+      // Then the check reports `neither the rule violation nor the unused file`
+      await steps.moduleScopeOutcome('neither the rule violation nor the unused file')
+    })
+
+    // Line 149
+    test('the check for `production` reports `only the rule violation`', async () => {
+      const steps = createSteps()
+
+      // Given a line where a different module imports from shared and breaks a rule
+      await steps.anotherModuleHasFinding()
+      // And the line has an unused file
+      await steps.lineHasUnusedFile()
+      // When the check for `production` runs
+      await steps.moduleScopeChecked('production')
+      // Then the check reports `only the rule violation`
+      await steps.moduleScopeOutcome('only the rule violation')
+    })
+
+    // Line 149
+    test('the check for `whole line` reports `the rule violation and the unused file`', async () => {
+      const steps = createSteps()
+
+      // Given a line where a different module imports from shared and breaks a rule
+      await steps.anotherModuleHasFinding()
+      // And the line has an unused file
+      await steps.lineHasUnusedFile()
+      // When the check for `whole line` runs
+      await steps.moduleScopeChecked('whole line')
+      // Then the check reports `the rule violation and the unused file`
+      await steps.moduleScopeOutcome('the rule violation and the unused file')
+    })
+  })
 })
