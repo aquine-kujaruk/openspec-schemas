@@ -57,7 +57,7 @@ describe("stage start repository", () => {
     expect(isStarted(root, name)).toBe(false);
   }, 120_000);
 
-  it("opens no product paths for a process with no workstreams and lets the builder alone release the stage", () => {
+  it("keeps a spec-plan stage open until the builder verifies it", () => {
     const root = project();
     const name = "record-outage";
     write(root, "openspec/config.yaml", "schema: spec-plan\n");
@@ -73,6 +73,19 @@ describe("stage start repository", () => {
 
     expect(run(root, "gate", "--helper")).toEqual({ status: 0, output: "" });
     expect(isStarted(root, name)).toBe(true);
+    expect(run(root, "gate")).toEqual({
+      status: 2,
+      output: "record-outage: continue Phase 1: Step 1 works — build step 1",
+    });
+    expect(isStarted(root, name)).toBe(true);
+
+    change(root, name, { schema: "spec-plan", deltas: {}, parts: { phases: [true] } });
+    expect(run(root, "gate")).toEqual({
+      status: 2,
+      output: "record-outage: verify the change with factory verify record-outage",
+    });
+    const verified = run(root, "verify", name);
+    expect(verified.status, verified.output).toBe(0);
     expect(run(root, "gate")).toEqual({ status: 0, output: "" });
     expect(isStarted(root, name)).toBe(false);
 
