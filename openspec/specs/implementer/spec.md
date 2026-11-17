@@ -384,12 +384,13 @@ A layer's examples MAY hold scaffolds, one per kind, in a section of their own. 
 
 ##### Examples:
 
-  | kind                 | layer          | name    | module  | path                                                               | rule                         |
-  | -------------------- | -------------- | ------- | ------- | ------------------------------------------------------------------ | ---------------------------- |
-  | schema               | domain         | Invoice | billing | src/billing/domain/schemas/invoice.schema.ts                       | domain-vocabulary            |
-  | entity               | domain         | Invoice | billing | src/billing/domain/entities/invoice.entity.ts                      | entity-validates-with-schema |
-  | repository-interface | application    | Invoice | billing | src/billing/application/repository-interfaces/invoice.repository-interface.ts | application-vocabulary |
-  | acl                  | infrastructure | Invoice | billing | src/billing/infrastructure/acl/invoice.acl.ts                      | infrastructure-vocabulary    |
+  | kind                 | layer          | name       | module  | path                                                               | rule                         |
+  | -------------------- | -------------- | ---------- | ------- | ------------------------------------------------------------------ | ---------------------------- |
+  | schema               | domain         | Invoice    | billing | src/billing/domain/schemas/invoice.schema.ts                       | domain-vocabulary            |
+  | entity               | domain         | Invoice    | billing | src/billing/domain/entities/invoice.entity.ts                      | entity-validates-with-schema |
+  | repository-interface | application    | Invoice    | billing | src/billing/application/repository-interfaces/invoice.repository-interface.ts | application-vocabulary |
+  | acl                  | infrastructure | Invoice    | billing | src/billing/infrastructure/acl/invoice.acl.ts                      | infrastructure-vocabulary    |
+  | mutation             | framework      | PayInvoice | billing | src/billing/framework/mutations/pay-invoice.mutation.ts            | query-bridges-use-case       |
 
 #### Scenario Outline: a `<kind>` scaffold that breaks `<rule>` fails the tests
 
