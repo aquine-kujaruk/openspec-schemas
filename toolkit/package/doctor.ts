@@ -160,7 +160,8 @@ const lacks = (root: string, installed: Installed, assets: string, web = false, 
         const tarball = `./${join(assets, installed.command)}`;
         if (!pinned) return run(["add", "-D", tarball]);
         run(["pkg", "set", `devDependencies.${COMMAND}=file:${tarball}`]);
-        run(["install"]);
+        // Under CI, pnpm freezes the lockfile by default; the repair exists to rewrite it.
+        run(["install", "--no-frozen-lockfile"]);
       },
     });
 

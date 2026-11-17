@@ -5,7 +5,7 @@ The [installer](../install.sh) does these steps for you. By hand, from the proje
 1. Install the package for the agents that will work in the project, at a release (`packages-v<version>`):
 
    ```bash
-   apm install aquine-kujaruk/openspec-schemas/backend#packages-v0.13.0 --target claude,codex
+   apm install aquine-kujaruk/openspec-schemas/backend#packages-v0.13.1 --target claude,codex
    ```
 
    Installing reaches the repositories of the package's tools: the skills that ship inside a tool are declared in the package at the tool's pinned version, and APM fetches them.
@@ -13,7 +13,7 @@ The [installer](../install.sh) does these steps for you. By hand, from the proje
 2. Pin the command the skills call. It came with the `setup` skill, in the folder of the agent it was installed for (`.claude/skills` or `.agents/skills`); its file name carries the version:
 
    ```bash
-   pnpm add -D ./.claude/skills/setup/assets/factory-0.13.0.tgz
+   pnpm add -D ./.claude/skills/setup/assets/factory-0.13.1.tgz
    ```
 
 3. Let setup repair what the package owns and list what the project must supply:
