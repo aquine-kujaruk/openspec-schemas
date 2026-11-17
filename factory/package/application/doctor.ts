@@ -68,7 +68,8 @@ export const createDoctor = ({
       >;
       packages?: Record<string, { version?: string }>;
     };
-    const resolved = importers?.["."]?.devDependencies?.[COMMAND]?.version;
+    // pnpm appends the peers it resolved, `file:x.tgz(@types/node@26.6.5)`; the package key has none.
+    const resolved = importers?.["."]?.devDependencies?.[COMMAND]?.version?.replace(/\(.*\)$/, "");
     return resolved
       ? (packages?.[`${COMMAND}@${resolved}`]?.version ?? resolved)
       : undefined;
