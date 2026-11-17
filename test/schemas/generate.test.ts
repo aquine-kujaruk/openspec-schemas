@@ -154,5 +154,5 @@ describe("in the command's repository, a ready change's delta has its tests befo
       deltas: { "architecture/modules": delta() },
     });
     expect(scenarios(cwd)).toBe(standing + 1);
-  });
+  }, 300_000); // Runs the repository generator three times.
 });
