@@ -23,3 +23,27 @@ A schema whose platform is `web` SHALL declare a spike workstream. The plan of a
 Once the person starts the implementation of a ready change, the implement phase SHALL build every phase with unchecked tasks in the plan's order, each closed by its verification task and the completion gate, SHALL start the next phase without asking the person, and SHALL go on to verify once no task is left. It SHALL stop early only when feedback is raised, when a check keeps failing and the agent cannot fix it, or when something only the person can give is missing.
 
 **Why** The person approves a plan so as not to be asked again; a pause between phases asked for an approval that adds nothing, since each phase already ends in a verification and the gate. The person: "¿Por qué tienes que depender de mí para eso?".
+
+### Decision: decisions-name-who-took-them · Every decision a change writes says whether the person or the agent took it
+
+@origin:2026-11-17-approve-then-implement @applies:schemas,phases,toolkit @enforced:decision-authored @by:person
+
+Every decision a change writes SHALL carry `@by:person` or `@by:agent`: each line under the plan's Decisions, each architecture decision, procedure and screen, and each requirement a delta spec adds or modifies. Validation SHALL report a change not ready while one lacks it, and archiving SHALL keep it in what it consolidates.
+
+**Why** The person wants to audit later which decisions were theirs and which the agent's, inside the plan and the specs themselves.
+
+### Decision: approve-then-implement · The person's approval is the plan's last question and starts the implementation where the project says
+
+@origin:2026-11-17-approve-then-implement @applies:phases,schemas,toolkit @enforced:plan-approved,handoff-spec @by:person
+
+The plan SHALL end with the person's approval as its last open question, shown with links to the change's artifacts themselves. A change SHALL NOT be ready until its plan records that approval. Once approved, the change SHALL be handed in the same turn to the implementation the project configures: the same session by default, or a command the project names.
+
+**Why** The person wants planning and implementing to read as one flow: approving should be one more answer, not a stop that waits for another run; and the person reads the plan itself, not a summary of it.
+
+### Decision: read-in-your-language · Artifacts are shown in the person's language and kept in English
+
+@origin:2026-11-17-approve-then-implement @applies:phases,toolkit @enforced:reading-spec @by:person
+
+The artifacts of `openspec/` SHALL stay in English in the repository. When a language other than English is configured, by the project or by the person's environment, every artifact the agent shows the person SHALL be shown as a copy translated into that language, kept under the system's temporary folder and never in the repository, translated by a small, fast model, with code, identifiers, names, tags and the specs' keywords left in English.
+
+**Why** The person reviews plans and specs in their own language, while the specs stay convertible and shared in one language.
