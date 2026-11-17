@@ -1,3 +1,5 @@
+import { existsSync, statSync } from "node:fs";
+import { join, normalize } from "node:path";
 import { type Block, operationsOf, tagOf } from "../../../../toolkit/flow/plan.ts";
 import type { Standing } from "../../../../toolkit/flow/consolidated.ts";
 import type { Candidate, Finding, Validator } from "../../../../toolkit/flow/validation.ts";
@@ -166,7 +168,18 @@ const procedureProbed: Rule = (c) =>
 
 const APPROVED = /^(?:\d{4}-\d{2}-\d{2}|declined)$/;
 
-/** A web change lists its screens, and each one is approved by whoever could decide it, and names its page. */
+/** Whether `path`, relative to the change's folder `dir`, is an HTML file of the change's `spikes/` folder that exists. */
+const isSpike = (dir: string, path: string): boolean => {
+  const at = normalize(path).split("\\").join("/");
+  if (!at.startsWith("spikes/") || !at.endsWith(".html")) return false;
+  const file = join(dir, at);
+  return existsSync(file) && statSync(file).isFile();
+};
+
+/**
+ * A web change lists its screens, and each one is approved by whoever could decide it, names the
+ * page the implementation builds, and names its spike, a throwaway HTML file in the change.
+ */
 const screenApproved: Rule = (c) => {
   if (!c.spike) return [];
   const spiked = c.plan.phases.some((p) => p.tasks.some((t) => t.workstream === c.spike));
@@ -174,7 +187,7 @@ const screenApproved: Rule = (c) => {
     ? [
         {
           rule: "screen-approved",
-          message: `the plan has tasks of ${c.spike}, the spike workstream, and lists no screen: list each screen under ## Screens, spiked and approved while planning`,
+          message: `the plan has tasks of ${c.spike}, the spike workstream, and lists no screen: list each screen under ## Screens, spiked under spikes/ and approved while planning`,
         },
       ]
     : [];
@@ -194,7 +207,17 @@ const screenApproved: Rule = (c) => {
         rule: "screen-approved",
         block: screen.slug,
         tag: "@page",
-        message: `the screen ${screen.slug} names no page: tag it with @page:<path of the page it spikes>`,
+        message: `the screen ${screen.slug} names no page: tag it with @page:<path of the page the implementation builds>`,
+      });
+    const spike = tagOf(screen, "spike")?.value;
+    if (!spike || !isSpike(c.change.dir, spike))
+      found.push({
+        rule: "screen-approved",
+        block: screen.slug,
+        tag: "@spike",
+        message: spike
+          ? `the screen ${screen.slug} names the spike ${spike}, which is not an HTML file under the change's spikes/ folder: write it there, or name the one that holds the screen`
+          : `the screen ${screen.slug} names no spike: tag it with @spike:spikes/<name>.html, the throwaway page that shows it`,
       });
   }
   return found;

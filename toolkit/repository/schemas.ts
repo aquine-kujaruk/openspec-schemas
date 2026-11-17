@@ -40,7 +40,7 @@ export const run = async (args: string[]): Promise<number> => {
   }
   for (const { name, description, workstreams, spike } of listed)
     console.log(
-      `${name}\n  ${description}\n  ${workstreams.length ? `workstreams: ${workstreams.join(", ")}` : "no workstreams: its tasks name none"}${spike ? `\n  spike: ${spike}, built while planning` : ""}`,
+      `${name}\n  ${description}\n  ${workstreams.length ? `workstreams: ${workstreams.join(", ")}` : "no workstreams: its tasks name none"}${spike ? `\n  spike: ${spike} builds the approved spikes first` : ""}`,
     );
   if (products.length) {
     console.log("\nproducts (a change builds one, made with its schema)");

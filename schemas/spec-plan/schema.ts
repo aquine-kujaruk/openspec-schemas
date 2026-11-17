@@ -32,7 +32,7 @@ Architecture decisions and procedures are durable: archiving copies them to \`op
 
 What the probes observed (what a log says, what is deployed, what the repository holds) goes under Findings, one fact per line with its source and the date it was seen.
 
-When the schema has a spike workstream, each screen the change adds or changes is a block under Screens: \`### Screen: <slug> · <title>\`, tagged \`@approved\` (the date it was approved, or \`declined\` when the person chose not to see it) and \`@page\` (the page it spikes). A screen is a visual decision: the agent approves one a convention or a standing screen settles, and says so under Decisions; the person approves the others, as open questions, with the spike mounted. Validation reports the change not ready while a screen lacks \`@approved\`, or while the plan has tasks of the spike workstream and lists no screen.
+When the schema has a spike workstream, each screen the change adds or changes is a block under Screens: \`### Screen: <slug> · <title>\`, tagged \`@approved\` (the date it was approved, or \`declined\` when the person chose not to see it), \`@page\` (the page the implementation will build) and \`@spike\` (its spike, a throwaway HTML file under the change's \`spikes/\` folder), followed by the journeys through it, one numbered list of plain-language steps each. A screen is a visual decision: the agent approves one a convention or a standing screen settles, and says so under Decisions; the person approves the others, as open questions, with the spike open. Validation reports the change not ready while a screen lacks \`@approved\` or names no spike the change holds, or while the plan has tasks of the spike workstream and lists no screen.
 
 ${phases}
 

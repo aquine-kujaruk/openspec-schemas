@@ -65,13 +65,15 @@ One block per way of setting the system up, reaching it, diagnosing it or operat
 ## Screens
 
 <!--
-Only in a schema with a spike workstream (a web frontend): one block per screen the change adds or changes, spiked while planning:
+Only in a schema with a spike workstream (a web frontend): one block per screen the change adds or changes, spiked while planning as a throwaway HTML file under spikes/:
 
 ### Screen: <slug> · <title>
 
-@approved:<YYYY-MM-DD or declined> @page:<path of the page it spikes>
+@approved:<YYYY-MM-DD or declined> @page:<path of the page the implementation builds> @spike:spikes/<name>.html
 
-<What the screen shows and the journeys through it, each with its end-to-end test under test/e2e/<module>/.>
+<What the screen shows, and which variant was approved.>
+
+<Each journey through it: a numbered list of plain-language steps, each ending with what the screen shows afterwards.>
 -->
 
 ## Phases

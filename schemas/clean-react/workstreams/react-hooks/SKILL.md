@@ -29,6 +29,6 @@ description: Build the react-hooks workstream of the implementer: the framework 
 
 **Declared skill:** `composition-patterns` (installed with the package, at the commit its manifest pins; never edit it), section 2 (state management: decouple the implementation, the context interface, lift state) for stores. The rest is about JSX and belongs to `react-ui`.
 
-**End to end:** the plan left end-to-end tests under `test/e2e` passing against the stub controllers. Each real controller keeps them passing: in the environment `e2e` the adapters are the in-memory ones, seeded with the literal data the stub painted, so the same rows, totals and messages show. `pnpm exec factory test e2e` runs them.
+**End to end:** `react-ui` left end-to-end tests under `test/e2e` passing against the stub controllers. Each real controller keeps them passing: in the environment `e2e` the adapters are the in-memory ones, seeded with the literal data the stub painted, so the same rows, totals and messages show. `pnpm exec factory test e2e` runs them.
 
 **Check:** `pnpm exec factory check --workstream react-hooks [--module <module>]`, the project's type check and `pnpm exec factory test e2e`. `renderHook` tests over an in-memory adapter are a later decision.

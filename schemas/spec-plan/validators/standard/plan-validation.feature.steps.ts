@@ -32,7 +32,7 @@ export function createSteps() {
   let openQuestions = 0;
   const decisions: string[] = [];
   const procedures: string[] = [];
-  const screens: string[] = [];
+  const screens: Array<{ name: string; tags: string[] }> = [];
   let made = "clean-backend";
   let phaseTasks = ["app-domain: write the use case", "modules: verify the phase"];
   let strayTasks: string[] = [];
@@ -53,7 +53,7 @@ export function createSteps() {
       ["## Open questions", ...Array.from({ length: openQuestions }, (_, i) => `- Question ${i + 1}?`)].join("\n\n"),
       ["## Architecture decisions", ...decisions].join("\n\n"),
       ["## Procedures", ...procedures].join("\n\n"),
-      ["## Screens", ...screens].join("\n\n"),
+      ["## Screens", ...screens.map((s) => `### Screen: ${s.name} · The orders list\n\n${s.tags.join(" ")}\n\nThe orders, newest first.\n`)].join("\n\n"),
       "## Phases",
       "### Phase 1: Orders are listed",
       "**Seams**\n\n```ts\nexport interface OrderRepositoryInterface {}\n```",
@@ -170,7 +170,22 @@ export function createSteps() {
     async planScreenApproved(screen: string, approved: string): Promise<void> {
       if (screen === "no screen") return;
       const tags = [...(approved === "none" ? [] : [`@approved:${approved}`]), `@page:src/orders/framework/ui/${screen}/${screen}.page.tsx`];
-      screens.push(`### Screen: ${screen} · The orders list\n\n${tags.join(" ")}\n\nThe orders, newest first.\n`);
+      screens.push({ name: screen, tags });
+    },
+    // The spike of the last screen: written in the change's spikes/ folder, named and absent, not
+    // named at all, or written outside the change's folder.
+    async screenSpike(spike: string): Promise<void> {
+      const screen = screens.at(-1);
+      if (!screen || spike === "is not named") return;
+      const page = "<!doctype html><title>Orders</title>\n";
+      if (spike === "exists") {
+        screen.tags.push("@spike:spikes/orders.html");
+        files[`openspec/changes/${name}/spikes/orders.html`] = page;
+      } else if (spike === "is named but missing") screen.tags.push("@spike:spikes/orders.html");
+      else if (spike === "lies outside the change") {
+        screen.tags.push("@spike:../orders.html");
+        files["openspec/changes/orders.html"] = page;
+      } else throw new Error(`unknown spike: ${spike}`);
     },
     async planSpikeTasks(tasks: string): Promise<void> {
       if (Number(tasks)) phaseTasks = ["react-ui: build the orders list page", ...phaseTasks];

@@ -29,8 +29,8 @@ export default {
   ),
   core: "clean-core",
   workstreams: ["react-ui", "react-hooks"],
-  // The plan builds react-ui as the spike, against the stub controllers it writes.
-  spike: { workstream: "react-ui", fakes: (o) => [`${o.modules}/framework/controllers/*.controller.ts`] },
+  // react-ui builds the approved spikes first, against the stub controllers it writes.
+  spike: { workstream: "react-ui" },
   defaults: {
     ...defaults,
     platform: web,

@@ -718,6 +718,8 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeWithSchema('clean-react')
       // And its plan has the screen `orders-list` approved `2026-11-16`
       await steps.planScreenApproved('orders-list', '2026-11-16')
+      // And the screen's spike `exists`
+      await steps.screenSpike('exists')
       // And its plan has `1` task(s) of the spike workstream
       await steps.planSpikeTasks('1')
       // When the change is validated
@@ -734,6 +736,8 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeWithSchema('clean-react')
       // And its plan has the screen `orders-list` approved `declined`
       await steps.planScreenApproved('orders-list', 'declined')
+      // And the screen's spike `exists`
+      await steps.screenSpike('exists')
       // And its plan has `1` task(s) of the spike workstream
       await steps.planSpikeTasks('1')
       // When the change is validated
@@ -750,6 +754,8 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeWithSchema('clean-react')
       // And its plan has the screen `orders-list` approved `none`
       await steps.planScreenApproved('orders-list', 'none')
+      // And the screen's spike `exists`
+      await steps.screenSpike('exists')
       // And its plan has `1` task(s) of the spike workstream
       await steps.planSpikeTasks('1')
       // When the change is validated
@@ -766,6 +772,62 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeWithSchema('clean-react')
       // And its plan has the screen `orders-list` approved `yesterday`
       await steps.planScreenApproved('orders-list', 'yesterday')
+      // And the screen's spike `exists`
+      await steps.screenSpike('exists')
+      // And its plan has `1` task(s) of the spike workstream
+      await steps.planSpikeTasks('1')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 220
+    test('a `clean-react` change with a screen approved `2026-11-16` and `1` spike task(s) is `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change made with the schema `clean-react`
+      await steps.changeWithSchema('clean-react')
+      // And its plan has the screen `orders-list` approved `2026-11-16`
+      await steps.planScreenApproved('orders-list', '2026-11-16')
+      // And the screen's spike `is named but missing`
+      await steps.screenSpike('is named but missing')
+      // And its plan has `1` task(s) of the spike workstream
+      await steps.planSpikeTasks('1')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 220
+    test('a `clean-react` change with a screen approved `2026-11-16` and `1` spike task(s) is `not ready` #2', async () => {
+      const steps = createSteps()
+
+      // Given a change made with the schema `clean-react`
+      await steps.changeWithSchema('clean-react')
+      // And its plan has the screen `orders-list` approved `2026-11-16`
+      await steps.planScreenApproved('orders-list', '2026-11-16')
+      // And the screen's spike `is not named`
+      await steps.screenSpike('is not named')
+      // And its plan has `1` task(s) of the spike workstream
+      await steps.planSpikeTasks('1')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 220
+    test('a `clean-react` change with a screen approved `2026-11-16` and `1` spike task(s) is `not ready` #3', async () => {
+      const steps = createSteps()
+
+      // Given a change made with the schema `clean-react`
+      await steps.changeWithSchema('clean-react')
+      // And its plan has the screen `orders-list` approved `2026-11-16`
+      await steps.planScreenApproved('orders-list', '2026-11-16')
+      // And the screen's spike `lies outside the change`
+      await steps.screenSpike('lies outside the change')
       // And its plan has `1` task(s) of the spike workstream
       await steps.planSpikeTasks('1')
       // When the change is validated
@@ -782,6 +844,8 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeWithSchema('clean-react')
       // And its plan has the screen `no screen` approved `none`
       await steps.planScreenApproved('no screen', 'none')
+      // And the screen's spike `is not named`
+      await steps.screenSpike('is not named')
       // And its plan has `1` task(s) of the spike workstream
       await steps.planSpikeTasks('1')
       // When the change is validated
@@ -798,6 +862,8 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeWithSchema('clean-react')
       // And its plan has the screen `no screen` approved `none`
       await steps.planScreenApproved('no screen', 'none')
+      // And the screen's spike `is not named`
+      await steps.screenSpike('is not named')
       // And its plan has `0` task(s) of the spike workstream
       await steps.planSpikeTasks('0')
       // When the change is validated
@@ -814,6 +880,8 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeWithSchema('clean-backend')
       // And its plan has the screen `no screen` approved `none`
       await steps.planScreenApproved('no screen', 'none')
+      // And the screen's spike `is not named`
+      await steps.screenSpike('is not named')
       // And its plan has `0` task(s) of the spike workstream
       await steps.planSpikeTasks('0')
       // When the change is validated

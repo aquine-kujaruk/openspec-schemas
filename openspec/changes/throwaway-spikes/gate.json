@@ -1,0 +1,6 @@
+{
+  "phase": "Phase 2: the spike workstream builds the approved screens and tests them end to end",
+  "failures": 0,
+  "waitingFor": "the agent",
+  "findings": []
+}

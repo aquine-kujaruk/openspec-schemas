@@ -179,10 +179,11 @@ export type SchemaDefinition = {
   /** The whole-product checks, which no workstream owns: those of its core. */
   checks?: Check[];
   /**
-   * The workstream a change of this schema builds while it is planned, as the spike the person sees,
-   * and the files it fakes beside its own layers (the stub controllers). Only a web schema has one.
+   * The workstream that builds, first in the implementation, the screens the plan spiked as
+   * throwaway HTML and the person approved, and writes their end-to-end tests. Only a web schema
+   * has one.
    */
-  spike?: { workstream: string; fakes?: (o: Options) => string[] };
+  spike?: { workstream: string };
 };
 
 /**

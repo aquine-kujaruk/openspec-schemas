@@ -12,7 +12,7 @@ export type Candidate = {
   consolidated: Consolidated;
   /** The workstreams of the change's schema. */
   workstreams: string[];
-  /** The workstream the change's schema builds as the spike while planning, when it has one. */
+  /** The workstream that builds the change's approved spikes first, when its schema has one. */
   spike?: string;
 };
 
