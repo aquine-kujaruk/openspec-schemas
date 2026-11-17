@@ -1,0 +1,23 @@
+name: fullstack
+version: 0.13.1
+description: The factory's phases over the clean-backend, clean-react and spec-plan schemas
+targets:
+  - claude
+  - codex
+dependencies:
+  apm:
+    - aquine-kujaruk/feat2test/skills/gherkin-craft#v4.0.0
+    - aquine-kujaruk/opsx-gherkin/skills/opsx-gherkin#v1.0.1
+    - vercel-labs/agent-skills/skills/composition-patterns#1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62
+    - vercel-labs/agent-skills/skills/web-design-guidelines#1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62
+  lsp:
+    - name: typescript
+      command: pnpm
+      args:
+        - exec
+        - tsc
+        - --lsp
+        - --stdio
+      extensionToLanguage:
+        .ts: typescript
+        .tsx: typescriptreact
