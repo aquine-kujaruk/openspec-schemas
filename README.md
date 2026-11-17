@@ -52,7 +52,7 @@ The project needs Node 22.18 or later, pnpm, and the agent package manager APM 0
 2. Pin the command the skills call. The tarball came with the `setup` skill; its file name carries the version:
 
    ```bash
-   pnpm add -D ./.claude/skills/setup/assets/factory-0.10.0.tgz
+   pnpm add -D ./.claude/skills/setup/assets/factory-0.11.0.tgz
    ```
 
 3. Let setup repair what the package owns and list what the project must supply:
@@ -89,7 +89,7 @@ A change goes through five skills, each calling the command:
 | Skill | What it does | Command behind it |
 | --- | --- | --- |
 | `plan` | Picks the schema the intention calls for, opens a change with it and writes its plan and delta specs until they are ready | `factory schemas`, `factory validate <change>` |
-| `implement` | Starts the next phase of a ready change and builds it, one workstream at a time | `factory implement <change>`, `factory check --workstream <workstream>` |
+| `implement` | Builds every pending phase of a ready change in order, one workstream at a time, then verifies it | `factory implement <change>`, `factory check --workstream <workstream>` |
 | `verify` | Runs every check and test and writes the evidence | `factory verify <change>` |
 | `archive` | Consolidates the change's specs, decisions and procedures and archives it | `factory archive [change]` |
 | `feedback` | Takes a correction back into the change it is about | `factory feedback <change>` |

@@ -1,11 +1,11 @@
 ---
 name: implement
-description: Implement a change. Builds the first phase of a ready plan that still has unchecked tasks, one task at a time, each inside the check of the workstream it names. Use when the person asks to build, code or continue a planned change.
+description: Implement a change. Builds every phase of a ready plan that still has unchecked tasks, in order, one task at a time, each inside the check of the workstream it names, then verifies the change. Use when the person asks to build, code or continue a planned change.
 ---
 
 # implement
 
-One run builds one phase: the first phase of the plan that has an unchecked task.
+One run builds every phase of the plan that has an unchecked task, in the plan's order, then verifies the change. The phases are the order of the work in coherent blocks: each one is closed by its verification task before the next one starts, and the next one starts without asking the person. The run stops early only when feedback is raised, when a check keeps failing and you cannot make it pass, or when something only the person can give is missing (a key, approval to read `prod`): then tell the person exactly what it is.
 
 1. `pnpm exec factory doctor`. When it prints anything as `missing` or `drift`, follow the `setup` skill first. A `note` is for the person: relay it once and go on. So is a `suspect`, a runbook that runs what the project no longer has: relay it once and go on; the `plan` skill investigates it.
 2. `pnpm exec factory implement <change>`. It starts the phase only for a change validation reports ready, generates the acceptance tests of the change's delta specs, each next to its step adapter, and prints the tasks to do. When it prints `not ready`, tell the person what it found and stop. From here until the phase's checks pass, the completion gate holds the turn.
@@ -18,7 +18,7 @@ One run builds one phase: the first phase of the plan that has an unchecked task
    ```
 7. When the plan lists screens under Screens, the schema's spike workstream comes first: it builds each screen from its approved spike (`@spike`, a throwaway HTML page in the change) against stub controllers, and writes the end-to-end test of each journey the screen lists under `test/e2e/<module>/`, passing against the stubs. Every workstream after it keeps those tests passing with `pnpm exec factory test e2e` as the real code takes the stubs' place. Take the phase's tasks in order. For each one, read `references/workstreams/<workstream>/SKILL.md` and the example files beside it, do the task inside that workstream's folders, run that workstream's check until it passes, and tick the task in the plan.
 8. Keep the entry up to date. The entry (`src/main.ts` unless the schema or the project configures another) belongs to the workstream whose skill says it owns it: `modules` when no framework skill claims it, the framework's UI workstream otherwise. Where it is the composition root it builds each adapter, hands it to its repository implementation, and hands the repositories to the use cases; where the framework composes in its own files it mounts what the framework's skill says. Create it with the first use case or screen and extend it with every one after, so that every file of the product is reached from it or from a test.
-9. The phase's last task verifies it: run the check of the workstream it names, tick it when it passes, and stop. The next phase is another run.
+9. The phase's last task verifies it: run the check of the workstream it names and tick it when it passes. Then run `pnpm exec factory implement <change>` again: it starts the next phase with unchecked tasks, and you go on from step 3 with the tasks it prints. When it prints that every task is done, follow the `verify` skill.
 
 Decide alone what only the code needs: a private name, a helper, the order of the work. A decision a user would notice, a seam the plan does not sign, or a rule future changes would inherit is the plan's. When a task needs one the plan does not settle, stop the phase with the plan and the delta specs as they are, and raise it:
 
@@ -28,4 +28,4 @@ pnpm exec factory feedback <change> raise --from "the implement phase" --names "
 
 Then tell the person and follow the `feedback` skill.
 
-When you finish, the completion gate runs the phase's checks and sends you back with what fails. Fix that; the gate is satisfied by passing checks, and its pass ends the run: the next phase starts with step 2 again.
+When you end a turn, the completion gate runs the checks of the phase being built and sends you back with what fails. Fix that and go on: a passing gate closes that phase, not the run, which ends at verify or at one of the stops above.
