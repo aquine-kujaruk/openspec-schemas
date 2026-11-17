@@ -17,7 +17,7 @@ export const createCommands = (
   },
   test: {
     usage:
-      "test <acceptance|integration> [--report <file>] [--product <name>]: runs the product's tests of one kind",
+      "test <acceptance|integration|unit|e2e> [--report <file>] [--product <name>]: runs the product's tests of one kind",
     run: handlers.test,
   },
   review: {

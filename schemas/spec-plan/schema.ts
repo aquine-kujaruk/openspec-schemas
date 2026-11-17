@@ -87,6 +87,7 @@ export const defaults: FactoryConfig = {
   acceptance: "test/acceptance",
   productSpecs: "openspec/specs/*/*/spec.md",
   integration: "test/integration",
+  unit: "test/unit",
   e2e: "test/e2e",
   entry: ["src/*.ts"],
   frameworks: { core: nothing, infrastructure: nothing },

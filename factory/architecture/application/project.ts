@@ -100,6 +100,7 @@ export const createProject = ({
           modules: DEFAULTS.modules,
           acceptance: DEFAULTS.acceptance,
           integration: DEFAULTS.integration,
+          unit: DEFAULTS.unit,
           productSpecs: DEFAULTS.productSpecs,
           entry: DEFAULTS.entry,
         },

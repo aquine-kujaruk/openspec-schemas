@@ -89,7 +89,7 @@ export type WorkstreamDeclaration = {
   layers: (o: Options) => Layer[];
   checks?: Check[];
   /** The kinds of product tests that prove this workstream's work (`factory test <kind>`). */
-  tests?: Array<"acceptance" | "integration">;
+  tests?: Array<"acceptance" | "integration" | "unit">;
 };
 
 /** A workstream once its declaration is joined with the configured topology. */
@@ -113,6 +113,8 @@ export type Options = {
   productSpecs: string;
   /** Where the integration tests live (`test/integration`): one folder per module, one test per repository implementation. */
   integration: string;
+  /** Where unit tests live (`test/unit`): one folder per module, mirroring the domain and application files they test. */
+  unit: string;
   /** Where the end-to-end tests of a web product live (`test/e2e`), run with `factory test e2e`. */
   e2e: string;
   /**

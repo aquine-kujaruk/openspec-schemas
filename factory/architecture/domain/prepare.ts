@@ -1,7 +1,7 @@
 import type { Options } from "../../shared/domain/types.ts";
 /** The base laid under a new module root when the configuration declares none. */
 export declare const DEFAULT_BASE: string[];
-type Roots = Pick<Options, "modules" | "acceptance" | "integration" | "base">;
+type Roots = Pick<Options, "modules" | "acceptance" | "integration" | "unit" | "base">;
 /**
  * `factory prepare`: the minimum the implementer needs before any workstream. Every configured
  * root that does not exist is created; a new module root also gets the configured `base` (or

@@ -27,6 +27,7 @@ A product built with the clean core has a place for unit tests that a rule fixes
 - The zone lives in the clean core, so `clean-backend` and `clean-react` both have it; discarded: only in `clean-backend`. @by:agent
 - The layer `unit` belongs to the `app-domain` workstream, which owns the domain and application it tests; discarded: a workstream of its own, which would own no product layer. @by:agent
 - A unit test mirrors the path of the file it tests (`test/unit/<module>/domain/entities/change.entity.test.ts` ↔ `<modules>/<module>/domain/entities/change.entity.ts`); discarded: a free name inside the module folder, which no rule can tie to a target. @by:agent
+- The modified `implementer` spec has no generated test; it is proved by the person's word, backed by `prepare.test.ts` creating `test/unit` and a custom unit root, as `the-reference-writes` did. Discarded: a step adapter for the whole implementer spec in this change. @by:person
 - In this worktree the phase is verified with `pnpm run typecheck && node factory/main.ts generate --check && pnpm run test`, the repository's own command; `pnpm run check` would call the pinned one. @by:agent
 
 ## Open questions
@@ -85,13 +86,15 @@ tests: ["acceptance", "unit"],
 - The tests generated from the modified `implementer` spec: `factory prepare` creates `test/unit`.
 - This repository's tests over the workstreams (`case-ids`, `rule-ids`, `scaffolds`, `factory`): the new layer is complete and its rule ids are unique.
 
-- [ ] Add `unit` to `Options`, `"unit"` to `WorkstreamDeclaration.tests` and `unit: "test/unit"` to the defaults of `spec-plan`; let `factory prepare` create it and `factory test unit` run it with the project's vitest, as `acceptance` and `integration`
-- [ ] Write `unit.rules.ts` in the clean core's `app-domain` workstream: the zone `unit`, its boundary (domain and application only), the archunit rule `unit-test-targets-core-file`; add the layer and the test kind to `workstream.ts`
-- [ ] Write `unit.examples.md` (a reference test of a value object, and one case per way of breaking each rule) and record each case's `expect` block with `node factory/main.ts expect`
-- [ ] Generate the tests of `architecture/unit` and of the modified `implementer` spec with `node factory/main.ts generate`, and write the step adapter `unit.feature.steps.ts` as `integration.feature.steps.ts` is written
-- [ ] Name `test/unit/<module>/` in the Owns line and the steps of the `app-domain` skill, and in the docs that list the kinds of test
-- [ ] Verify the phase: `pnpm run typecheck && node factory/main.ts generate --check && pnpm run test`
+- [x] Add `unit` to `Options`, `"unit"` to `WorkstreamDeclaration.tests` and `unit: "test/unit"` to the defaults of `spec-plan`; let `factory prepare` create it and `factory test unit` run it with the project's vitest, as `acceptance` and `integration`
+- [x] Write `unit.rules.ts` in the clean core's `app-domain` workstream: the zone `unit`, its boundary (domain and application only), the archunit rule `unit-test-targets-core-file`; add the layer and the test kind to `workstream.ts`
+- [x] Write `unit.examples.md` (a reference test of a value object, and one case per way of breaking each rule) and record each case's `expect` block with `node factory/main.ts expect`
+- [x] Generate the tests of `architecture/unit` and of the modified `implementer` spec with `node factory/main.ts generate`, and write the step adapter `unit.feature.steps.ts` as `integration.feature.steps.ts` is written
+- [x] Name `test/unit/<module>/` in the Owns line and the steps of the `app-domain` skill, and in the docs that list the kinds of test
+- [x] Verify the phase: `pnpm run typecheck && node factory/main.ts generate --check && pnpm run test`
 
 ## Feedback
+
+- **the verify phase**: implementer: no generated test ran. The spec has no step adapter, so generation omits it; prepare has passing hand-written tests, including unit and a custom unit root. The unit architecture scenarios and phase verification pass. A decision is needed on generated evidence for implementer before implementation can finish. Resolved: the person proves `implementer` by their word; nothing else changed.
 
 ## Next step

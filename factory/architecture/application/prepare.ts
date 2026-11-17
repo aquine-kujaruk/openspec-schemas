@@ -14,7 +14,7 @@ export const createPrepare = ({
     "shared/infrastructure",
   ];
 
-  type Roots = Pick<Options, "modules" | "acceptance" | "integration" | "base">;
+  type Roots = Pick<Options, "modules" | "acceptance" | "integration" | "unit" | "base">;
 
   /**
    * `factory prepare`: the minimum the implementer needs before any workstream. Every configured
@@ -36,6 +36,7 @@ export const createPrepare = ({
     }
     make(o.acceptance);
     make(o.integration);
+    make(o.unit);
     return created;
   };
   return { DEFAULT_BASE, prepare };

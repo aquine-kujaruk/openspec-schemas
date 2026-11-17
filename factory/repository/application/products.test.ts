@@ -36,6 +36,7 @@ describe("a project declares its products by folder", () => {
     ["api", "modules", "apps/api/src/*"],
     ["worker", "modules", "apps/worker/lib/*"],
     ["api", "acceptance", "apps/api/test/acceptance"],
+    ["api", "unit", "apps/api/test/unit"],
     ["api", "productSpecs", "openspec/specs/api/*/*/spec.md"],
     ["worker", "productSpecs", "openspec/specs/worker/*/*/spec.md"],
   ])("the product %s resolves %s to %s", async (name, setting, resolved) => {
@@ -98,6 +99,7 @@ describe("a project declares its products by folder", () => {
   it.each([
     ["modules", "src/*"],
     ["acceptance", "test/acceptance"],
+    ["unit", "test/unit"],
     ["productSpecs", "openspec/specs/*/*/spec.md"],
   ])(
     "without products the project has one product at its root whose %s is %s",

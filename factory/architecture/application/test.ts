@@ -20,6 +20,7 @@ export const createTest = ({
   const KINDS = {
     acceptance: () => config.acceptance,
     integration: () => config.integration,
+    unit: () => config.unit,
   };
 
   /** The end-to-end packages a web product pins, at the version the command was built with. */
@@ -119,8 +120,8 @@ export const createTest = ({
   };
 
   /**
-   * `factory test <acceptance|integration|e2e> [--report <file>]`: the product's tests of one kind,
-   * run over the configured root of that kind and nothing else: the acceptance and integration tests
+   * `factory test <acceptance|integration|unit|e2e> [--report <file>]`: the product's tests of one kind,
+   * run over the configured root of that kind and nothing else: the acceptance, integration and unit tests
    * with the project's own test runner, the end-to-end tests of a web product with the pinned
    * end-to-end tool. `--report` also writes each test's result to that file, as JSON.
    */

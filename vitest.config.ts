@@ -38,6 +38,7 @@ const PER_HOLDER = [
 );
 
 export default defineConfig({
+  resolve: { alias: { "factory/sdk": new URL("./factory/sdk/index.ts", import.meta.url).pathname } },
   test: {
     globals: true,
     setupFiles: ["tools/test-setup.ts"],

@@ -76,6 +76,7 @@ export const createProducts = ({
       modules: under(root, merged.modules),
       acceptance: under(root, merged.acceptance),
       integration: under(root, merged.integration),
+      unit: under(root, merged.unit),
       entry: merged.entry.map((e) => under(root, e)),
       productSpecs,
       review: merged.review.modules
@@ -203,11 +204,12 @@ export const createProducts = ({
   ): Promise<Product> =>
     named ? productNamed(project, named) : currentProduct(project);
 
-  /** The folders that hold product code: the module root and the roots of both kinds of test. */
+  /** The folders that hold product code: the module root and the roots of acceptance, integration and unit tests. */
   const productRoots = (config: FactoryConfig): string[] => [
     config.modules.replace(/\/\*$/, ""),
     config.acceptance,
     config.integration,
+    config.unit,
   ];
   return {
     PRODUCT_VARIABLE,

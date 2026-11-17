@@ -10,6 +10,7 @@ const roots = {
   modules: "src/*",
   acceptance: "test/acceptance",
   integration: "test/integration",
+  unit: "test/unit",
 };
 const temp = () => mkdtempSync(join(tmpdir(), "prepare-"));
 const exists = (cwd: string, dir: string) => {
@@ -27,6 +28,8 @@ describe("the implementer prepares the configured roots", () => {
     ["modules", "packages/*", "packages"],
     ["acceptance", "test/acceptance", "test/acceptance"],
     ["integration", "test/integration", "test/integration"],
+    ["unit", "test/unit", "test/unit"],
+    ["unit", "tests/core", "tests/core"],
   ])(
     "the missing root from %s = %s is created as %s",
     (setting, value, root) => {

@@ -12,7 +12,7 @@ export default {
 };
 ```
 
-- A product's settings come from its schema's defaults, then the top level of `factory.config.ts`, then its own entry. Its roots (`modules`, `acceptance`, `integration`, `entry`) are read inside its folder.
+- A product's settings come from its schema's defaults, then the top level of `factory.config.ts`, then its own entry. Its roots (`modules`, `acceptance`, `integration`, `unit`, `entry`) are read inside its folder.
 - Its specs live at `openspec/specs/<product>/<module>/<use-case>/spec.md`, and the decisions its changes consolidate at `openspec/adr/<product>/`. There is one `openspec/` at the repository root.
 - Every change builds one product, named as `x-product` in its `.openspec.yaml`, and is made with that product's schema. The changes of one intention name each other under `x-linked`. `factory validate` checks both.
 - The write guard opens a product's folder only to a change of that product. The gate, `factory verify` and `factory implement` judge a change by its own product alone.
