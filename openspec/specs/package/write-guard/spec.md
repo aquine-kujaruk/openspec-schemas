@@ -46,6 +46,8 @@ When the guard refuses a write to product code, it SHALL name the phase through 
 
 ### Requirement: An agent never writes the harness
 
+`@by:agent`
+
 The guard SHALL refuse a write to the harness whatever the state of the project, naming the part of the harness the path belongs to. The harness is the project's factory configuration, the generated tests, the installed schemas, the agents' installed skills and guards, the consolidated specs, decisions and procedures, the archived changes, and the installed command.
 
 #### Scenario Outline: writing `<path>` is refused as `<part>`
@@ -69,7 +71,7 @@ The guard SHALL refuse a write to the harness whatever the state of the project,
   | src/* | 1       | openspec/changes/archive/2026-11-13-add-orders/plan.md | refused | archived changes        |
   | src/* | 0       | .claude/settings.json                                 | refused | agent guards            |
   | src/* | 1       | .agents/skills/plan/SKILL.md                          | refused | agent skills            |
-  | src/* | 1       | node_modules/factory/toolkit/cli.js                   | refused | installed command       |
+  | src/* | 1       | node_modules/factory/factory/main.js                  | refused | installed command       |
 
 ### Requirement: A write that touches several files is refused when any of them is
 
