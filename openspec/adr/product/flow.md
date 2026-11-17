@@ -18,11 +18,11 @@ A schema whose platform is `web` SHALL declare a spike workstream. The plan of a
 
 ### Decision: phases-in-one-run · A started implementation builds every pending phase in one run
 
-@origin:2026-11-17-phases-in-one-run @applies:phases @enforced:implement-skill
+@origin:2026-11-17-carry-approved-plans-through-verification @applies:phases @enforced:implement-skill,completion-gate @by:agent
 
-Once the person starts the implementation of a ready change, the implement phase SHALL build every phase with unchecked tasks in the plan's order, each closed by its verification task and the completion gate, SHALL start the next phase without asking the person, and SHALL go on to verify once no task is left. It SHALL stop early only when feedback is raised, when a check keeps failing and the agent cannot fix it, or when something only the person can give is missing.
+The main agent SHALL start in the checkout of the approved plan, build its pending phases in order, close each with its verification task and continue through verification. On an attempted stop, a passing phase with pending work SHALL return the next action. Feedback, a check that repeatedly fails and input only the person can give remain valid stops.
 
-**Why** The person approves a plan so as not to be asked again; a pause between phases asked for an approval that adds nothing, since each phase already ends in a verification and the gate. The person: "¿Por qué tienes que depender de mí para eso?".
+**Why** The person already approved the ordered work. The recorded incident required a further prompt after a passing phase.
 
 ### Decision: decisions-name-who-took-them · Every decision a change writes says whether the person or the agent took it
 

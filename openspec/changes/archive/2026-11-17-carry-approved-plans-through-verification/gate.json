@@ -1,0 +1,6 @@
+{
+  "phase": "Phase 3: Find blockers before approval and route reviewer defects",
+  "failures": 0,
+  "waitingFor": "the agent",
+  "findings": []
+}

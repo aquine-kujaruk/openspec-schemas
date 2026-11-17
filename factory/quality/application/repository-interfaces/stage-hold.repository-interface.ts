@@ -3,6 +3,7 @@ import type { BuildingStage, StageRecord, StageWorkstream } from "../../domain/s
 
 export interface StageHoldRepositoryInterface {
   listBuilding(): Promise<BuildingStage[]>;
+  hasCurrentVerification(name: string): Promise<boolean>;
   listHarnessFindings(): Promise<string[]>;
   listWorkstreams(stage: BuildingStage): Promise<StageWorkstream[]>;
   readRecord(name: string): Promise<StageRecord>;

@@ -57,9 +57,9 @@ The main agent SHALL start in the checkout of the approved plan, build its pendi
 
 Exercise the default session and a local command runner using a disposable repository and a linked worktree. Include the same branch-relative change path in both checkouts to catch path-only comparisons.
 
-- [ ] Identify the resolved checkout in the handoff result. Update the packaged flow and runner instructions to compare it with the actual receiving session root before edits. On mismatch, bind the launcher to the intended checkout and resume there. A shell cd in a different host session is insufficient.
-- [ ] Add the handoff scenarios, including matching roots, a mismatched session and the existing runner exit-status contract. For installed consumers verify their expected project instructions and hooks. For the factory source repository use its documented source workflow.
-- [ ] Verify the handoff suite and run a local runner that reports its actual working directory. Record how to check T3’s session binding independently of the shell.
+- [x] Identify the resolved checkout in the handoff result. Update the packaged flow and runner instructions to compare it with the actual receiving session root before edits. On mismatch, bind the launcher to the intended checkout and resume there. A shell cd in a different host session is insufficient.
+- [x] Add the handoff scenarios, including matching roots, a mismatched session and the existing runner exit-status contract. For installed consumers verify their expected project instructions and hooks. For the factory source repository use its documented source workflow.
+- [x] Verify the handoff suite and run a local runner that reports its actual working directory. Record how to check T3’s session binding independently of the shell.
 
 ### Phase 2: Retain the main agent through verification
 
@@ -67,10 +67,10 @@ Exercise the default session and a local command runner using a disposable repos
 
 Exercise the main and helper stop entry points against a real two-phase plan. Cover checks passing with work left, a completed final phase with absent or stale evidence, success, pending feedback, a missing input, and the third failing check.
 
-- [ ] Update gate acceptance adapters to pass the actual helper flag. Build fixtures with started phases, checked tasks and current or stale evidence. Support existing started records without a phase title.
-- [ ] Keep the main agent’s started record while tasks or current verification remain outstanding. Return the next action without counting continuation as a failed check. Handle repeated stop calls and ensure a helper exit cannot clear the main run.
-- [ ] Preserve the altered-harness checks, product and schema scope, failure handoff and feedback resume path. Keep the write guard’s protection after tasks finish while verification is pending.
-- [ ] Verify via a two-phase CLI replay. Attempt to stop after phase one, continue phase two, attempt to stop before verify, verify, then stop successfully. Repeat the intermediate stop three times and confirm it never becomes a failure handoff.
+- [x] Update gate acceptance adapters to pass the actual helper flag. Build fixtures with started phases, checked tasks and current or stale evidence. Support existing started records without a phase title.
+- [x] Keep the main agent’s started record while tasks or current verification remain outstanding. Return the next action without counting continuation as a failed check. Handle repeated stop calls and ensure a helper exit cannot clear the main run.
+- [x] Preserve the altered-harness checks, product and schema scope, failure handoff and feedback resume path. Keep the write guard’s protection after tasks finish while verification is pending.
+- [x] Verify via a two-phase CLI replay. Attempt to stop after phase one, continue phase two, attempt to stop before verify, verify, then stop successfully. Repeat the intermediate stop three times and confirm it never becomes a failure handoff.
 
 ### Phase 3: Find blockers before approval and route reviewer defects
 
@@ -78,13 +78,15 @@ Exercise the main and helper stop entry points against a real two-phase plan. Co
 
 Replay a migration probe on a disposable fixture and present its Findings. Exercise both branches of the reviewer rule with an approved, bounded repair and with a rule whose meaning is open.
 
-- [ ] Update plan instructions to exercise only unproven tool behaviour needed to start, close or verify a phase. Reuse representative evidence. Record the command, relevant input and observed result, or the earliest feasible check and reason for deferral.
-- [ ] Include how each affected spec will be proved. Choose generated acceptance coverage when feasible; if the repository still requires personal attestation, flag it before approval and request it against actual results at verification.
-- [ ] Align implement, feedback and the question policy. Record the owning spec, reproducer, repair approval and negative control. Retest with the rebuilt reviewer before resuming. Preserve the installed checker's integrity and ask when the rule, ownership or authorization is open.
-- [ ] Verify the feedback suite and a sample plan against the new planning scenarios. Run pnpm run check, build all three packages and check their packaged skills and hooks. Include the repository’s required version increment for the packaged changes.
+- [x] Update plan instructions to exercise only unproven tool behaviour needed to start, close or verify a phase. Reuse representative evidence. Record the command, relevant input and observed result, or the earliest feasible check and reason for deferral.
+- [x] Include how each affected spec will be proved. Choose generated acceptance coverage when feasible; if the repository still requires personal attestation, flag it before approval and request it against actual results at verification.
+- [x] Align implement, feedback and the question policy. Record the owning spec, reproducer, repair approval and negative control. Retest with the rebuilt reviewer before resuming. Preserve the installed checker's integrity and ask when the rule, ownership or authorization is open.
+- [x] Verify the feedback suite and a sample plan against the new planning scenarios. Run pnpm run check, build all three packages and check their packaged skills and hooks. Include the repository’s required version increment for the packaged changes.
 
 
 ## Feedback
+
+- The planning-probe requirement has its own spec and generated test to exercise the planning instructions without requiring personal attestation for the rest of the existing planning spec.
 
 - The person approved the pending plans. The factory migration has landed. The three affected deltas now target its dispatch, stage hold and andon specs.
 

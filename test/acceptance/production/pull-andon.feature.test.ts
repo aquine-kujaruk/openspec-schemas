@@ -67,10 +67,52 @@ describe('Feature: factory/production/pull-andon Specification', () => {
       // And the plan of `add-orders` holds `1` feedback entr(ies)
       await steps.planFeedbackEntriesAfter('add-orders', '1')
     })
+
+    // Line 25
+    test('a reviewer finding with `repair in the owned repo` and `one specified outcome` leads to `track and test a separate repair`', async () => {
+      const steps = createSteps()
+
+      // Given the approved repair scope grants `repair in the owned repo` for reviewer repairs
+      await steps.reviewerRepairAuthority('repair in the owned repo')
+      // And the standing rule gives `one specified outcome` for the reproduced case
+      await steps.standingRuleGives('one specified outcome')
+      // When the reviewer finding is taken in
+      await steps.takeReviewerFinding()
+      // Then the next action is `track and test a separate repair`
+      await steps.reviewerFindingAction('track and test a separate repair')
+    })
+
+    // Line 25
+    test('a reviewer finding with `repair in the owned repo` and `two plausible outcomes` leads to `ask which outcome to require`', async () => {
+      const steps = createSteps()
+
+      // Given the approved repair scope grants `repair in the owned repo` for reviewer repairs
+      await steps.reviewerRepairAuthority('repair in the owned repo')
+      // And the standing rule gives `two plausible outcomes` for the reproduced case
+      await steps.standingRuleGives('two plausible outcomes')
+      // When the reviewer finding is taken in
+      await steps.takeReviewerFinding()
+      // Then the next action is `ask which outcome to require`
+      await steps.reviewerFindingAction('ask which outcome to require')
+    })
+
+    // Line 25
+    test('a reviewer finding with `no authority` and `one specified outcome` leads to `ask for the repair decision`', async () => {
+      const steps = createSteps()
+
+      // Given the approved repair scope grants `no authority` for reviewer repairs
+      await steps.reviewerRepairAuthority('no authority')
+      // And the standing rule gives `one specified outcome` for the reproduced case
+      await steps.standingRuleGives('one specified outcome')
+      // When the reviewer finding is taken in
+      await steps.takeReviewerFinding()
+      // Then the next action is `ask for the repair decision`
+      await steps.reviewerFindingAction('ask for the repair decision')
+    })
   })
 
   describe('Rule: Feedback reopens only what it invalidates', () => {
-    // Line 31
+    // Line 43
     test('feedback naming phase `2` turns the done phases `1, 2` into `1`', async () => {
       const steps = createSteps()
 
@@ -86,7 +128,7 @@ describe('Feature: factory/production/pull-andon Specification', () => {
       await steps.phasesDoneAfter('1')
     })
 
-    // Line 31
+    // Line 43
     test('feedback naming phase `1` turns the done phases `1, 2` into `none`', async () => {
       const steps = createSteps()
 
@@ -102,7 +144,7 @@ describe('Feature: factory/production/pull-andon Specification', () => {
       await steps.phasesDoneAfter('none')
     })
 
-    // Line 31
+    // Line 43
     test('feedback naming phase `2` turns the done phases `1` into `1`', async () => {
       const steps = createSteps()
 
@@ -120,7 +162,7 @@ describe('Feature: factory/production/pull-andon Specification', () => {
   })
 
   describe('Rule: Feedback the agent cannot settle becomes an open question', () => {
-    // Line 50
+    // Line 62
     test('feedback needing `1` decision(s) from the person leaves the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -136,7 +178,7 @@ describe('Feature: factory/production/pull-andon Specification', () => {
       await steps.validationReportsChange('not ready')
     })
 
-    // Line 50
+    // Line 62
     test('feedback needing `0` decision(s) from the person leaves the change `ready`', async () => {
       const steps = createSteps()
 

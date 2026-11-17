@@ -6,6 +6,7 @@ Ask, as an item under Open questions, when the decision is:
 
 - **Behaviour the consolidated specs leave open.** What a user will notice and no spec under `openspec/specs` settles.
 - **A decision that binds future changes.** Every architecture decision the plan writes.
+- **Reviewer repair outside an approval.** Ask when a reproduced reviewer defect has an ambiguous standing rule or falls outside the approved repair’s reviewer, rule or scope. Follow the feedback skill for a bounded repair.
 - **The end of a standing decision.** Every `@replaces` and every `@removes` on an architecture decision.
 
 Decide alone, in the artifact its scope picks, naming the alternative you discarded, when the decision is:

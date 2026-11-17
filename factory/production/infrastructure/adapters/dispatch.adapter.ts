@@ -1,3 +1,4 @@
+import { realpathSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import type { DispatchAcl } from "../acl/dispatch.acl.ts";
 
@@ -13,6 +14,7 @@ export class DispatchAdapter implements DispatchAcl {
   }
 
   validateWorkOrder(name: string) { return this.assess(name); }
+  checkout(path = this.root) { return realpathSync(path); }
   getRunner() { return this.runner(); }
   async runCommand(command: string) {
     return spawnSync("sh", ["-c", command], { cwd: this.root, stdio: "inherit" }).status;

@@ -8,6 +8,7 @@ type Seed = {
   harnessFindings: string[];
   records: Map<string, StageRecord>;
   failedLines: Set<string>;
+  verified?: boolean;
 };
 const fresh = (): StageRecord => ({ failures: 0, waitingFor: "the agent", findings: [] });
 
@@ -23,6 +24,10 @@ export class InMemoryStageHoldRepository implements StageHoldRepositoryInterface
 
   async listBuilding(): Promise<BuildingStage[]> {
     return this.data.stages;
+  }
+
+  async hasCurrentVerification(): Promise<boolean> {
+    return this.data.verified === true;
   }
 
   async listHarnessFindings(): Promise<string[]> {

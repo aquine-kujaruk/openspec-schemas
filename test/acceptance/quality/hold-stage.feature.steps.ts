@@ -7,7 +7,7 @@ import type { StageHold } from "../../../factory/quality/domain/value-objects/st
 import { InMemoryStageHoldRepository } from "./repositories/in-memory-stage-hold.repository.ts";
 
 const CHANGE = "add-orders";
-const PHASE = "Step 1 works";
+const PHASE = "phase one";
 const streams: StageWorkstream[] = [
   { id: "app-domain", upstream: [], tests: ["acceptance", "unit"] },
   { id: "modules", upstream: ["app-domain"], tests: [] },
@@ -26,11 +26,15 @@ export function createSteps() {
   let findings: string[] = [];
   let productFails = false;
   let outcome: StageHold;
+  let currentStage = "task pending in phase one";
 
   return {
     // Context
     changeChecks(checks: string): void {
       findings = checks === "pass" ? [] : ["the check of app-domain fails"];
+    },
+    changeAtStage(stage: string): void {
+      currentStage = stage;
     },
     failedAttemptsBefore(failures: string): void {
       failed = Number(failures);
@@ -62,14 +66,19 @@ export function createSteps() {
     async aboutToFinish(agentKind: string): Promise<void> {
       expect(["main", "helper"]).toContain(agentKind);
       const records = new Map<string, StageRecord>();
-      if (failed) records.set(CHANGE, { phase: PHASE, failures: failed, waitingFor: "the agent", findings: [] });
+      if (failed || currentStage !== "task pending in phase one") records.set(CHANGE, { phase: PHASE, failures: failed, waitingFor: "the agent", findings: [] });
       repository.seed({
         stages: Array.from({ length: building }, (_, index) => ({
           name: index === 0 ? CHANGE : `${CHANGE}-${index + 1}`,
           process: made,
           line: built,
-          phases: [{ title: PHASE, tasks: [{ done: false, workstream: "app-domain" }, { done: false, workstream: "modules" }] }],
+          pendingFeedback: currentStage === "feedback awaiting a decision",
+          phases: [
+            { title: PHASE, tasks: [{ done: currentStage !== "task pending in phase one", workstream: "app-domain" }, { done: currentStage !== "task pending in phase one", workstream: "modules" }] },
+            { title: "phase two", tasks: [{ done: currentStage !== "phase one done, phase two pending", workstream: "modules" }] },
+          ],
         })),
+        verified: currentStage === "last phase done, verified",
         workstreams: made === "spec-plan" ? [] : streams,
         harnessFindings: altered ? [`${altered}: its installed files were changed`] : [],
         records,
@@ -82,6 +91,15 @@ export function createSteps() {
     // Outcome
     finishVerdict(verdict: string): void {
       expect(outcome.allowed ? "allowed" : "refused", outcome.reasons.join("\n")).toBe(verdict);
+    },
+    gateDirectsTo(instruction: string): void {
+      const expected: Record<string, string> = {
+        "fix the reported check": "the check of",
+        yield: "has pending feedback",
+        "verify the change": "verify the change",
+      };
+      if (instruction === "finish") expect(outcome.reasons).toEqual([]);
+      else expect(outcome.reasons.join("\n")).toContain(expected[instruction] ?? instruction);
     },
     async failedAttemptsCounted(failuresAfter: string): Promise<void> {
       expect((await repository.readRecord(CHANGE)).failures).toBe(Number(failuresAfter));

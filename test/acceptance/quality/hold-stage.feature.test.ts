@@ -5,17 +5,101 @@ import { createSteps } from './hold-stage.feature.steps.js'
 describe('Feature: factory/quality/hold-stage Specification', () => {
   describe('Rule: An agent finishes only when the change\'s checks pass', () => {
     // Line 11
+    test('finishing with checks that `pass` is `refused`', async () => {
+      const steps = createSteps()
+
+      // Given a change in implementation whose checks `pass`
+      await steps.changeChecks('pass')
+      // And the change is at `task pending in phase one`
+      await steps.changeAtStage('task pending in phase one')
+      // And `0` failed attempt(s) at finishing in a row before this one
+      await steps.failedAttemptsBefore('0')
+      // When the `main` agent is about to finish
+      await steps.aboutToFinish('main')
+      // Then finishing is `refused`
+      await steps.finishVerdict('refused')
+      // And the gate directs the agent to `continue phase one`
+      await steps.gateDirectsTo('continue phase one')
+      // And `0` failed attempt(s) in a row are counted
+      await steps.failedAttemptsCounted('0')
+    })
+
+    // Line 11
+    test('finishing with checks that `pass` is `refused` #2', async () => {
+      const steps = createSteps()
+
+      // Given a change in implementation whose checks `pass`
+      await steps.changeChecks('pass')
+      // And the change is at `phase one done, phase two pending`
+      await steps.changeAtStage('phase one done, phase two pending')
+      // And `2` failed attempt(s) at finishing in a row before this one
+      await steps.failedAttemptsBefore('2')
+      // When the `main` agent is about to finish
+      await steps.aboutToFinish('main')
+      // Then finishing is `refused`
+      await steps.finishVerdict('refused')
+      // And the gate directs the agent to `start phase two`
+      await steps.gateDirectsTo('start phase two')
+      // And `0` failed attempt(s) in a row are counted
+      await steps.failedAttemptsCounted('0')
+    })
+
+    // Line 11
+    test('finishing with checks that `pass` is `refused` #3', async () => {
+      const steps = createSteps()
+
+      // Given a change in implementation whose checks `pass`
+      await steps.changeChecks('pass')
+      // And the change is at `last phase done, evidence absent`
+      await steps.changeAtStage('last phase done, evidence absent')
+      // And `0` failed attempt(s) at finishing in a row before this one
+      await steps.failedAttemptsBefore('0')
+      // When the `main` agent is about to finish
+      await steps.aboutToFinish('main')
+      // Then finishing is `refused`
+      await steps.finishVerdict('refused')
+      // And the gate directs the agent to `verify the change`
+      await steps.gateDirectsTo('verify the change')
+      // And `0` failed attempt(s) in a row are counted
+      await steps.failedAttemptsCounted('0')
+    })
+
+    // Line 11
+    test('finishing with checks that `pass` is `refused` #4', async () => {
+      const steps = createSteps()
+
+      // Given a change in implementation whose checks `pass`
+      await steps.changeChecks('pass')
+      // And the change is at `last phase done, evidence stale`
+      await steps.changeAtStage('last phase done, evidence stale')
+      // And `0` failed attempt(s) at finishing in a row before this one
+      await steps.failedAttemptsBefore('0')
+      // When the `main` agent is about to finish
+      await steps.aboutToFinish('main')
+      // Then finishing is `refused`
+      await steps.finishVerdict('refused')
+      // And the gate directs the agent to `verify the change`
+      await steps.gateDirectsTo('verify the change')
+      // And `0` failed attempt(s) in a row are counted
+      await steps.failedAttemptsCounted('0')
+    })
+
+    // Line 11
     test('finishing with checks that `pass` is `allowed`', async () => {
       const steps = createSteps()
 
       // Given a change in implementation whose checks `pass`
       await steps.changeChecks('pass')
+      // And the change is at `last phase done, verified`
+      await steps.changeAtStage('last phase done, verified')
       // And `0` failed attempt(s) at finishing in a row before this one
       await steps.failedAttemptsBefore('0')
       // When the `main` agent is about to finish
       await steps.aboutToFinish('main')
       // Then finishing is `allowed`
       await steps.finishVerdict('allowed')
+      // And the gate directs the agent to `finish`
+      await steps.gateDirectsTo('finish')
       // And `0` failed attempt(s) in a row are counted
       await steps.failedAttemptsCounted('0')
     })
@@ -26,12 +110,16 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
 
       // Given a change in implementation whose checks `pass`
       await steps.changeChecks('pass')
-      // And `2` failed attempt(s) at finishing in a row before this one
-      await steps.failedAttemptsBefore('2')
+      // And the change is at `feedback awaiting a decision`
+      await steps.changeAtStage('feedback awaiting a decision')
+      // And `0` failed attempt(s) at finishing in a row before this one
+      await steps.failedAttemptsBefore('0')
       // When the `main` agent is about to finish
       await steps.aboutToFinish('main')
       // Then finishing is `allowed`
       await steps.finishVerdict('allowed')
+      // And the gate directs the agent to `yield`
+      await steps.gateDirectsTo('yield')
       // And `0` failed attempt(s) in a row are counted
       await steps.failedAttemptsCounted('0')
     })
@@ -42,12 +130,16 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
 
       // Given a change in implementation whose checks `fail`
       await steps.changeChecks('fail')
+      // And the change is at `task pending in phase one`
+      await steps.changeAtStage('task pending in phase one')
       // And `0` failed attempt(s) at finishing in a row before this one
       await steps.failedAttemptsBefore('0')
       // When the `main` agent is about to finish
       await steps.aboutToFinish('main')
       // Then finishing is `refused`
       await steps.finishVerdict('refused')
+      // And the gate directs the agent to `fix the reported check`
+      await steps.gateDirectsTo('fix the reported check')
       // And `1` failed attempt(s) in a row are counted
       await steps.failedAttemptsCounted('1')
     })
@@ -58,19 +150,23 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
 
       // Given a change in implementation whose checks `fail`
       await steps.changeChecks('fail')
+      // And the change is at `task pending in phase one`
+      await steps.changeAtStage('task pending in phase one')
       // And `1` failed attempt(s) at finishing in a row before this one
       await steps.failedAttemptsBefore('1')
       // When the `main` agent is about to finish
       await steps.aboutToFinish('main')
       // Then finishing is `refused`
       await steps.finishVerdict('refused')
+      // And the gate directs the agent to `fix the reported check`
+      await steps.gateDirectsTo('fix the reported check')
       // And `2` failed attempt(s) in a row are counted
       await steps.failedAttemptsCounted('2')
     })
   })
 
   describe('Rule: The third failure in a row hands the change to the person', () => {
-    // Line 31
+    // Line 37
     test('after `0` failure(s) the change waits for `the agent`', async () => {
       const steps = createSteps()
 
@@ -86,7 +182,7 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
       await steps.changeWaitingFor('the agent')
     })
 
-    // Line 31
+    // Line 37
     test('after `1` failure(s) the change waits for `the agent`', async () => {
       const steps = createSteps()
 
@@ -102,7 +198,7 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
       await steps.changeWaitingFor('the agent')
     })
 
-    // Line 31
+    // Line 37
     test('after `2` failure(s) the change waits for `the person`', async () => {
       const steps = createSteps()
 
@@ -120,7 +216,7 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
   })
 
   describe('Rule: A helper agent is held like the main one', () => {
-    // Line 50
+    // Line 56
     test('the `helper` agent finishing with checks that `fail` is `refused`', async () => {
       const steps = createSteps()
 
@@ -134,7 +230,7 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
       await steps.finishVerdict('refused')
     })
 
-    // Line 50
+    // Line 56
     test('the `helper` agent finishing with checks that `pass` is `allowed`', async () => {
       const steps = createSteps()
 
@@ -150,7 +246,7 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
   })
 
   describe('Rule: An altered harness holds the agent', () => {
-    // Line 67
+    // Line 73
     test('finishing with `generated tests` altered is `refused`', async () => {
       const steps = createSteps()
 
@@ -166,7 +262,7 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
       await steps.refusalNamesHarnessPart('generated tests')
     })
 
-    // Line 67
+    // Line 73
     test('finishing with `installed schemas` altered is `refused`', async () => {
       const steps = createSteps()
 
@@ -182,7 +278,7 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
       await steps.refusalNamesHarnessPart('installed schemas')
     })
 
-    // Line 67
+    // Line 73
     test('finishing with `factory configuration` altered is `refused`', async () => {
       const steps = createSteps()
 
@@ -200,7 +296,7 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
   })
 
   describe('Rule: With no change in implementation the gate holds nobody', () => {
-    // Line 86
+    // Line 92
     test('finishing with `0` change(s) in implementation is `allowed`', async () => {
       const steps = createSteps()
 
@@ -212,7 +308,7 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
       await steps.finishVerdict('allowed')
     })
 
-    // Line 86
+    // Line 92
     test('finishing with `0` change(s) in implementation is `allowed` #2', async () => {
       const steps = createSteps()
 
@@ -226,7 +322,7 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
   })
 
   describe('Rule: A change is judged by the checks of its own schema', () => {
-    // Line 102
+    // Line 108
     test('a `clean-backend` change finishing while the product\'s checks `fail` is `refused`', async () => {
       const steps = createSteps()
 
@@ -234,13 +330,15 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
       await steps.changeInImplementationWithSchema('clean-backend')
       // And the checks of the product's workstreams `fail`
       await steps.productChecks('fail')
+      // And the change is at `last phase done, verified`
+      await steps.changeAtStage('last phase done, verified')
       // When the `main` agent is about to finish
       await steps.aboutToFinish('main')
       // Then finishing is `refused`
       await steps.finishVerdict('refused')
     })
 
-    // Line 102
+    // Line 108
     test('a `spec-plan` change finishing while the product\'s checks `fail` is `allowed`', async () => {
       const steps = createSteps()
 
@@ -248,13 +346,15 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
       await steps.changeInImplementationWithSchema('spec-plan')
       // And the checks of the product's workstreams `fail`
       await steps.productChecks('fail')
+      // And the change is at `last phase done, verified`
+      await steps.changeAtStage('last phase done, verified')
       // When the `main` agent is about to finish
       await steps.aboutToFinish('main')
       // Then finishing is `allowed`
       await steps.finishVerdict('allowed')
     })
 
-    // Line 102
+    // Line 108
     test('a `spec-plan` change finishing while the product\'s checks `pass` is `allowed`', async () => {
       const steps = createSteps()
 
@@ -262,6 +362,8 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
       await steps.changeInImplementationWithSchema('spec-plan')
       // And the checks of the product's workstreams `pass`
       await steps.productChecks('pass')
+      // And the change is at `last phase done, verified`
+      await steps.changeAtStage('last phase done, verified')
       // When the `main` agent is about to finish
       await steps.aboutToFinish('main')
       // Then finishing is `allowed`
@@ -270,7 +372,7 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
   })
 
   describe('Rule: A change is judged by its own product alone', () => {
-    // Line 120
+    // Line 127
     test('a change of `api` finishing while `api` fails is `refused`', async () => {
       const steps = createSteps()
 
@@ -280,13 +382,15 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
       await steps.changeOfProductInImplementation('api')
       // And the checks of the product `api` fail
       await steps.productChecksFail('api')
+      // And the change is at `last phase done, verified`
+      await steps.changeAtStage('last phase done, verified')
       // When the `main` agent is about to finish
       await steps.aboutToFinish('main')
       // Then finishing is `refused`
       await steps.finishVerdict('refused')
     })
 
-    // Line 120
+    // Line 127
     test('a change of `api` finishing while `worker` fails is `allowed`', async () => {
       const steps = createSteps()
 
@@ -296,6 +400,8 @@ describe('Feature: factory/quality/hold-stage Specification', () => {
       await steps.changeOfProductInImplementation('api')
       // And the checks of the product `worker` fail
       await steps.productChecksFail('worker')
+      // And the change is at `last phase done, verified`
+      await steps.changeAtStage('last phase done, verified')
       // When the `main` agent is about to finish
       await steps.aboutToFinish('main')
       // Then finishing is `allowed`

@@ -134,4 +134,48 @@ describe('Feature: factory/production/dispatch-work-order Specification', () => 
       await steps.handoffExitStatus('1')
     })
   })
+
+  describe('Rule: Implementation starts in the checkout that owns the plan', () => {
+    // Line 51
+    test('handing off from `project root` to `project root` gives `continue in this session`', async () => {
+      const steps = createSteps()
+
+      // Given the approved change lives in `project root`
+      await steps.approvedCheckout('project root')
+      // And the receiving session is attached to `project root`
+      await steps.receivingSessionCheckout('project root')
+      // When the checkout for implementation is selected
+      await steps.selectImplementationCheckout()
+      // Then the handoff calls for `continue in this session`
+      await steps.checkoutHandoffAction('continue in this session')
+    })
+
+    // Line 51
+    test('handing off from `change worktree` to `change worktree` gives `continue in this session`', async () => {
+      const steps = createSteps()
+
+      // Given the approved change lives in `change worktree`
+      await steps.approvedCheckout('change worktree')
+      // And the receiving session is attached to `change worktree`
+      await steps.receivingSessionCheckout('change worktree')
+      // When the checkout for implementation is selected
+      await steps.selectImplementationCheckout()
+      // Then the handoff calls for `continue in this session`
+      await steps.checkoutHandoffAction('continue in this session')
+    })
+
+    // Line 51
+    test('handing off from `project root` to `change worktree` gives `bind the implementation to change worktree`', async () => {
+      const steps = createSteps()
+
+      // Given the approved change lives in `change worktree`
+      await steps.approvedCheckout('change worktree')
+      // And the receiving session is attached to `project root`
+      await steps.receivingSessionCheckout('project root')
+      // When the checkout for implementation is selected
+      await steps.selectImplementationCheckout()
+      // Then the handoff calls for `bind the implementation to change worktree`
+      await steps.checkoutHandoffAction('bind the implementation to change worktree')
+    })
+  })
 })

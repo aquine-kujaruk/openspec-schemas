@@ -140,12 +140,12 @@ const closing = new CloseWorkOrderUseCase(new ClosingRepositoryImplementation(ne
 )));
 
 export async function dispatchWorkOrder(args: string[]): Promise<number> {
-  const name = args.find((arg) => !arg.startsWith("--"));
-  if (!name) {
-    console.error("Name the change to hand off: factory handoff <change>");
+  const [name, option, sessionRoot] = args;
+  if (!name || (option !== undefined && (option !== "--session-root" || !sessionRoot || args.length !== 3))) {
+    console.error("Usage: factory handoff <change> [--session-root <path>]");
     return 2;
   }
-  const { status, said } = await dispatch.execute(name);
+  const { status, said } = await dispatch.execute(name, sessionRoot);
   (status === 0 ? console.log : console.error)(said.join("\n"));
   return status;
 }
@@ -181,6 +181,17 @@ export async function pullAndon(args: string[]): Promise<number> {
 
   const options = (flag: string) => args.flatMap((arg, index) =>
     arg === flag && args[index + 1] !== undefined ? [args[index + 1]!] : []);
+  if (action === "reviewer-repair") {
+    const [scope] = options("--scope");
+    const [rule] = options("--rule");
+    if (!scope || !["approved", "unapproved"].includes(scope) ||
+        !rule || !["determinate", "ambiguous"].includes(rule)) {
+      console.error("Usage: factory feedback <change> reviewer-repair --scope <approved|unapproved> --rule <determinate|ambiguous>");
+      return 2;
+    }
+    console.log(andon.reviewerRepairAction(scope === "approved", rule === "determinate"));
+    return 0;
+  }
   const [source] = options("--from");
   const [says] = options("--says");
   if ((action !== "raise" && action !== "take") || !source || !says ||

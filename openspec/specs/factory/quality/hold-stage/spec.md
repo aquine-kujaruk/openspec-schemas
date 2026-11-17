@@ -9,24 +9,30 @@ Judging an agent's attempt to finish: with a change in implementation, the agent
 
 `@by:agent`
 
-With a change in implementation, the gate SHALL allow an agent to finish when the checks of the phase it is building pass, and SHALL refuse when they fail, returning the findings. A pass SHALL clear the count of failed attempts, and the pass of the agent that builds SHALL end the implementation it started.
+The gate SHALL run the checks of the current phase. After a pass the main agent SHALL be directed to the first outstanding task, or to verification when every task is complete. It SHALL be allowed to finish after verification succeeds for the current change and product state. A continuation SHALL clear the failure count. A recorded request awaiting the person or unresolved feedback SHALL allow the agent to yield. Repeated failing checks SHALL follow the existing three-attempt handoff.
 
 #### Scenario Outline: finishing with checks that `<checks>` is `<verdict>`
 
 - **GIVEN** a change in implementation whose checks `<checks>` <!-- changeChecks -->
+- **AND** the change is at `<stage>` <!-- changeAtStage -->
 - **AND** `<failures>` failed attempt(s) at finishing in a row before this one <!-- failedAttemptsBefore -->
 - **WHEN** the `<agentKind>` agent is about to finish <!-- aboutToFinish -->
 - **THEN** finishing is `<verdict>` <!-- finishVerdict -->
+- **AND** the gate directs the agent to `<instruction>` <!-- gateDirectsTo -->
 - **AND** `<failuresAfter>` failed attempt(s) in a row are counted <!-- failedAttemptsCounted -->
 
 ##### Examples:
 
-  | checks | failures | agentKind | verdict | failuresAfter |
-  | ------ | -------- | --------- | ------- | ------------- |
-  | pass   | 0        | main      | allowed | 0             |
-  | pass   | 2        | main      | allowed | 0             |
-  | fail   | 0        | main      | refused | 1             |
-  | fail   | 1        | main      | refused | 2             |
+  | checks | stage                             | failures | agentKind | verdict | instruction             | failuresAfter |
+  | ------ | --------------------------------- | -------- | --------- | ------- | ----------------------- | ------------- |
+  | pass   | task pending in phase one         | 0        | main      | refused | continue phase one      | 0             |
+  | pass   | phase one done, phase two pending | 2        | main      | refused | start phase two         | 0             |
+  | pass   | last phase done, evidence absent  | 0        | main      | refused | verify the change       | 0             |
+  | pass   | last phase done, evidence stale   | 0        | main      | refused | verify the change       | 0             |
+  | pass   | last phase done, verified         | 0        | main      | allowed | finish                  | 0             |
+  | pass   | feedback awaiting a decision      | 0        | main      | allowed | yield                   | 0             |
+  | fail   | task pending in phase one         | 0        | main      | refused | fix the reported check  | 1             |
+  | fail   | task pending in phase one         | 1        | main      | refused | fix the reported check  | 2             |
 
 ### Requirement: The third failure in a row hands the change to the person
 
@@ -54,7 +60,7 @@ When the checks fail on the third attempt in a row, the gate SHALL let the agent
 
 `@by:agent`
 
-The gate SHALL judge a helper agent's attempt to finish by the same rule as the main agent's.
+The helper SHALL be judged by the same phase checks as the main agent. When its work passes it MAY finish while the main agent continues the change. Its pass SHALL preserve the main agent’s obligation to finish the plan.
 
 #### Scenario Outline: the `<agentKind>` agent finishing with checks that `<checks>` is `<verdict>`
 
@@ -115,40 +121,42 @@ When no change is in implementation, the gate SHALL allow an agent to finish.
 
 `@by:agent`
 
-The gate SHALL judge a change in implementation by the checks of the workstreams its own schema has. A change whose schema has no workstreams SHALL be held only by an altered harness.
+Only the workstreams of the change’s schema SHALL supply phase checks. For a schema with no workstreams, harness integrity and the main agent’s outstanding tasks and verification SHALL still govern completion.
 
 #### Scenario Outline: a `<schema>` change finishing while the product's checks `<checks>` is `<verdict>`
 
 - **GIVEN** a change in implementation made with the schema `<schema>` <!-- changeInImplementationWithSchema -->
 - **AND** the checks of the product's workstreams `<checks>` <!-- productChecks -->
+- **AND** the change is at `<stage>` <!-- changeAtStage -->
 - **WHEN** the `<agentKind>` agent is about to finish <!-- aboutToFinish -->
 - **THEN** finishing is `<verdict>` <!-- finishVerdict -->
 
 ##### Examples:
 
-  | schema        | checks | agentKind | verdict |
-  | ------------- | ------ | --------- | ------- |
-  | clean-backend | fail   | main      | refused |
-  | spec-plan     | fail   | main      | allowed |
-  | spec-plan     | pass   | main      | allowed |
+  | schema        | checks | agentKind | verdict | stage |
+  | ------------- | ------ | --------- | ------- | ----- |
+  | clean-backend | fail   | main      | refused | last phase done, verified |
+  | spec-plan     | fail   | main      | allowed | last phase done, verified |
+  | spec-plan     | pass   | main      | allowed | last phase done, verified |
 
 ### Requirement: A change is judged by its own product alone
 
 `@by:agent`
 
-In a project with products, the gate SHALL judge a change in implementation by the checks of its own product only, so that a failing check in another product SHALL NOT hold it.
+The gate SHALL judge only the checks of the change’s own product. Once that change is verified, a failing check in another product SHALL allow the main agent to finish.
 
 #### Scenario Outline: a change of `<product>` finishing while `<failing>` fails is `<verdict>`
 
 - **GIVEN** the project declares the products `<products>` <!-- projectDeclaresProducts -->
 - **AND** a change of the product `<product>` in implementation <!-- changeOfProductInImplementation -->
 - **AND** the checks of the product `<failing>` fail <!-- productChecksFail -->
+- **AND** the change is at `<stage>` <!-- changeAtStage -->
 - **WHEN** the `<agentKind>` agent is about to finish <!-- aboutToFinish -->
 - **THEN** finishing is `<verdict>` <!-- finishVerdict -->
 
 ##### Examples:
 
-  | products    | product | failing | agentKind | verdict |
-  | ----------- | ------- | ------- | --------- | ------- |
-  | api, worker | api     | api     | main      | refused |
-  | api, worker | api     | worker  | main      | allowed |
+  | products    | product | failing | agentKind | verdict | stage |
+  | ----------- | ------- | ------- | --------- | ------- | ----- |
+  | api, worker | api     | api     | main      | refused | last phase done, verified |
+  | api, worker | api     | worker  | main      | allowed | last phase done, verified |

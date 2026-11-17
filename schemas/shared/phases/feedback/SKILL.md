@@ -11,7 +11,9 @@ Feedback goes back into the change it is about, whoever raised it: `the person`,
 2. `pnpm exec factory feedback <change>` lists what was raised and is waiting. What the person just said is feedback from `the person`.
 3. For each piece of feedback, settle two things:
    - the earliest phase whose work it undoes, or none when it only adds to what is left;
-   - the decisions it needs that only the person can take, by the question policy in the plan's instruction (`pnpm exec factory openspec instructions plan --change <change> --json`). Something neither the plan nor you can settle, such as a defect of the harness or an access you lack, is a question for the person too.
+   - the decisions it needs that only the person can take, by the question policy in the plan's instruction (`pnpm exec factory openspec instructions plan --change <change> --json`). For a reviewer defect, reproduce it and name the owning reviewer and standing rule. Check whether the rule determines one outcome and a separate approved repair plan covers that reviewer, rule and repair. Use `pnpm exec factory feedback <change> reviewer-repair --scope <approved|unapproved> --rule <determinate|ambiguous>` to route it.
+   - With both conditions met, record the repair plan and reproducer in the affected change. Repair the reviewer in its owning repository. Rebuild it and run the reproducer and a negative control that still rejects a genuine violation. Resume the original change after both pass with the corrected reviewer.
+   - Ask the person when the rule is ambiguous, the repair changes policy or its approval is missing. Keep the installed checker intact. Ask for access when only the person can grant it.
 4. Take it in:
 
    ```bash

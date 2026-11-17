@@ -43,6 +43,12 @@ export class PullAndonUseCase {
     this.signals = signals;
   }
 
+  reviewerRepairAction(approvedScope: boolean, determinateRule: boolean): string {
+    if (!determinateRule) return "ask which outcome to require";
+    if (!approvedScope) return "ask for the repair decision";
+    return "track and test a separate repair";
+  }
+
   async execute(name: string, feedback: { source: string; says: string; phase?: number; questions?: string[] }): Promise<void> {
     const lines = (await this.signals.readPlan(name)).split("\n");
     if (feedback.phase !== undefined) {

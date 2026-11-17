@@ -1,4 +1,9 @@
-## ADDED Requirements
+# flow/planning-probes Specification
+
+## Purpose
+Make the evidence and prerequisites of a plan visible before approval.
+
+## Requirements
 
 ### Requirement: Planning exercises the assumptions that can block a phase
 

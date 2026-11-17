@@ -25,6 +25,8 @@ export class InMemoryDispatchRepository implements DispatchRepositoryInterface {
     };
   }
 
+  checkout(path = "/project"): string { return path; }
+
   async getRunner(): Promise<Runner> {
     return this.runner;
   }
