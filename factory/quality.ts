@@ -45,7 +45,7 @@ import { loadEnv } from "./shared/infrastructure/adapters/env.adapter.ts";
 import { capture, PROJECT_ROOT } from "./shared/infrastructure/adapters/paths.adapter.ts";
 
 import type { Review } from "./shared/domain/schemas/line-types.schema.ts";
-import { createRubricCases, expectedRubricVerdict } from "./quality/infrastructure/adapters/rubric-case.adapter.ts";
+import { createRubricCases } from "./quality/infrastructure/adapters/rubric-case.adapter.ts";
 import { AuditRubricService } from "./quality/domain/services/audit-rubric.service.ts";
 import { AuditUseCase } from "./quality/application/use-cases/audit.use-case.ts";
 import { AuditAdapter } from "./quality/infrastructure/adapters/audit.adapter.ts";
@@ -149,7 +149,7 @@ const generate =
       const source = path.join(dir, layer + ".examples.md");
       if (!fileSystem.existsSync(source)) return "";
       const rows = [...exampleFile.parseExampleFile(source).rubric].flatMap(([row, cases]) =>
-        [...cases.keys()].map((name) => `        | ${row} | ${name} | ${expectedRubricVerdict(name)} |`));
+        [...cases].map(([name, sample]) => `        | ${row} | ${name} | ${sample.expectedVerdict} |`));
       if (!rows.length) return "";
       return [
         "", "  Rule: Recorded rubric judgements", "",

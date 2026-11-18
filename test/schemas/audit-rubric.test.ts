@@ -23,8 +23,7 @@ it("loads the actual clean-react rubric after the core's rubric", async () => {
       .flatMap(file => [...exampleFile.parseExampleFile(file).rubric]);
     expect(casesByRow.map(([row]) => row).sort()).toEqual(rows.map(row => row.id).sort());
     for (const [row, cases] of casesByRow) {
-      expect(cases.has("reference"), row).toBe(true);
-      expect([...cases.keys()].some(name => !name.startsWith("reference")), row).toBe(true);
+      expect([...cases.values()].map(sample => sample.expectedVerdict), row).toEqual(expect.arrayContaining(["yes", "no"]));
     }
     expect(rows.filter((row) => row.verdict === "rejected")).toEqual([]);
   });

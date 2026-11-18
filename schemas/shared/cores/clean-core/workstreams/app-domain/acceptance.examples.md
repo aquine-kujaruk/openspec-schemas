@@ -339,7 +339,7 @@ it("starts the delivery server", () => expect(server.listening).toBe(true));
 ```
 
 ```expect
-- src/catalog/application/use-cases/close.ts (gpt-6-luna yes 0.93 · a8fc5b909e02bd908a2d2dc9e89373c23cfe73d40462f6fe6cd65345d961ed7a)
+yes
 ```
 
 ### reference
@@ -358,5 +358,5 @@ it("closes the catalog through its public use case", () => {
 ```
 
 ```expect
-(no findings) (gpt-6-luna no 0 · 11e6d13a951d889538396c1f6e631a159ad899c83622dfff2a2b518fd42f4107)
+no
 ```

@@ -474,7 +474,7 @@ async function listItems() { const rows = await db.list(); return rows.map(row =
 ```
 
 ```expect
-- src/catalog/infrastructure/repository-implementations/catalog.ts (gpt-6-luna yes 0.99 · b132c2b69b615625a2ee3b770aabeab0519fbec9ac874c63a2197b3caa449fd0)
+yes
 ```
 
 ### reference
@@ -484,7 +484,7 @@ async function listItems() { const rows = await db.list(); return ItemRecordSche
 ```
 
 ```expect
-(no findings) (gpt-6-luna no 0 · a1387742177a8e2cc585c3f49889ed52932861ae1790c7654069037774c2f189)
+no
 ```
 
 ## S10 · external-record-validation
@@ -496,7 +496,7 @@ export async function readContact() { return (await response.json()) as ContactR
 ```
 
 ```expect
-- src/catalog/infrastructure/acl/contact.ts (gpt-6-luna yes 0.94 · 0ffaa59390cc59e9ea764c14c85893e60fdd157c3acf44202d4569fe30ae6b2c)
+yes
 ```
 
 ### reference
@@ -506,7 +506,7 @@ export async function readContact() { const raw: unknown = await response.json()
 ```
 
 ```expect
-(no findings) (gpt-6-luna no 0 · c8cf45196961bc785ad0e9eaabd73524edc81cdcc5f275e90d628e86ee45f6b3)
+no
 ```
 
 ## S14 · shared-resource-owner
@@ -540,7 +540,7 @@ export class BillingAdapter { readonly retryDelay = new BackoffAdapter(); }
 ```
 
 ```expect
-- src/payments/infrastructure/adapters/backoff.adapter.ts (gpt-6-luna yes 1 · d95efaeea010d84fe65cd8c8e4b38084dd0adcbf37302692d4b95fbc31615318)
+yes
 ```
 
 ### reference
@@ -562,5 +562,5 @@ export class ShippingAdapter { readonly retryDelay = new BackoffAdapter(); }
 ```
 
 ```expect
-(no findings) (gpt-6-luna no 0 · ba367fdd2f552431c3848cd835ebc152bcc07f0f387af4e7d93d9e90eb203e45)
+no
 ```

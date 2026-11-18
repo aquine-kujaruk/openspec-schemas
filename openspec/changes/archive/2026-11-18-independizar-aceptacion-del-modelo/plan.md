@@ -82,14 +82,20 @@ Semantic acceptance cases SHALL declare the expected answer independently of any
 - Use two evaluator identities on the same source and assert that the case and generated test are byte-identical. Switching back reuses that evaluator's latest matching observation. A failed matching observation stays a failure.
 - All 46 migrated cases replay with offline evidence. Prove each changed scenario with an executed assertion. Model calibration and live product calls are outside the verification for this change.
 
-- [ ] Parse the explicit expected answer and make the CLI and generated checks consume it.
-- [ ] Migrate the 46 rubric declarations and retain all score histories. Move semantic recording entirely to the evidence path. Keep deterministic recording intact.
-- [ ] Match recorded evidence by evaluator and inputs, including when switching back to a previously evaluated model.
-- [ ] Document the authoring and refresh workflow. Regenerate only where needed.
-- [ ] Verify with type checking, generator freshness, the complete offline Vitest suite, Factory checks and named scenario evidence.
+- [x] Parse the explicit expected answer and make the CLI and generated checks consume it.
+- [x] Migrate the 46 rubric declarations and retain all score histories. Move semantic recording entirely to the evidence path. Keep deterministic recording intact.
+- [x] Match recorded evidence by evaluator and inputs, including when switching back to a previously evaluated model.
+- [x] Document the authoring and refresh workflow. Regenerate only where needed.
+- [x] Verify with type checking, generator freshness, the complete offline Vitest suite, Factory checks and named scenario evidence.
 
 ## Feedback
 
+- The implement gate detected that replacing existing scenario titles would prevent OpenSpec from merging the delta. The delta preserves those titles and their example rows while changing how the expected answer and its evidence are declared.
+
+- The whole suite detected that the deterministic recorder test stripped all expect blocks when preparing inputs. Its fixture helper now strips only deterministic findings, and compares rubric declarations as part of the preserved text.
+
+- Type checking, Factory architecture checks, test generation and local backend and frontend builds passed. The full offline suite passed 906 tests and replayed all 46 cases. The S17 refresh reused existing evidence with the key set to an empty string, leaving the example and history unchanged.
+
 ## Next step
 
-Implement the approved acceptance contract and migration.
+Run named scenario verification and archive the change.

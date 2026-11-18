@@ -6,19 +6,21 @@ const { parseExampleText, recordFindings } = architectureexampleFile;
 import { project as architectureproject } from "../../factory/engineering.ts";
 const { EXAMPLE_FILES } = architectureproject;
 
-/** The text without its `expect` blocks and the blank lines right before each. */
+/** The text without deterministic `expect` blocks and their leading blank lines. */
 const strip = (text: string): string => {
   const out: string[] = [];
   let ticks: string | undefined;
   let dropping = false;
+  let rubric = false;
   for (const line of text.split("\n")) {
     if (ticks) {
       if (line.startsWith(ticks) && /^`+\s*$/.test(line)) ticks = undefined;
       if (!dropping) out.push(line);
       continue;
     }
+    if (line.startsWith("## ")) rubric = /^## S\d{2} · /.test(line);
     const fence = /^(`{3,})(\S*)/.exec(line);
-    dropping = fence?.[2] === "expect";
+    dropping = !rubric && fence?.[2] === "expect";
     if (fence) ticks = fence[1];
     if (dropping) while (out.at(-1) === "") out.pop();
     else out.push(line);
@@ -65,7 +67,7 @@ describe("recording findings in an example file", () => {
   });
 
   for (const path of EXAMPLE_FILES) {
-    it(`${path}: only the expect blocks change, appended or replaced`, () => {
+    it(`${path}: only deterministic expect blocks change, appended or replaced`, () => {
       const text = readFileSync(path, "utf8");
       const bare = strip(text);
       for (const [before, turn] of [

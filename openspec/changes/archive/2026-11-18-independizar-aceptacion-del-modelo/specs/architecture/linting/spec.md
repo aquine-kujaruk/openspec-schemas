@@ -6,25 +6,25 @@
 
 Each rubric row SHALL declare at least one counterexample expecting yes and one closely matched reference expecting no. Each case SHALL declare its expected answer as yes or no. A case with an invalid declaration SHALL be rejected. Changing the configured decision model SHALL leave the declared inputs and expected answers intact. The configured evaluator SHALL receive all files of the case together. Confidence SHALL be the probability of yes for an expected yes, and its complement for an expected no. At 95% or above the case SHALL pass. From 90% inclusive to below 95% it SHALL pass with a warning. Below 90% it SHALL fail.
 
-#### Scenario Outline: Expected <answer> with probability <probability> gives <result>
+#### Scenario Outline: Recording <case> at <score> produces <state>
 
 - **GIVEN** a case declaring `<answer>` as its expected answer <!-- declaredAnswer -->
-- **WHEN** its files are evaluated with yes probability `<probability>` <!-- evaluatedProbability -->
-- **THEN** the case result is `<result>` <!-- confidenceResult -->
+- **WHEN** its files are evaluated with yes probability `<score>` <!-- evaluatedProbability -->
+- **THEN** the recorded evidence is classified as `<state>` <!-- confidenceResult -->
 - **AND** the declaration stays as written <!-- declarationUnchanged -->
 
 ##### Examples:
 
-  | answer | probability | result |
-  | --- | --- | --- |
-  | yes | 0.95 | passed |
-  | yes | 0.90 | passed with a warning |
-  | yes | 0.8999 | failed |
-  | yes | 0.01 | failed |
-  | no | 0.05 | passed |
-  | no | 0.10 | passed with a warning |
-  | no | 0.1001 | failed |
-  | no | 0.99 | failed |
+  | case | answer | score | state |
+  | --- | --- | --- | --- |
+  | wrapper-id | yes | 0.95 | target |
+  | wrapper-id | yes | 0.90 | warning |
+  | wrapper-id | yes | 0.8999 | failed |
+  | wrapper-id | yes | 0.01 | failed |
+  | reference | no | 0.05 | target |
+  | reference | no | 0.10 | warning |
+  | reference | no | 0.1001 | failed |
+  | reference | no | 0.99 | failed |
 
 #### Scenario Outline: A declaration of <declaration> is <outcome>
 
@@ -47,24 +47,25 @@ Each rubric row SHALL declare at least one counterexample expecting yes and one 
 
 The acceptance check SHALL reuse the latest recorded judgement matching the case files, question and configured evaluator. If matching evidence is missing, the check SHALL obtain a fresh judgement when the evaluator is available, or fail naming the case and the command to refresh its evidence. Evaluating or reusing a judgement SHALL leave the acceptance declaration intact. A failed judgement SHALL remain visible in the history.
 
-#### Scenario Outline: A <change> change with evaluator <availability> uses <evidence>
+#### Scenario Outline: Replaying <change> with key <key> makes <calls> calls
 
 - **GIVEN** a case with existing evidence and change `<change>` <!-- evidenceChange -->
-- **WHEN** acceptance is checked with the evaluator `<availability>` <!-- acceptanceChecked -->
-- **THEN** the reported evidence is `<evidence>` <!-- usedEvidence -->
+- **WHEN** acceptance is checked with the evaluator key `<key>` <!-- acceptanceChecked -->
+- **THEN** it makes `<calls>` evaluator calls <!-- evaluatorCalls -->
+- **AND** the reported evidence is `<evidence>` <!-- usedEvidence -->
 - **AND** the declaration stays as written <!-- declarationUnchanged -->
 
 ##### Examples:
 
-  | change | availability | evidence |
-  | --- | --- | --- |
-  | no | unavailable | replayed |
-  | model | available | fresh |
-  | model | unavailable | missing |
-  | question | available | fresh |
-  | files | available | fresh |
-  | question | unavailable | missing |
-  | files | unavailable | missing |
+  | change | key | calls | evidence |
+  | --- | --- | --- | --- |
+  | none | absent | 0 | replayed |
+  | case | present | 1 | fresh |
+  | question | present | 1 | fresh |
+  | model | present | 1 | fresh |
+  | case | absent | 0 | missing |
+  | question | absent | 0 | missing |
+  | model | absent | 0 | missing |
 
 ### Requirement: Every judgement joins a history the report reads
 
@@ -85,6 +86,8 @@ Each live judgement SHALL append its probability, timestamp, evaluator identity 
   | history | score | state | drift | result |
   | --- | --- | --- | --- | --- |
   | none | 0.95 | target | absent | passes |
+  | 0.97 0.96 0.97 | 0.95 | target | absent | passes |
   | 0.75 | 0.95 | target | present | passes |
+  | 0.72 | 0.91 | warning | absent | passes |
   | 0.70 | 0.90 | warning | present | passes |
   | 0.92 0.91 0.93 | 0.64 | failed | present | fails |

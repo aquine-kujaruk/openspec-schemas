@@ -291,7 +291,7 @@ export class PaycheckEntity { constructor(readonly grossPay: Money) {} }
 ```
 
 ```expect
-- src/invoicing/domain/value-objects/money.value-object.ts (gpt-6-luna yes 0.98 · d160236b68b3af93202eb0d9530715df804dd5f71e586deb452304d9d3cc6fd3)
+yes
 ```
 
 ### reference
@@ -309,5 +309,5 @@ import { Unit } from "../../shared/domain/unit"; export class Item { unit = new 
 ```
 
 ```expect
-(no findings) (gpt-6-luna no 0 · 340f60fa23a8705193b2599fd09d5560302c03f6451002818f4cb89b2bad6c6f)
+no
 ```
