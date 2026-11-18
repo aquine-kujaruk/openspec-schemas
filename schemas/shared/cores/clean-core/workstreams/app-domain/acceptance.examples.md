@@ -325,3 +325,38 @@ export class InMemoryInvoiceRepository implements InvoiceRepositoryInterface {
 ```expect
 - test/acceptance/module/repositories/in-memory-invoice.repository.ts (archunit)
 ```
+
+## S07 · core-test-coverage
+
+### untested-operation
+
+```ts src/catalog/application/use-cases/close.ts
+export class CloseUseCase { execute() { return "closed"; } }
+```
+
+```ts test/catalog.test.ts
+it("starts the delivery server", () => expect(server.listening).toBe(true));
+```
+
+```expect
+- src/catalog/application/use-cases/close.ts (gpt-6-luna yes 0.93 · a8fc5b909e02bd908a2d2dc9e89373c23cfe73d40462f6fe6cd65345d961ed7a)
+```
+
+### reference
+
+```ts src/catalog/application/use-cases/close.ts
+export class CloseUseCase { execute() { return "closed"; } }
+```
+
+```ts test/acceptance/catalog/close.feature.test.ts
+import { expect, it } from "vitest";
+import { CloseUseCase } from "../../../src/catalog/application/use-cases/close";
+it("closes the catalog through its public use case", () => {
+  const close = new CloseUseCase();
+  expect(close.execute()).toEqual("closed");
+});
+```
+
+```expect
+(no findings) (gpt-6-luna no 0 · 11e6d13a951d889538396c1f6e631a159ad899c83622dfff2a2b518fd42f4107)
+```

@@ -1,3 +1,4 @@
+import { createRubricSteps } from "../../../../../../tools/rubric-steps.ts";
 import { basename, join } from "node:path";
 import { expect } from "vitest";
 import { architecture, exampleArchitecture } from "factory/sdk";
@@ -11,6 +12,7 @@ const recorded = expectations(join(import.meta.dirname, `${layer}.examples.md`))
 const workstream = ruleIds(architecture, basename(import.meta.dirname));
 
 export function createSteps() {
+  const semantic = createRubricSteps(layer, import.meta.dirname);
   let current = "";
   let asked = "";
   let broken: Findings = new Map();
@@ -32,6 +34,9 @@ export function createSteps() {
     async workstreamChecked(): Promise<void> {
       all = await ex.all(current, workstream);
     },
+    async rubricJudged(row: string): Promise<void> {
+      await semantic.judge(row, current);
+    },
 
     // Outcome
     async brokenAsExpected(): Promise<void> {
@@ -39,6 +44,9 @@ export function createSteps() {
     },
     async noBrokenFiles(): Promise<void> {
       expect(all, `${current}`).toEqual({});
+    },
+    rubricVerdict(verdict: string): void {
+      semantic.check(verdict);
     },
   };
 }

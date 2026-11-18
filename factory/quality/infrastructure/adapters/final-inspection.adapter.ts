@@ -1,12 +1,31 @@
+import { randomUUID } from "node:crypto";
+import { AstBuilder, compile, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { cacheDir, capture, self } from "../../../shared/infrastructure/adapters/paths.adapter.ts";
+import { cacheDir, capture, runTool, self } from "../../../shared/infrastructure/adapters/paths.adapter.ts";
 import { QualityException } from "../../domain/exceptions/quality.exceptions.ts";
+import { FileGaugeReportSchema } from "../acl/final-inspection.acl.ts";
 import type {
   EndToEndRecord, FileGaugeRecord, FinalInspectionAcl, FinalInspectionRecord,
   InspectionCertificateRecord, InspectionFinding,
 } from "../acl/final-inspection.acl.ts";
 import type { QualityCertificateFileAcl } from "../acl/quality-certificate-file.acl.ts";
+
+export function scenariosOfDelta(file: string) {
+  const feature = runTool("opsx-gherkin", [file], { bin: "opsx-to-feature" });
+  if (feature.status !== 0) throw new QualityException(`Invalid scenario specification ${file}: ${feature.stderr.trim()}`, { cause: feature });
+  const document = new Parser(new AstBuilder(randomUUID), new GherkinClassicTokenMatcher()).parse(feature.stdout);
+  const requirements = new Map<string, string>();
+  for (const { rule } of document.feature?.children ?? []) {
+    if (!rule || rule.tags.some(tag => ["@openspec-removed", "@openspec-renamed"].includes(tag.name))) continue;
+    for (const { scenario } of rule.children)
+      if (scenario) requirements.set(scenario.id, rule.name);
+  }
+  return compile(document, file, randomUUID).flatMap(scenario => {
+    const requirement = requirements.get(scenario.astNodeIds[0]!);
+    return requirement ? [{ requirement, scenario: scenario.name }] : [];
+  });
+}
 
 export type InspectionResources = {
   snapshot: FinalInspectionRecord;
@@ -42,9 +61,13 @@ export class FinalInspectionAdapter implements FinalInspectionAcl {
       capture("pnpm", ["exec", "vitest", "run", ...files, "--reporter=json", `--outputFile=${report}`], { cwd: this.root });
     else
       await this.run(["test", "acceptance", "--report", report]);
-    return existsSync(report)
-      ? (JSON.parse(readFileSync(report, "utf8")) as { testResults: FileGaugeRecord[] }).testResults
-      : [];
+    if (!existsSync(report)) return [];
+    try {
+      const raw: unknown = JSON.parse(readFileSync(report, "utf8"));
+      return FileGaugeReportSchema.parse(raw).testResults;
+    } catch (cause) {
+      throw new QualityException(`Invalid Vitest assertion report in ${report}`, { cause });
+    }
   }
 
   async run(args: string[]) {

@@ -2,6 +2,7 @@ export type InspectionDrawings = {
   spec: string;
   text: string;
   gauge?: string;
+  expected?: { requirement: string; scenario: string }[];
 }[];
 
 export type Finding = { source: string; names: string; findings: string[] };

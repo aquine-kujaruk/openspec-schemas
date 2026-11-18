@@ -59,7 +59,6 @@ export type Archunit = (ctx: RuleContext) => Rule[];
 export type Review = {
   /** The `.env` variable that holds the decision model's API key. */
   keyVariable: string;
-  /** Decision model id. */
   model: string;
   /** A span whose probability is at or above this line is a warning (and keeps narrowing). */
   threshold: number;
@@ -67,8 +66,6 @@ export type Review = {
   spanLines: number;
   /** Stage 1 caps: files per request and total characters per request. */
   batch: { files: number; chars: number };
-  /** Where the modules live (`src/*`): a row's folder `domain` is asked over the `domain` folder of every module. */
-  modules: string;
 };
 
 /**
@@ -152,7 +149,6 @@ export type Architecture = {
   workstreams: Workstream[];
   /** The folder of each workstream, where its rules and examples are; a core's live apart from its schema's. */
   folders?: Record<string, string>;
-  /** `factory review`. */
   review: Review;
   /** Paths fallow ignores entirely. */
   ignore: string[];

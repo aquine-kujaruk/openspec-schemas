@@ -5,10 +5,11 @@ import { AuditRubricService } from "../../domain/services/audit-rubric.service.t
 import type { AuditFinding } from "../../domain/value-objects/audit-finding.value-object.ts";
 import type { AuditRepositoryInterface } from "../repository-interfaces/audit.repository-interface.ts";
 
-export type AuditInput = { root: string; config: Review; rubrics: string[]; key?: string };
+export type AuditInput = { root: string; modules: string; config: Review; rubrics: string[]; key?: string };
 export type AuditReport =
   | { code: 0; findings: AuditFinding[]; lines: string[] }
-  | { code: 2 | 3; issue: string };
+  | { code: 2 | 3; issue: string }
+  | { code: 4; incomplete: string[]; findings: AuditFinding[]; lines: string[] };
 
 const byRange = (a: AuditFinding, b: AuditFinding): number =>
   a.file.localeCompare(b.file) ||
@@ -27,7 +28,7 @@ export class AuditUseCase {
     this.records = new AuditRecordService((content) => repository.hashContent(content));
   }
 
-  async execute({ root, config, rubrics, key }: AuditInput): Promise<AuditReport> {
+  async execute({ root, modules, config, rubrics, key }: AuditInput): Promise<AuditReport> {
     if (!key) {
       return {
         code: 2,
@@ -40,20 +41,46 @@ export class AuditUseCase {
         issue: "the schema this project is checked with has no rubric: there is nothing to review",
       };
     }
-    const rows = this.rubric.loadDocuments(
-      this.repository.listRubrics(root, rubrics),
-      this.repository.listPackageNames(root),
-    );
+    const incomplete: string[] = [];
+    const reportIncomplete = (findings: AuditFinding[] = [], coverage?: string): AuditReport => ({
+      code: 4, incomplete, findings,
+      lines: [
+        ...findings.map(finding => finding.format()),
+        ...(coverage ? [coverage] : []),
+        ...incomplete.map(reason => `incomplete: ${reason}`),
+      ],
+    });
     try {
+      const rows = this.rubric.loadDocuments(
+        this.repository.listRubrics(root, rubrics),
+        this.repository.listPackageNames(root),
+      );
       const accepted = rows.filter((row) => row.verdict === "accepted");
       const asked = accepted.filter((row) => !row.crossFile);
       const folders = [...new Set(asked.flatMap((row) => row.folders))];
-      const all = this.repository.listCoreFiles(root, config.modules, folders);
+      const all = this.repository.listCoreFiles(root, modules, folders);
+      for (const row of rows.filter((row) => row.verdict === "rejected"))
+        incomplete.push(`a row was rejected: ${row.id} ${row.reason}`);
+      if (!all.length && this.repository.listCoreFiles(root, modules, ["domain", "application", "infrastructure", "framework"]).length)
+        incomplete.push("no core file selected");
+      if (incomplete.length) return reportIncomplete();
       const record = this.repository.readPass(root);
       const fingerprint = this.records.rubricHash(asked);
       const files = this.records.touched(all, record, fingerprint);
       const findings = (await this.funnel.inspect({
-        ask: (state, questions) => this.repository.askQuestions(state, questions),
+        ask: async (state, questions, locations) => {
+          try {
+            const answers = await this.repository.askQuestions(state, questions);
+            for (const [index, question] of questions.entries()) {
+              if (!answers.has(question.name))
+                incomplete.push(`the model failed: missing answer for ${question.name} at ${locations[index]}`);
+            }
+            return answers;
+          } catch (error) {
+            incomplete.push(`the model failed: ${error instanceof Error ? error.message : String(error)}`);
+            throw error;
+          }
+        },
         outline: (file) => this.repository.outlineSource(file),
         rows: asked,
         files,
@@ -62,9 +89,10 @@ export class AuditUseCase {
         batch: config.batch,
       })).sort(byRange);
       const crossFile = accepted.filter((row) => row.crossFile).map((row) => row.id);
-      const rejected = rows.filter((row) => row.verdict === "rejected")
-        .map((row) => `${row.id} ${row.reason}`);
       const judged = new Set(files.map((file) => file.path));
+      const selected = new Set(all.map((file) => file.path));
+      if (incomplete.length) return reportIncomplete(findings,
+        `${findings.length} partial warnings; ${judged.size} of ${selected.size} distinct core files submitted`);
       this.repository.savePass(root, this.records.recordPass(
         record, files, this.repository.findCommit(root), fingerprint,
       ));
@@ -73,16 +101,16 @@ export class AuditUseCase {
         findings,
         lines: [
           ...findings.map((finding) => finding.format()),
-          `${findings.length} warnings; ${judged.size} of ${all.length} core files judged (${
+          `${findings.length} warnings; ${judged.size} of ${selected.size} core files judged (${
             record.rubric && record.rubric !== fingerprint
               ? "the rubric changed: every file judged again"
               : "touched since the last pass"
           })`,
           ...(crossFile.length ? [`skipped as cross-file (for the human reviewer): ${crossFile.join(", ")}`] : []),
-          ...(rejected.length ? [`skipped as not generic: ${rejected.join("; ")}`] : []),
         ],
       };
     } catch (cause) {
+      if (incomplete.length) return reportIncomplete();
       return { code: 3, issue: cause instanceof Error ? cause.message : String(cause) };
     }
   }

@@ -3,7 +3,7 @@ import { z } from "zod";
 export const FinalInspectionRecordSchema = z.object({
   name: z.string(),
   repository: z.boolean(),
-  drawings: z.array(z.object({ spec: z.string(), text: z.string(), gauge: z.string().optional() })),
+  drawings: z.array(z.object({ spec: z.string(), text: z.string(), gauge: z.string().optional(), expected: z.array(z.object({ requirement: z.string(), scenario: z.string() })).optional() })),
   workstreams: z.array(z.object({
     id: z.string(),
     upstream: z.array(z.string()),
@@ -17,10 +17,13 @@ export const FinalInspectionRecordSchema = z.object({
 export type FinalInspectionRecord = z.infer<typeof FinalInspectionRecordSchema>;
 export type InspectionRun = { status: number | null; output: string };
 
-export type FileGaugeRecord = {
-  name: string;
-  assertionResults: { ancestorTitles: string[]; title: string; status: string }[];
-};
+const FileGaugeRecordSchema = z.object({
+  name: z.string(),
+  status: z.string().optional(),
+  assertionResults: z.array(z.object({ ancestorTitles: z.array(z.string()), title: z.string(), status: z.string() })),
+});
+export const FileGaugeReportSchema = z.object({ testResults: z.array(FileGaugeRecordSchema) });
+export type FileGaugeRecord = z.infer<typeof FileGaugeRecordSchema>;
 export type EndToEndRecord = { test: string; result: "passed" | "failed"; output?: string };
 export type InspectionFinding = { source: string; names: string; findings: string[] };
 export interface FinalInspectionAcl {
@@ -35,7 +38,7 @@ export interface FinalInspectionAcl {
   feedback(name: string, finding: InspectionFinding): Promise<void>;
 }
 
-export const InspectionAuditState = { Run: "run", Skipped: "skipped" } as const;
+export const InspectionAuditState = { Run: "run", Skipped: "skipped", Incomplete: "incomplete" } as const;
 
 export type InspectionCertificateRecord = {
   change: string;

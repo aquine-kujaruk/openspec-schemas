@@ -8,7 +8,7 @@ import type {
 import { AuditFinding } from "../value-objects/audit-finding.value-object.ts";
 
 export type AuditFunnelOptions = {
-  ask: (state: string, questions: AuditQuestion[]) => Promise<AuditAnswers>;
+  ask: (state: string, questions: AuditQuestion[], locations: string[]) => Promise<AuditAnswers>;
   outline: (file: AuditFile) => AuditSpan[];
   rows: AuditRow[];
   files: AuditFile[];
@@ -73,14 +73,17 @@ export class AuditFunnelService {
           .map((f) => `=== ${f.path} ===\n${f.content}`)
           .join("\n\n");
         const questions: AuditQuestion[] = [];
+        const locations: string[] = [];
         for (const row of rowsHere)
-          for (const [i, f] of batch.entries())
+          for (const [i, f] of batch.entries()) {
+            locations.push(f.path);
             questions.push({
               name: `${row.id}_f${i}`,
               instructions: `Consider only the file ${f.path}. ${row.question}`,
               excerpt: f.content,
             });
-        const answers = await o.ask(state, questions);
+          }
+        const answers = await o.ask(state, questions, locations);
         for (const row of rowsHere)
           for (const [i, f] of batch.entries()) {
             const p = answers.get(`${row.id}_f${i}`);
@@ -95,16 +98,17 @@ export class AuditFunnelService {
     // Stage 2, per file: the rows that answered yes over its units.
     for (const [path, byRow] of candidates) {
       const file = o.files.find((f) => f.path === path)!;
-      const state = numbered(file.content);
+      const state = `File: ${file.path}\n\n${numbered(file.content)}`;
       const units = o.outline(file);
       const rowsHere = rows.filter((r) => byRow.has(r.id));
       const ask = async (row: AuditRow, spans: AuditSpan[]) => {
         const questions = spans.map((s, i) => ({
           name: `${row.id}_s${i}`,
-          instructions: `Consider only lines ${s.from}-${s.to} of the file (${s.label}). ${row.question}`,
+          instructions: `Evaluate ${row.id} at ${path}, lines ${s.from}-${s.to} (${s.label}). Use the surrounding file to interpret this range. The predicate is true when the specified range itself exhibits the violation. Rubric: ${row.question}`,
           excerpt: slice(file.content, s),
         }));
-        const answers = await o.ask(state, questions);
+        const locations = spans.map(span => `${path}:${span.from}-${span.to}`);
+        const answers = await o.ask(state, questions, locations);
         return spans.flatMap((s, i) => {
           const p = answers.get(`${row.id}_s${i}`);
           return yes(p) ? [{ span: s, p }] : [];

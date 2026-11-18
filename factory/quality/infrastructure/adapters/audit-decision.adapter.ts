@@ -65,7 +65,6 @@ export type OpenAiClientOptions = {
   endpoint?: string;
   timeoutMs?: number;
   fetch?: typeof fetch;
-  /** Called with every inspection issue (the command prints them to stderr). */
   onIssue?: (issue: string) => void;
 };
 

@@ -65,6 +65,8 @@ export function createSteps() {
   const files: Record<string, string> = {};
   let credential: string | undefined = "sk-test";
   let rows: LoadedAuditRow[] = [];
+  let modulePattern = "src/*";
+  let fixtureRows = [S09];
   let config = { ...DEFAULTS };
   let report: AuditReport | undefined;
   const output: string[] = [];
@@ -76,8 +78,8 @@ export function createSteps() {
   };
 
   const runMain = async () => {
-    report = await audit.execute({ root: "", key: credential, config, rubrics });
-    if (report.code === 0) output.push(...report.lines);
+    report = await audit.execute({ root: "", modules: modulePattern, key: credential, config, rubrics });
+    if ("lines" in report) output.push(...report.lines);
     else output.push(report.issue);
   };
 
@@ -173,6 +175,31 @@ export function createSteps() {
       writeRubric(`${schema}/RUBRIC.md`, schemaRows);
       rubrics = [...rubrics, `${schema}/RUBRIC.md`];
     },
+    productDeclaresModules(modules: string): void {
+      modulePattern = modules;
+    },
+    coreFilesUnder(count: string, folder: string): void {
+      for (let i = 0; i < Number(count); i++) files[entity(i).replace("src/", folder + "/")] = CLASS;
+      seed(fixtureRows, files);
+    },
+    noPassRecorded(): void {
+      repository.seed({ pass: { files: {} } });
+    },
+    productWithCoreFiles(count: string): void {
+      for (let i = 0; i < Number(count); i++) files[entity(i)] = CLASS;
+      seed(fixtureRows, files);
+    },
+    foldersSelect(selected: string): void {
+      fixtureRows = [{ ...S09, layers: Number(selected) ? "domain" : "application" }];
+      seed(fixtureRows, files);
+    },
+    rubricRejectedRows(rejected: string): void {
+      if (Number(rejected)) fixtureRows.push({ ...S11, question: "Is a payment present?" });
+      seed(fixtureRows, files);
+    },
+    decisionModelState(model: string): void {
+      if (model === "fails") repository.seed({ judge: () => { throw new Error("offline"); } });
+    },
 
     // Action
     async reviewRuns(): Promise<void> {
@@ -259,6 +286,10 @@ export function createSteps() {
       expect(report?.code, output.join("\n")).toBe(0);
       const ids = repository.calls.flatMap((questions) => questions.map((question) => question.name.split("_")[0]!));
       expect([...new Set(ids)].join(", ")).toBe(asked);
+    },
+    auditOutcomeIs(outcome: string): void {
+      if (outcome === "complete") expect(report?.code).toBe(0);
+      else expect(output.join("\n")).toContain(outcome);
     },
   };
 }

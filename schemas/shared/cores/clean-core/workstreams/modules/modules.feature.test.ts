@@ -282,4 +282,30 @@ describe('Feature: Keep the modules apart', () => {
       await steps.moduleScopeOutcome('the rule violation and the unused file')
     })
   })
+
+  describe('Rule: Recorded rubric judgements', () => {
+    // Line 163
+    test('rubric S08 / cross-module-import is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `cross-module-import`
+      await steps.exampleFolder('cross-module-import')
+      // When rubric row `S08` is judged
+      await steps.rubricJudged('S08')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 163
+    test('rubric S08 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S08` is judged
+      await steps.rubricJudged('S08')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+  })
 })

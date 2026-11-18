@@ -1,3 +1,4 @@
+import { QualityException } from "../../../../factory/quality/domain/exceptions/quality.exceptions.ts";
 import type { FinalInspectionRepositoryInterface } from "../../../../factory/quality/application/repository-interfaces/final-inspection.repository-interface.ts";
 import type { QualityCertificate } from "../../../../factory/quality/domain/aggregates/quality-certificate.aggregate.ts";
 import type {
@@ -21,6 +22,7 @@ export class InMemoryFinalInspectionRepository implements FinalInspectionReposit
   readonly certificates = new Map<string, QualityCertificate>();
   readonly findings: Finding[] = [];
   requested: string[] = [];
+  auditUnavailable = false;
 
   seed(data: Seed): void {
     this.data = data;
@@ -61,6 +63,7 @@ export class InMemoryFinalInspectionRepository implements FinalInspectionReposit
   }
 
   async runAudit(): Promise<string[]> {
+    if (this.auditUnavailable) throw new QualityException("incomplete: the model failed", { cause: this.auditUnavailable });
     return this.data.warnings;
   }
 

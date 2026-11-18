@@ -300,4 +300,174 @@ describe('Feature: Build the domain layer', () => {
       await steps.noBrokenFiles()
     })
   })
+
+  describe('Rule: Recorded rubric judgements', () => {
+    // Line 164
+    test('rubric S06 / literal-currency is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `literal-currency`
+      await steps.exampleFolder('literal-currency')
+      // When rubric row `S06` is judged
+      await steps.rubricJudged('S06')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 164
+    test('rubric S06 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S06` is judged
+      await steps.rubricJudged('S06')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 164
+    test('rubric S09 / provider-name is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `provider-name`
+      await steps.exampleFolder('provider-name')
+      // When rubric row `S09` is judged
+      await steps.rubricJudged('S09')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 164
+    test('rubric S09 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S09` is judged
+      await steps.rubricJudged('S09')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 164
+    test('rubric S11 / aggregate-of-one is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `aggregate-of-one`
+      await steps.exampleFolder('aggregate-of-one')
+      // When rubric row `S11` is judged
+      await steps.rubricJudged('S11')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 164
+    test('rubric S11 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S11` is judged
+      await steps.rubricJudged('S11')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 164
+    test('rubric S12 / misplaced-method is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `misplaced-method`
+      await steps.exampleFolder('misplaced-method')
+      // When rubric row `S12` is judged
+      await steps.rubricJudged('S12')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 164
+    test('rubric S12 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S12` is judged
+      await steps.rubricJudged('S12')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 164
+    test('rubric S16 / constructor-mode is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `constructor-mode`
+      await steps.exampleFolder('constructor-mode')
+      // When rubric row `S16` is judged
+      await steps.rubricJudged('S16')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 164
+    test('rubric S16 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S16` is judged
+      await steps.rubricJudged('S16')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 164
+    test('rubric S17 / wrapper-id is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `wrapper-id`
+      await steps.exampleFolder('wrapper-id')
+      // When rubric row `S17` is judged
+      await steps.rubricJudged('S17')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 164
+    test('rubric S17 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S17` is judged
+      await steps.rubricJudged('S17')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 164
+    test('rubric S20 / restated-method is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `restated-method`
+      await steps.exampleFolder('restated-method')
+      // When rubric row `S20` is judged
+      await steps.rubricJudged('S20')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 164
+    test('rubric S20 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S20` is judged
+      await steps.rubricJudged('S20')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+  })
 })

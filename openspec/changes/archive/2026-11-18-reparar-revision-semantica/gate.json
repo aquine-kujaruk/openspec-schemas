@@ -1,0 +1,6 @@
+{
+  "phase": "Phase 1: The review judges the product's modules and says when it is incomplete",
+  "failures": 0,
+  "waitingFor": "the agent",
+  "findings": []
+}

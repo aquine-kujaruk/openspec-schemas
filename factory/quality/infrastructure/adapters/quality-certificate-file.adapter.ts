@@ -77,7 +77,7 @@ export class QualityCertificateFileAdapter implements QualityCertificateFileAcl 
       ).join("\n\n") : "Every check passes."}`,
       `## Review\n\n${review.state === InspectionAuditState.Run
         ? `Run: ${review.warnings.length} warning(s).${review.warnings.map((warning) => `\n- ${warning}`).join("")}`
-        : `Skipped: ${review.note ?? "the project configures no key"}.`}`,
+        : `${review.state === InspectionAuditState.Incomplete ? "Incomplete" : "Skipped"}: ${review.note ?? "the project configures no key"}.`}`,
       `## Procedures\n\n${table(
         ["Procedure", "Environment", "Treatment", "Outcome"],
         procedures.map(({ slug, env, treatment, outcome }) => [slug, env, treatment, outcome ?? ""]),

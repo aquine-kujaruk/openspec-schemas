@@ -9,11 +9,12 @@ export class AuditRecordService {
 
   rubricHash(rows: AuditRow[]): string {
     return this.hash(
-      JSON.stringify(
-        rows
+      JSON.stringify({
+        scope: "named-file-and-line-range",
+        rows: rows
           .map((row) => [row.id, row.question, row.folders, row.crossFile])
           .sort((a, b) => (a[0] < b[0] ? -1 : 1)),
-      ),
+      }),
     );
   }
 

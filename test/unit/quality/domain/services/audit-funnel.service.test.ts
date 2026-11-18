@@ -98,6 +98,26 @@ describe("audit funnel", () => {
       },
     ]);
   });
+  it("identifies the file and individual line range in every narrowing request", async () => {
+    const source = CLASS.replace("return base;", "return base; // SMELL");
+    const seen: string[] = [];
+    const client = markerClient();
+    await service.inspect({
+      ask: async (state, questions) => {
+        if (questions.some(question => question.name.includes("_s"))) {
+          expect(state).toContain("File: " + file(source).path);
+          for (const question of questions) {
+            expect(question.instructions).toContain(file(source).path + ", lines ");
+            seen.push(question.instructions);
+          }
+        }
+        return client.ask(state, questions);
+      },
+      outline, rows: [S09], files: [file(source)], threshold: 0.85, spanLines: 4, batch: BATCH,
+    });
+    expect(seen.some(question => question.includes("lines 8-11"))).toBe(true);
+  });
+
   it("narrows findings in two methods to two ranges", async () => {
     const findings = await run(
       CLASS.replace("return base;", "return base; // SMELL").replace(
@@ -156,7 +176,7 @@ describe("audit funnel", () => {
     const client = fakeClient(() => 0.95);
     await run("a\nb", 40, client);
 
-    expect(client.calls[1]?.state).toBe("   1 | a\n   2 | b");
+    expect(client.calls[1]?.state).toBe(`File: ${file("").path}\n\n   1 | a\n   2 | b`);
   });
 
   it("drops a span the model answers below the threshold at a deeper stage", async () => {

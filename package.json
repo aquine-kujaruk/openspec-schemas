@@ -1,6 +1,6 @@
 {
   "name": "openspec-schemas",
-  "version": "0.14.1",
+  "version": "0.14.2",
   "private": true,
   "description": "OpenSpec schemas, the resources they are built from and the packages built from them.",
   "type": "module",
@@ -18,6 +18,7 @@
     "check": "pnpm run typecheck && pnpm exec factory generate --check && pnpm run test"
   },
   "dependencies": {
+    "@cucumber/gherkin": "42.0.1",
     "@fission-ai/openspec": "2.0.0",
     "archunit": "2.5.4",
     "fallow": "3.34.1",

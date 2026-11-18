@@ -270,7 +270,7 @@ export const build = async (
         `the package needs ${shared("skills")}/setup/SKILL.md: the setup skill carries the command`,
       );
     for (const [id, dir] of workstreamDirs)
-      for (const file of files(dir, "{SKILL.md,*.examples.md}"))
+      for (const file of files(dir, "{SKILL.md,*.examples.md,*.scores.json}"))
         copy(
           file,
           join(skills, "implement/references/workstreams", id, basename(file)),

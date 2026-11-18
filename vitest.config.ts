@@ -1,5 +1,6 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { RubricReporter } from "./tools/rubric-reporter.ts";
 import { defineConfig } from "vitest/config";
 
 /**
@@ -38,6 +39,7 @@ export default defineConfig({
   resolve: { alias: { "factory/sdk": new URL("./factory/sdk.ts", import.meta.url).pathname } },
   test: {
     globals: true,
+    reporters: ["default", new RubricReporter()],
     setupFiles: ["tools/test-setup.ts"],
     environment: "node",
     testTimeout: 120_000,

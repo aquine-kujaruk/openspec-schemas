@@ -35,9 +35,9 @@ export class InMemoryAuditRepository implements AuditRepositoryInterface {
     return [];
   }
 
-  listCoreFiles(_root: string, _modules: string, folders: string[]): AuditFile[] {
+  listCoreFiles(_root: string, modules: string, folders: string[]): AuditFile[] {
     return folders.flatMap((folder) => Object.entries(this.files)
-      .filter(([path]) => path.includes(`/${folder}/`))
+      .filter(([path]) => path.startsWith(modules.split("*")[0]) && path.includes(`/${folder}/`))
       .map(([path, content]) => ({ path, content, folder })));
   }
 

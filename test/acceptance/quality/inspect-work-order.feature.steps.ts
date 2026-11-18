@@ -28,6 +28,7 @@ export function createSteps() {
   let probedAs: string | undefined;
   let givenOutcome: string | undefined;
   let certificate: QualityCertificate;
+  let suiteAssertion: string | undefined;
   let delivered: { repository: boolean; spec: string } | undefined;
   const adapterFolders = new Map<string, string>();
   let written = true;
@@ -42,6 +43,19 @@ export function createSteps() {
   const before = [...product];
 
   const measurements = (): { drawings: InspectionDrawings; gauges: GaugeReport } => {
+    if (suiteAssertion) {
+      const spec = "architecture/linting";
+      const gauge = "test/schemas/architecture/linting.test.ts";
+      const requirement = "A recorded judgement is replayed without the model";
+      const scenario = "A matching fingerprint replays";
+      const expected = [{ requirement, scenario }];
+      const assertions = suiteAssertion === "absent" ? [] : [{
+        requirement: suiteAssertion === "other requirement" ? "Unrelated rule" : requirement,
+        scenario: suiteAssertion === "other title" ? "Unrelated scenario" : scenario,
+        passed: ["passing", "other requirement", "other title"].includes(suiteAssertion),
+      }];
+      return { drawings: [{ spec, text: DELTA, gauge, expected }], gauges: [{ name: gauge, assertions }] };
+    }
     if (delivered) {
       const pieces = delivered.spec.split("/");
       const folder = delivered.repository
@@ -98,6 +112,9 @@ export function createSteps() {
     },
     reviewKeyIs(key: string): void {
       auditConfigured = key === "configured";
+    },
+    reviewRunIs(run: string): void {
+      records.auditUnavailable = run === "incomplete";
     },
     reviewRaisesWarnings(warnings: string): void {
       auditWarnings = Array.from({ length: Number(warnings) }, (_, i) =>
@@ -173,13 +190,16 @@ export function createSteps() {
     remainingAcceptanceIs(status: string): void {
       written = status === "passing";
     },
+    namedSuiteAssertion(assertion: string): void {
+      suiteAssertion = assertion;
+    },
 
     // Action
     async verifyChange(): Promise<void> {
       const { drawings, gauges } = measurements();
       records.seed({
         inspection: {
-          name: CHANGE, repository: delivered?.repository ?? false, drawings,
+          name: CHANGE, repository: Boolean(suiteAssertion || delivered?.repository), drawings,
           workstreams: streams,
           platform: platformName,
           procedures: tagged ? [{ slug: PROCEDURE, environments: [tagged], declined: probedAs === "declined" }] : [],
@@ -245,6 +265,10 @@ export function createSteps() {
     acceptanceFilesRequested(tests: string): void {
       expect(records.requested).toHaveLength(Number(tests));
       expect(certificate.scenarios).toHaveLength(Number(tests));
+    },
+    namedScenarioProof(proof: string): void {
+      expect(certificate.scenarios).toMatchObject([{ scenario: "A matching fingerprint replays", result: proof }]);
+      expect(certificate.scenarios[0]?.by).toBeUndefined();
     },
   };
 

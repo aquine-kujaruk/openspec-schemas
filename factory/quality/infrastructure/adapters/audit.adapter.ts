@@ -29,14 +29,14 @@ export class AuditAdapter implements AuditAcl {
 
   listCoreFiles(root: string, modules: string, folders: string[]) {
     return folders.flatMap((folder) =>
-      globSync(`${modules}/${folder}/**/*.ts`, { cwd: root })
+      globSync(`${modules}/${folder}/**/*.{ts,tsx}`, { cwd: root })
         .sort()
         .map((path) => ({
           path: relative(root, join(root, path)).replaceAll("\\", "/"),
           content: readFileSync(join(root, path), "utf8"),
           folder,
         })),
-    ).filter((file) => !/\.(test|spec)\.ts$/.test(file.path));
+    ).filter((file) => !/\.(test|spec)\.tsx?$/.test(file.path));
   }
 
   readPass(root: string) {

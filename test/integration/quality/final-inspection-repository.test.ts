@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { QualityCertificate } from "../../../factory/quality/domain/aggregates/quality-certificate.aggregate.ts";
 import { ScenarioResult } from "../../../factory/quality/domain/value-objects/scenario-result.value-object.ts";
-import type { FinalInspectionAcl } from "../../../factory/quality/infrastructure/acl/final-inspection.acl.ts";
+import { FileGaugeReportSchema, type FinalInspectionAcl } from "../../../factory/quality/infrastructure/acl/final-inspection.acl.ts";
 import { QualityCertificateFileAdapter } from "../../../factory/quality/infrastructure/adapters/quality-certificate-file.adapter.ts";
 import { FinalInspectionRepositoryImplementation } from "../../../factory/quality/infrastructure/repository-implementations/final-inspection.repository-implementation.ts";
 
@@ -13,6 +13,11 @@ const ORDERS = "openspec/changes";
 const GAUGE = "test/acceptance/orders/list.feature.test.ts";
 
 describe("the final inspection repository", () => {
+  it("rejects malformed assertion evidence", () => {
+    const assertion = { ancestorTitles: ["Rule: Orders"], title: "Lists orders", status: "passed" };
+    expect(FileGaugeReportSchema.safeParse({ testResults: [{ name: GAUGE, assertionResults: [{ ...assertion, status: true }] }] }).success).toBe(false);
+  });
+
   it("reads the runner's report and persists the verified certificate without touching the product", async () => {
     const root = mkdtempSync(join(tmpdir(), "quality-certificate-"));
     try {
@@ -51,6 +56,13 @@ describe("the final inspection repository", () => {
         async feedback() {},
       };
       const inspections = new FinalInspectionRepositoryImplementation(adapter);
+      const suiteFailure = new FinalInspectionRepositoryImplementation({
+        ...adapter,
+        async gauges(files) { return (await adapter.gauges(files)).map(run => ({ ...run, status: "failed" })); },
+      });
+      const [failedFile] = await suiteFailure.runGauges([GAUGE]);
+      expect(failedFile?.assertions.at(-1)).toEqual({ requirement: "", scenario: "Vitest suite execution", passed: false });
+
       const [report] = await inspections.runGauges([GAUGE]);
       const scenarios = report!.assertions.map(({ requirement, scenario, passed }) =>
         new ScenarioResult({ spec: "orders/list", requirement, scenario, result: passed ? "passed" : "failed" }),

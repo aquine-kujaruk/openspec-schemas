@@ -5,7 +5,15 @@ export type Files = Map<string, string>;
 export type Case = {
   files: Files;
   expected: Findings | undefined;
+  judgement?: Judgement;
 };
+export type Judgement = {
+  verdict: "yes" | "no" | "ambiguous";
+  score: number;
+  model: string;
+  fingerprint: string;
+};
+
 /**
  * A `<layer>.examples.md`: its `## reference` files, its `## scaffolds` (destination pattern →
  * template, the pattern naming `<module>` and `<name>` where they vary) and, per `## <rule>`, its
@@ -15,6 +23,7 @@ export type ExampleFile = {
   reference: Files;
   scaffolds: Files;
   rules: Map<string, Map<string, Case>>;
+  rubric: Map<string, Map<string, Case>>;
 };
 /** Findings to record, per `## <rule>`, per `### <case>`. */
 export type Recorded = Map<string, Map<string, Findings>>;
@@ -33,6 +42,7 @@ export declare const recordFindings: (
   text: string,
   name: string,
   recorded: Recorded,
+  judgements?: Map<string, Map<string, Judgement>>,
 ) => string;
 
 /** Collaborators supplied by the composition root. */

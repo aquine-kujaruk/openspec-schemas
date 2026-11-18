@@ -7,6 +7,7 @@ export default {
   schemas: ["clean-backend", "spec-plan"],
   agents: ["claude", "codex"],
   tools: {
+    "@cucumber/gherkin": "42.0.1",
     "@fission-ai/openspec": "2.0.0",
     archunit: "2.5.4",
     fallow: "3.34.1",

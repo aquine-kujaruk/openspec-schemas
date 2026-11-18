@@ -1,0 +1,20 @@
+{
+  "S23/local-selection": [
+    {
+      "model": "gpt-6-luna",
+      "question": "7329081efb56746451fa1433fde40368e527a24c51bf0d3924feff1a24422bb0",
+      "case": "32f9e411729d5b9ced910160227dadbddf0483e27c814c49e6892db5fca69f5c",
+      "score": 0.98,
+      "date": "2026-11-18T12:23:12.334Z"
+    }
+  ],
+  "S23/reference": [
+    {
+      "model": "gpt-6-luna",
+      "question": "7329081efb56746451fa1433fde40368e527a24c51bf0d3924feff1a24422bb0",
+      "case": "97b61121fdffe25b011f9af583ad88bb7570d38657ffa7d38ddfb4ddece91ec2",
+      "score": 0,
+      "date": "2026-11-18T12:23:12.732Z"
+    }
+  ]
+}

@@ -212,4 +212,102 @@ describe('Feature: Build the application layer', () => {
       await steps.noBrokenFiles()
     })
   })
+
+  describe('Rule: Recorded rubric judgements', () => {
+    // Line 131
+    test('rubric S13 / vague-operation is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `vague-operation`
+      await steps.exampleFolder('vague-operation')
+      // When rubric row `S13` is judged
+      await steps.rubricJudged('S13')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 131
+    test('rubric S13 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S13` is judged
+      await steps.rubricJudged('S13')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 131
+    test('rubric S15 / field-copy is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `field-copy`
+      await steps.exampleFolder('field-copy')
+      // When rubric row `S15` is judged
+      await steps.rubricJudged('S15')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 131
+    test('rubric S15 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S15` is judged
+      await steps.rubricJudged('S15')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 131
+    test('rubric S18 / unrelated-methods is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `unrelated-methods`
+      await steps.exampleFolder('unrelated-methods')
+      // When rubric row `S18` is judged
+      await steps.rubricJudged('S18')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 131
+    test('rubric S18 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S18` is judged
+      await steps.rubricJudged('S18')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 131
+    test('rubric S19 / raw-props is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `raw-props`
+      await steps.exampleFolder('raw-props')
+      // When rubric row `S19` is judged
+      await steps.rubricJudged('S19')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 131
+    test('rubric S19 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S19` is judged
+      await steps.rubricJudged('S19')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+  })
 })

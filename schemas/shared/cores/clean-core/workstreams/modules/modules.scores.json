@@ -1,0 +1,45 @@
+{
+  "S08/cross-module-import": [
+    {
+      "model": "gpt-6-luna",
+      "question": "056b1e363e64de2b334757c3499a46ea9b3d8f321bf98bf2774e3440bf9b283c",
+      "case": "416b27898c16b314447da64ae6efedc0cfbf6969689289f731f5118b7d52bc52",
+      "score": 0.2,
+      "date": "2026-11-18T12:23:42.854Z"
+    },
+    {
+      "model": "gpt-6-luna",
+      "question": "056b1e363e64de2b334757c3499a46ea9b3d8f321bf98bf2774e3440bf9b283c",
+      "case": "416b27898c16b314447da64ae6efedc0cfbf6969689289f731f5118b7d52bc52",
+      "score": 0.2,
+      "date": "2026-11-18T12:23:43.267Z"
+    },
+    {
+      "model": "gpt-6-luna",
+      "question": "056b1e363e64de2b334757c3499a46ea9b3d8f321bf98bf2774e3440bf9b283c",
+      "case": "afe9228c1ea390eec942aef7088cfd54638503ad5833810171cac2ba3bf32383",
+      "score": 0.98,
+      "date": "2026-11-18T12:39:42.787Z",
+      "baseline": {
+        "by": "person",
+        "reason": "Accepted the corrected fixture as a new baseline after two identical live scores on 2026-11-18."
+      }
+    },
+    {
+      "model": "gpt-6-luna",
+      "question": "056b1e363e64de2b334757c3499a46ea9b3d8f321bf98bf2774e3440bf9b283c",
+      "case": "afe9228c1ea390eec942aef7088cfd54638503ad5833810171cac2ba3bf32383",
+      "score": 0.98,
+      "date": "2026-11-18T12:39:43.080Z"
+    }
+  ],
+  "S08/reference": [
+    {
+      "model": "gpt-6-luna",
+      "question": "056b1e363e64de2b334757c3499a46ea9b3d8f321bf98bf2774e3440bf9b283c",
+      "case": "54b46f19903fa45adb69a1a4ed2d8b8e94a3f3d19df062ee86669ba0bb2e6f53",
+      "score": 0,
+      "date": "2026-11-18T12:23:43.724Z"
+    }
+  ]
+}

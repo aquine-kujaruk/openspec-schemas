@@ -268,3 +268,46 @@ export class InvoiceRepositoryImplementation {
 ```expect
 - src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
 ```
+
+## S08 · shared-domain-owner
+
+### cross-module-import
+
+```ts src/invoicing/domain/value-objects/money.value-object.ts
+export class Money {
+  constructor(readonly currencyCode: string, readonly minorUnits: number) {}
+  format() { return this.currencyCode + " " + (this.minorUnits / 100).toFixed(2); }
+}
+```
+
+```ts src/invoicing/domain/entities/invoice.entity.ts
+import { Money } from "../value-objects/money.value-object";
+export class InvoiceEntity { constructor(readonly total: Money) {} }
+```
+
+```ts src/payroll/domain/entities/paycheck.entity.ts
+import { Money } from "../../../invoicing/domain/value-objects/money.value-object";
+export class PaycheckEntity { constructor(readonly grossPay: Money) {} }
+```
+
+```expect
+- src/invoicing/domain/value-objects/money.value-object.ts (gpt-6-luna yes 0.98 · d160236b68b3af93202eb0d9530715df804dd5f71e586deb452304d9d3cc6fd3)
+```
+
+### reference
+
+```ts src/sales/domain/entities/sale.ts
+import { Unit } from "../../shared/domain/unit"; export class Sale { unit = new Unit(); }
+```
+
+```ts src/shared/domain/unit.ts
+export class Unit { round(n: number) { return Math.round(n); } }
+```
+
+```ts src/catalog/domain/item.ts
+import { Unit } from "../../shared/domain/unit"; export class Item { unit = new Unit(); }
+```
+
+```expect
+(no findings) (gpt-6-luna no 0 · 340f60fa23a8705193b2599fd09d5560302c03f6451002818f4cb89b2bad6c6f)
+```
