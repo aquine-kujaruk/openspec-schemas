@@ -22,7 +22,7 @@ export class RubricReporter implements Reporter {
       const delta = result.delta === undefined ? "—" : result.delta.toFixed(3);
       const changes = result.changed.length ? " · changed " + result.changed.join(", ") : "";
       const warnings = rubricWarnings(result).map(warning => " · WARNING " + warning).join("");
-      console.log(`${result.layer} ${result.row}/${result.name} · history [${result.history.join(", ")}] · p=${result.score} · expected ${result.expected} · confidence ${(100 * result.confidence).toFixed(1)}% · Δ ${delta} · ${result.state} · ${result.replayed ? "replay" : "live"}${changes}${warnings}`);
+      console.log(`${result.layer} ${result.row}/${result.name} · history [${result.history.join(", ")}] · p=${result.score} · expected ${result.expected} · confidence ${(100 * result.confidence).toFixed(1)}% · Δ ${delta} · ${result.state} · ${result.replayed ? "replay" : "live"} · evaluator ${result.model}${changes}${warnings}`);
     }
   }
 }

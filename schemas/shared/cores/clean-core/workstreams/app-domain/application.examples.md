@@ -310,7 +310,7 @@ export class VacancyRepositoryImplementation implements VacancyRepositoryInterfa
 ```
 
 ```expect
-- src/catalog/application/repository-interfaces/vacancies.ts (gpt-6-luna yes 0.98 · 0c7e0f13d543ffb5dc55a59bc94efb08ff339aecdc4140a34947037bd3289b1b)
+yes
 ```
 
 ### reference
@@ -329,7 +329,7 @@ export class RankCandidatesUseCase {
 ```
 
 ```expect
-(no findings) (gpt-6-luna no 0 · 50cb785708846148624a22b5cf1e188ad7224bd7908ca4722d43fe5721bf46e7)
+no
 ```
 
 ## S15 · consumer-shape
@@ -341,7 +341,7 @@ function execute(item: ItemEntity) { return { code: item.code, caption: item.nam
 ```
 
 ```expect
-- src/catalog/application/use-cases/summary.ts (gpt-6-luna yes 0.97 · 6104c1552c884ff32863214de177f162dc88e2bb54cc87e2addb8effa259f594)
+yes
 ```
 
 ### reference
@@ -351,7 +351,7 @@ function execute(item: ItemEntity) { return item.summary(); }
 ```
 
 ```expect
-(no findings) (gpt-6-luna no 0 · 4e2efb4a93946c855e7af62b1df6c8a9620c0b077633f011cc8577512c42a765)
+no
 ```
 
 ## S18 · atomic-use-case
@@ -363,7 +363,7 @@ class ItemsUseCase { createItem(name: string) { return this.repo.create(name); }
 ```
 
 ```expect
-- src/catalog/application/use-cases/items.ts (gpt-6-luna yes 0.95 · 45c8745f7c652aa77c0dc9bada10299d9ccd7dec073ea9afdeaefb7f6a8aa047)
+yes
 ```
 
 ### reference
@@ -373,7 +373,7 @@ class CreateItemUseCase { execute(name: string) { return this.repo.create(name);
 ```
 
 ```expect
-(no findings) (gpt-6-luna no 0 · 02246c31d2b3797cddfd0f37f111dc95c8259d0d11079ba69e5f87830c412046)
+no
 ```
 
 ## S19 · use-case-hydration
@@ -385,7 +385,7 @@ class ReadItemUseCase { async execute(id: string) { const props = await this.rep
 ```
 
 ```expect
-- src/catalog/application/use-cases/read.ts (gpt-6-luna yes 1 · 8ad6abb0246b2a04bc0f0f445fe3283cd83d8d28fe2681eea4c0002d6965a9a4)
+yes
 ```
 
 ### reference
@@ -395,5 +395,5 @@ class ReadItemUseCase { async execute(id: string) { const props = await this.rep
 ```
 
 ```expect
-(no findings) (gpt-6-luna no 0 · 0a06ad0c3912b248e9f9c93f43cc1ccf91910edaf050c41aba4993df1f3e01ce)
+no
 ```

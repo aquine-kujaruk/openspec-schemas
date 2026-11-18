@@ -1,8 +1,8 @@
 import { spawnSync } from "node:child_process";
 import { globSync, readFileSync, writeFileSync } from "node:fs";
-import { assertRubricCase, expectedRubricVerdict, rubricWarnings } from "../factory/quality/infrastructure/adapters/rubric-case.adapter.ts";
+import { assertRubricCase, rubricWarnings } from "../factory/quality/infrastructure/adapters/rubric-case.adapter.ts";
 import { basename, dirname, join, relative } from "node:path";
-import type { Judgement, Recorded } from "../factory/quality/infrastructure/adapters/sample-file-contract.adapter.ts";
+import type { Recorded } from "../factory/quality/infrastructure/adapters/sample-file-contract.adapter.ts";
 import { judgements, exampleFile as architectureexampleFile } from "../factory/quality.ts";
 const { parseExampleText, recordFindings } = architectureexampleFile;
 import { examples as architectureexamples } from "../factory/quality.ts";
@@ -57,6 +57,7 @@ async function expectAcrossHolders(layers: Set<string>, flags: string[]): Promis
  * every rule is checked against that rule alone and the files reported, with their tools, are
  * written into the case's `expect` block; no other line of the file changes, and a file that does
  * not parse is not written. The generated tests compare with these blocks; review the diff.
+ * Rubric cases append measurements to their layer’s score history. Their declarations stay as written.
  * Cases prefixed `todo.` are known gaps and are listed at the end. The example files are sources of
  * the repository that develops the workstreams, so the command runs only there.
  */
@@ -110,35 +111,33 @@ export const expect = async (args: string[]): Promise<number> => {
           todos.push(`${layer} · ${rule} · ${name}`);
       }
     }
-    const scores = new Map<string, Map<string, Judgement>>();
-    try {
-      if (parsed.rubric.size) {
-        const samples = judgements(layer, dirname(path));
-        for (const [row, cases] of parsed.rubric) {
-          const accepted = new Map<string, Judgement>();
-          scores.set(row, accepted);
-          for (const name of cases.keys()) {
-            if (selected && selected !== row + "/" + name) continue;
-            const expected = expectedRubricVerdict(name);
-            for (let attempt = 0; attempt < attempts; attempt++) {
-              const result = await samples.judge(row, name, changedOnly && attempt === 0 ? "record-changed" : "record");
-              try {
-                assertRubricCase(layer, row, name, result, expected);
-                for (const warning of rubricWarnings(result)) console.warn(`${layer} ${row}/${name}: ${warning}`);
-                accepted.set(name, result);
-                break;
-              } catch (error) {
-                console.error(error instanceof Error ? error.message : String(error));
-                if (attempt + 1 === attempts) status = 1;
-              }
+    const updated = recordFindings(text, shown, out);
+    if (updated !== text) {
+      writeFileSync(path, updated);
+      console.log(`wrote ${shown}`);
+    }
+    if (!parsed.rubric.size) continue;
+    const samples = judgements(layer, dirname(path));
+    for (const [row, cases] of parsed.rubric) {
+      for (const name of cases.keys()) {
+        if (selected && selected !== row + "/" + name) continue;
+        for (let attempt = 0; attempt < attempts; attempt++) {
+          const result = await samples.judge(row, name, changedOnly && attempt === 0 ? "record-changed" : "record");
+          try {
+            assertRubricCase(layer, row, name, result, result.expected);
+            for (const warning of rubricWarnings(result)) console.warn(`${layer} ${row}/${name}: ${warning}`);
+            console.log(`${layer} ${row}/${name}: ${result.replayed ? "reused" : "recorded"} evidence (${result.model}, confidence ${(100 * result.confidence).toFixed(1)}%)`);
+            break;
+          } catch (error) {
+            console.error(error instanceof Error ? error.message : String(error));
+            if (result.replayed || attempt + 1 === attempts) {
+              status = 1;
+              break;
             }
           }
         }
       }
-    } finally {
-      writeFileSync(path, recordFindings(text, shown, out, scores));
     }
-    console.log(`wrote ${shown}`);
   }
   const layers = new Set(all.map((p) => basename(p, ".examples.md")));
   for (const l of [...only].filter((l) => !layers.has(l))) {

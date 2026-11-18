@@ -51,5 +51,5 @@ export { sdkValidateChange as validateChange } from "./production.ts";
 export { vocabularyRules } from "./quality/domain/services/architecture-standards.service.ts";
 export { web } from "./shared/domain/schemas/platform.schema.ts";
 export { judgements } from "./quality.ts";
-export type { Judgement } from "./quality/infrastructure/adapters/sample-file-contract.adapter.ts";
+export type { Judgement } from "./quality/infrastructure/adapters/rubric-case.adapter.ts";
 export { assertRubricCase } from "./quality/infrastructure/adapters/rubric-case.adapter.ts";

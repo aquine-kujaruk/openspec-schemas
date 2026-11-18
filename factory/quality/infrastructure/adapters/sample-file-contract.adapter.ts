@@ -1,18 +1,13 @@
 import type { Findings } from "./sample-findings.adapter.ts";
 /** Files of one case or of a reference section: repository path → content. */
 export type Files = Map<string, string>;
-/** A case: its files, and the findings its `expect` block records (`undefined` without one). */
+/** Files and the expectation declared by the case. */
 export type Case = {
   files: Files;
   expected: Findings | undefined;
-  judgement?: Judgement;
+  expectedVerdict?: RubricVerdict;
 };
-export type Judgement = {
-  verdict: "yes" | "no" | "ambiguous";
-  score: number;
-  model: string;
-  fingerprint: string;
-};
+export type RubricVerdict = "yes" | "no";
 
 /**
  * A `<layer>.examples.md`: its `## reference` files, its `## scaffolds` (destination pattern →
@@ -42,7 +37,6 @@ export declare const recordFindings: (
   text: string,
   name: string,
   recorded: Recorded,
-  judgements?: Map<string, Map<string, Judgement>>,
 ) => string;
 
 /** Collaborators supplied by the composition root. */

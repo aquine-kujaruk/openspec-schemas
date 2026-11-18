@@ -1,13 +1,10 @@
-import { canRecordRubricScore, expectedRubricVerdict } from "./rubric-case.adapter.ts";
 import { QualityException } from "../../domain/exceptions/quality.exceptions.ts";
 import type {
   Files,
-  Judgement,
   Case,
   ExampleFile,
   Recorded,
 } from "./sample-file-contract.adapter.ts";
-import type { Findings } from "./sample-findings.adapter.ts";
 import type { ExampleFilePorts } from "./sample-file-contract.adapter.ts";
 
 /** Builds these use cases from their capabilities; importing them touches no resources. */
@@ -35,7 +32,7 @@ export const createExampleFile = ({
    * Reads an example file. Headings outside fences give the place (`##` rule, `reference` or
    * `scaffolds`, `###` case); every file is a fence with `<lang> <path>` in its info string that
    * holds that file verbatim, and a case ends with at most one fence whose info string is `expect`,
-   * holding its recorded findings. Prose between them is ignored. A fence closes on a line of at
+   * holding its recorded findings or declared rubric verdict. A fence closes on a line of at
    * least as many backticks, so a block can contain a shorter fence.
    */
   const scan = (lines: string[], name: string) => {
@@ -61,13 +58,10 @@ export const createExampleFile = ({
           if (open.path) target!.set(open.path, open.lines.join("\n") + "\n");
           else {
             if (file.rubric.has(section)) {
-              const match = /^(?:- \S+|\(no findings\)) \((\S+) (yes|no) ([\d.e+-]+) · ([a-f0-9]+)\)$/.exec(open.lines.join("\n"));
-              if (!match) throw new QualityException(`${name}:${open.at + 2}: invalid recorded judgement`, { cause: open.lines });
-              const score = Number(match[3]);
-              const verdict = match[2] as "yes" | "no";
-              if (!Number.isFinite(score) || score < 0 || score > 1 || (verdict === "yes" ? score < 0.85 : score > 0.15))
-                fail("score does not support the recorded verdict");
-              current!.case.judgement = { model: match[1], verdict, score, fingerprint: match[4] };
+              const verdict = open.lines[0]?.trim();
+              if (open.lines.length !== 1 || (verdict !== "yes" && verdict !== "no"))
+                throw new QualityException(`${name}:${open.at + 2}: a rubric expectation must declare yes or no`, { cause: open.lines });
+              current!.case.expectedVerdict = verdict;
             } else current!.case.expected = parseFindingLines(
               open.lines,
               name,
@@ -133,6 +127,10 @@ export const createExampleFile = ({
     }
     if (open)
       throw new QualityException(`${name}:${open.at + 1}: block ${open.path ?? "expect"} is not closed`, { cause: lines[open.at] });
+    for (const { rule, name: sample, block, end } of spans) {
+      if (!block && file.rubric.has(rule))
+        throw new QualityException(`${name}:${end + 1}: rubric case ${rule}/${sample} must declare yes or no in an expect block`, { cause: sample });
+    }
     return { file, spans };
   };
 
@@ -147,19 +145,14 @@ export const createExampleFile = ({
     text: string,
     name: string,
     recorded: Recorded,
-    judgements: Map<string, Map<string, Judgement>> = new Map(),
   ): string => {
     const lines = text.split("\n");
     const { file, spans } = scan(lines, name);
     for (const span of spans.reverse()) {
+      if (file.rubric.has(span.rule)) continue;
       const findings = recorded.get(span.rule)?.get(span.name);
-      const judgement = judgements.get(span.rule)?.get(span.name);
-      if (!findings && !judgement) continue;
-      if (judgement && (judgement.verdict !== expectedRubricVerdict(span.name) || !canRecordRubricScore(span.name, judgement.score))) continue;
-      const path = file.rubric.get(span.rule)?.get(span.name)?.files.keys().next().value;
-      const body = judgement
-        ? [`${judgement.verdict === "yes" ? "- " + path : "(no findings)"} (${judgement.model} ${judgement.verdict} ${judgement.score} · ${judgement.fingerprint})`]
-        : findingLines(findings!);
+      if (!findings) continue;
+      const body = findingLines(findings);
       if (span.block)
         lines.splice(
           span.block.open + 1,

@@ -1,17 +1,21 @@
 import { createHash } from "node:crypto";
 import { join } from "node:path";
-import type { Case, Judgement } from "./sample-file-contract.adapter.ts";
+import type { Case, RubricVerdict } from "./sample-file-contract.adapter.ts";
 import { QualityException } from "../../domain/exceptions/quality.exceptions.ts";
 
 import type { RubricObservation as Observation } from "../acl/rubric-history.acl.ts";
 import { FileRubricHistoryAdapter } from "./file-rubric-history.adapter.ts";
-export const expectedRubricVerdict = (name: string): "yes" | "no" =>
-  name === "reference" || name.startsWith("reference.") ? "no" : "yes";
+export type Judgement = {
+  verdict: RubricVerdict | "ambiguous";
+  score: number;
+  model: string;
+  fingerprint: string;
+};
 
 const ConfidenceState = { Target: "target", Warning: "warning", Failed: "failed" } as const;
 
 export type ScoreResult = Judgement & {
-  expected: "yes" | "no";
+  expected: RubricVerdict;
   confidence: number;
   state: (typeof ConfidenceState)[keyof typeof ConfidenceState];
   history: number[];
@@ -23,15 +27,11 @@ export type ScoreResult = Judgement & {
 
 const hash = (text: string) => createHash("sha256").update(text).digest("hex");
 const confidenceBands = { target: 95, minimum: 90, drift: 20 } as const;
-const reaches = (score: number, expected: "yes" | "no", percent: number) =>
+const reaches = (score: number, expected: RubricVerdict, percent: number) =>
   expected === "yes" ? score >= percent / 100 : score <= (100 - percent) / 100;
 
-export const canRecordRubricScore = (name: string, score: number) =>
-  reaches(score, expectedRubricVerdict(name), confidenceBands.minimum);
-
-function compare(observation: Observation, previous: Observation[], fingerprint: string, name: string, replayed: boolean): ScoreResult {
+function compare(observation: Observation, previous: Observation[], fingerprint: string, expected: RubricVerdict, replayed: boolean): ScoreResult {
   const { score, model } = observation;
-  const expected = expectedRubricVerdict(name);
   const confidence = expected === "yes" ? score : 1 - score;
   const state = reaches(score, expected, confidenceBands.target) ? ConfidenceState.Target
     : reaches(score, expected, confidenceBands.minimum) ? ConfidenceState.Warning : ConfidenceState.Failed;
@@ -61,39 +61,37 @@ export function createRubricCases(options: {
   ask?: (state: string, question: string) => Promise<number>;
 }) {
   const history = new FileRubricHistoryAdapter(join(options.dir, options.layer + ".scores.json"));
-  const recorded = (row: string, name: string) => options.cases.get(row)?.get(name)?.judgement;
 
   async function judge(row: string, name: string, mode: "test" | "record" | "record-changed" = "test"): Promise<ScoreResult> {
     const sample = options.cases.get(row)?.get(name);
     const question = options.questions.get(row);
     const id = row + "/" + name;
-    if (!sample?.files.size || !question) throw new QualityException(`${options.layer} ${id}: missing files or accepted rubric question`, { cause: id });
+    if (!sample?.files.size || !sample.expectedVerdict || !question)
+      throw new QualityException(`${options.layer} ${id}: missing files, expected verdict or accepted rubric question`, { cause: id });
+    const expected = sample.expectedVerdict;
     const files = [...sample.files.entries()].sort(([a], [b]) => a.localeCompare(b));
     const identity = { model: options.model, question: hash(question), case: hash(JSON.stringify(files)) };
     const fingerprint = hash(JSON.stringify(identity));
     if (mode !== "record") {
       const previous = history.read(id);
-      const latest = previous.at(-1);
-      const recordedMatch = sample.judgement?.fingerprint === fingerprint;
-      const latestMatch = latest && latest.model === identity.model && latest.question === identity.question && latest.case === identity.case;
-      if (latestMatch && (recordedMatch || mode === "record-changed"))
-        return compare(latest, previous.slice(0, -1), fingerprint, name, true);
-      if (recordedMatch) return compare({ ...identity, score: sample.judgement!.score, date: "" }, previous, fingerprint, name, true);
+      const index = previous.findLastIndex(item =>
+        item.model === identity.model && item.question === identity.question && item.case === identity.case);
+      if (index >= 0) return compare(previous[index]!, previous.slice(0, index), fingerprint, expected, true);
     }
     if (!options.ask)
-      throw new QualityException(`${options.layer} ${id}: missing or stale judgement. Configure the model key and run factory expect ${options.layer}.`, { cause: id });
+      throw new QualityException(`${options.layer} ${id}: no matching judgement for ${options.model}. Configure the model key and run factory expect ${options.layer}.`, { cause: id });
     const state = files.map(([path, code]) => `=== ${path} ===\n${code}`).join("\n\n");
     const score = await options.ask(state, question);
     if (!Number.isFinite(score) || score < 0 || score > 1)
       throw new QualityException(`${options.layer} ${id}: the model returned no valid probability`, { cause: score });
     const observation = { ...identity, score, date: new Date().toISOString() };
     const previous = await history.append(id, observation);
-    return compare(observation, previous, fingerprint, name, false);
+    return compare(observation, previous, fingerprint, expected, false);
   }
-  return { judge, recorded };
+  return { judge };
 }
 
-export function assertRubricCase(layer: string, row: string, name: string, result: ScoreResult, expected: "yes" | "no") {
+export function assertRubricCase(layer: string, row: string, name: string, result: ScoreResult, expected: RubricVerdict) {
   if (result.state === ConfidenceState.Failed || result.verdict !== expected)
     throw new QualityException(`${layer} ${row}/${name}: expected ${expected}, received ${result.verdict} (p=${result.score}, confidence=${result.confidence}, minimum=${confidenceBands.minimum}%). Rerun factory expect ${layer}.`, { cause: result });
 }
