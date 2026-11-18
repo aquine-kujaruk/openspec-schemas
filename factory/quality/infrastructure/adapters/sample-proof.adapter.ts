@@ -8,12 +8,6 @@ export const createExpectations = ({
   parseExampleFile,
   findingLines,
 }: ExpectationsPorts): typeof import("./sample-proof-contract.adapter.ts") => {
-  /**
-   * The recorded findings of one layer (the `expect` blocks of `<layer>.examples.md`), read once,
-   * and the comparison a scenario's outcome step makes: the case must be recorded, what the tools
-   * report now must equal the record, and a case that is not `todo.` must break its rule in at least
-   * one file.
-   */
   const expectations = (path: string) => {
     let file: ExampleFile | undefined;
     const load = () => (file ??= parseExampleFile(path));

@@ -1,5 +1,5 @@
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
-import { QualityCertificateSchema, type InspectionVerdict, type QualityCertificateProps } from "../schemas/quality-certificate.schema.ts";
+import { AuditStateSchema, QualityCertificateSchema, type InspectionVerdict, type QualityCertificateProps } from "../schemas/quality-certificate.schema.ts";
 import type { ScenarioResult } from "../value-objects/scenario-result.value-object.ts";
 
 export class QualityCertificate {
@@ -28,6 +28,6 @@ export class QualityCertificate {
   }
 
   get verdict(): InspectionVerdict {
-    return this.unproved.length || this.failing.length || this.unexercised.length ? "not verified" : "verified";
+    return this.unproved.length || this.failing.length || this.unexercised.length || this.review.state === AuditStateSchema.enum.incomplete ? "not verified" : "verified";
   }
 }

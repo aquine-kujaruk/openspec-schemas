@@ -286,4 +286,78 @@ describe('Feature: Build the infrastructure layer', () => {
       await steps.noBrokenFiles()
     })
   })
+
+  describe('Rule: Recorded rubric judgements', () => {
+    // Line 151
+    test('rubric S05 / domain-return is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `domain-return`
+      await steps.exampleFolder('domain-return')
+      // When rubric row `S05` is judged
+      await steps.rubricJudged('S05')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 151
+    test('rubric S05 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S05` is judged
+      await steps.rubricJudged('S05')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 151
+    test('rubric S10 / unparsed-record is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `unparsed-record`
+      await steps.exampleFolder('unparsed-record')
+      // When rubric row `S10` is judged
+      await steps.rubricJudged('S10')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 151
+    test('rubric S10 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S10` is judged
+      await steps.rubricJudged('S10')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 151
+    test('rubric S14 / three-resource-clients is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `three-resource-clients`
+      await steps.exampleFolder('three-resource-clients')
+      // When rubric row `S14` is judged
+      await steps.rubricJudged('S14')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 151
+    test('rubric S14 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S14` is judged
+      await steps.rubricJudged('S14')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+  })
 })

@@ -36,7 +36,7 @@ import { InspectWorkOrderUseCase, type InspectionOptions } from "./quality/appli
 import { HoldStageUseCase } from "./quality/application/use-cases/hold-stage.use-case.ts";
 import { QualityException } from "./quality/domain/exceptions/quality.exceptions.ts";
 import type { InspectionCertificateRecord } from "./quality/infrastructure/acl/final-inspection.acl.ts";
-import { FinalInspectionAdapter } from "./quality/infrastructure/adapters/final-inspection.adapter.ts";
+import { FinalInspectionAdapter, scenariosOfDelta } from "./quality/infrastructure/adapters/final-inspection.adapter.ts";
 import { QualityCertificateFileAdapter } from "./quality/infrastructure/adapters/quality-certificate-file.adapter.ts";
 import { StageHoldAdapter } from "./quality/infrastructure/adapters/stage-hold.adapter.ts";
 import { FinalInspectionRepositoryImplementation } from "./quality/infrastructure/repository-implementations/final-inspection.repository-implementation.ts";
@@ -45,6 +45,8 @@ import { loadEnv } from "./shared/infrastructure/adapters/env.adapter.ts";
 import { capture, PROJECT_ROOT } from "./shared/infrastructure/adapters/paths.adapter.ts";
 
 import type { Review } from "./shared/domain/schemas/line-types.schema.ts";
+import { createRubricCases, expectedRubricVerdict } from "./quality/infrastructure/adapters/rubric-case.adapter.ts";
+import { AuditRubricService } from "./quality/domain/services/audit-rubric.service.ts";
 import { AuditUseCase } from "./quality/application/use-cases/audit.use-case.ts";
 import { AuditAdapter } from "./quality/infrastructure/adapters/audit.adapter.ts";
 import { openAiClient } from "./quality/infrastructure/adapters/audit-decision.adapter.ts";
@@ -143,6 +145,21 @@ const generate =
     relative: path.relative,
     layoutOf: generated.layoutOf,
     testOf: generated.testOf,
+    rubricExamples: (dir, layer) => {
+      const source = path.join(dir, layer + ".examples.md");
+      if (!fileSystem.existsSync(source)) return "";
+      const rows = [...exampleFile.parseExampleFile(source).rubric].flatMap(([row, cases]) =>
+        [...cases.keys()].map((name) => `        | ${row} | ${name} | ${expectedRubricVerdict(name)} |`));
+      if (!rows.length) return "";
+      return [
+        "", "  Rule: Recorded rubric judgements", "",
+        "    Scenario Outline: rubric <row> / <example> is <verdict>",
+        "      Given the example `<example>` <!-- exampleFolder -->",
+        "      When rubric row `<row>` is judged <!-- rubricJudged -->",
+        "      Then its verdict is `<verdict>` <!-- rubricVerdict -->", "",
+        "      Examples:", "        | row | example | verdict |", ...rows, "",
+      ].join("\n");
+    },
     productTestOf: generated.productTestOf,
     mergedSpecs: merged.mergedSpecs,
     DEVELOPING: shared.paths.DEVELOPING,
@@ -209,7 +226,7 @@ export async function runQualityControl(args: string[]): Promise<number> {
 }
 
 const runAudit = async (
-  { config, rubrics }: { config: Review; rubrics: string[] },
+  { config, rubrics, modules }: { config: Review; rubrics: string[]; modules: string },
   root = PROJECT_ROOT,
 ): Promise<number> => {
   const key = loadEnv(root, runtime.environment())[config.keyVariable];
@@ -226,8 +243,8 @@ const runAudit = async (
     },
   );
   const report = await new AuditUseCase(new AuditRepositoryImplementation(source))
-    .execute({ root, rubrics, config, key });
-  if (report.code === 0) {
+    .execute({ root, modules, rubrics, config, key });
+  if ("lines" in report) {
     for (const line of report.lines) console.log(line);
   } else {
     console.error(report.issue);
@@ -237,7 +254,26 @@ const runAudit = async (
 
 export async function audit(): Promise<number> {
   await project.initialize();
-  return runAudit({ config: project.architecture.review, rubrics: project.RUBRICS });
+  return runAudit({ modules: project.config.modules, config: project.architecture.review, rubrics: project.RUBRICS });
+}
+
+export function judgements(layer: string, dir: string) {
+  const config = project.config.review;
+  const key = loadEnv(PROJECT_ROOT, runtime.environment())[config.keyVariable];
+  const client = key ? openAiClient({ key, model: config.model }) : undefined;
+  const adapter = new AuditAdapter(async () => new Map(), () => null);
+  const rows = new AuditRubricService().loadDocuments(
+    adapter.listRubrics(PROJECT_ROOT, project.RUBRICS), adapter.listPackageNames(PROJECT_ROOT),
+  );
+  return createRubricCases({
+    layer, dir, model: config.model,
+    cases: exampleFile.parseExampleFile(path.join(dir, layer + ".examples.md")).rubric,
+    questions: new Map(rows.filter((row) => row.verdict === "accepted").map((row) => [row.id, row.question])),
+    ask: client && (async (state, question) => {
+      const answers = await client.ask(state, [{ name: "violation", instructions: question, excerpt: state }]);
+      return answers.get("violation") ?? NaN;
+    }),
+  });
 }
 
 const EVIDENCE = "evidence.md";
@@ -292,7 +328,13 @@ export async function inspect(root: string, name: string, options: InspectionOpt
       repository: layout.repository,
       drawings: order.deltaSpecs.map((file) => {
         const spec = file.replace(/^specs\//, "").replace(/\/spec\.md$/, "");
-        return { spec, text: fileSystem.readFileSync(path.join(order.dir, file), "utf8"), gauge: generated.testOf(spec, layout) };
+        const source = path.join(order.dir, file);
+        const text = fileSystem.readFileSync(source, "utf8");
+        const gauge = generated.testOf(spec, layout);
+        const suite = path.join("test", "schemas", spec + ".test.ts");
+        if (!gauge && layout.repository && fileSystem.existsSync(path.join(root, suite)))
+          return { spec, text, gauge: suite, expected: scenariosOfDelta(source) };
+        return { spec, text, gauge };
       }),
       workstreams: Object.entries(process.workstreams).map(([id, workstream]) => ({
         id,
@@ -343,7 +385,7 @@ export async function inspectWorkOrder(args: string[]): Promise<number> {
   const { review, e2e } = certificate;
   console.log(`- review: ${review.state === "run"
     ? `run, ${review.warnings.length} warning(s)`
-    : `skipped (${review.note})`}`);
+    : `${review.state} (${review.note})`}`);
   if (e2e?.length)
     console.log(`- end-to-end: ${e2e.filter(({ result }) => result === "passed").length} of ${e2e.length} passing`);
   for (const { slug, env, treatment, outcome } of certificate.procedures)

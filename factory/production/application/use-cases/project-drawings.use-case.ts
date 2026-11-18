@@ -11,7 +11,6 @@ export class ProjectDrawingsUseCase {
     this.assess = assess;
   }
 
-  /** Projects the drawings as ready work orders with revisions will leave them, oldest first. */
   async execute(root: string): Promise<DrawingProjection | undefined> {
     const found: Array<{ name: string; created: string }> = [];
     for (const change of this.drawings.listWorkOrders(root)) {

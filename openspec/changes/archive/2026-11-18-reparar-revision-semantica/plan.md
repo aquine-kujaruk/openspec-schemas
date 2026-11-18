@@ -11,7 +11,7 @@ schema: spec-plan
 
 ## Goal
 
-`factory review` judges the modules the product declares and reports a run that judged nothing, rejected a row or lost the model as incomplete. Every rubric row is proven like a deterministic rule: a counterexample and a near miss in its layer's `examples.md`, judged by the decision model, recorded by `factory expect` and replayed by Vitest, with a score history that fails a degraded or ambiguous judgement. The patterns of the 2026-11-18 review are taught in the workstream skills, and the six pending clean-core families stand as architecture decisions awaiting their rule.
+`factory review` judges the modules the product declares and reports a run that judged nothing, rejected a row or lost the model as incomplete. Every rubric row is proven like a deterministic rule: a counterexample and a near miss in its layer's `examples.md`, judged by the decision model, recorded by `factory expect` and replayed by Vitest, with a fixed minimum confidence of 90% in the expected verdict and independent warnings for confidence below 95% or a historical shift of at least 20 points. The patterns of the 2026-11-18 review are taught in the workstream skills, and the six pending clean-core families stand as architecture decisions awaiting their rule.
 
 ## Findings
 
@@ -26,6 +26,8 @@ schema: spec-plan
 - Step 1 of `cambio-secuencial` reads active changes, worktrees, open PRs and the last closure; nothing in it reaches an older archived plan (`openspec/runbooks/operate/cambios.md`). Seen 2026-11-18.
 - The person's review of the Factory implementation is capture `20261118-103440` (10:34–11:02); the decisions of this plan were taken in Easel on 2026-11-18.
 
+- On 2026-11-18 the five live S17 scores for `wrapper-id` were 1, 1, 1, 1, 1. For `reference` they were 0, 0, 0, 0, 0. Both observed spreads were 0, and the person chose 0.2 as a historical warning threshold. The observations are in `domain.scores.json`.
+
 ## Decisions
 
 - This change comes before the CLI family; discarded: the CLI family first (Astra's order) and a two-line patch inside the CLI family. @by:person
@@ -33,9 +35,9 @@ schema: spec-plan
 - Vitest proves each rubric question with its cases; the product stays judged by `factory review`. Discarded: auditing every Factory file inside Vitest, and a fake client only. @by:person
 - A semantic case is written in its layer's `examples.md` like a deterministic one, recorded by `factory expect` and tested by the feat2test-generated steps; the integration is a setup file, SDK steps and a reporter, not a Vite plugin. Discarded: a standalone Vitest plugin with a `toBeJudged` matcher. @by:person
 - Without the key or the network a test replays the recorded judgement while the case's fingerprint (question, case files, model) matches; only a changed case calls the model, and without the key it fails. Discarded: always judging live, and skipping. @by:person
-- A score between 0.15 and 0.85 is ambiguous and is not recorded. Discarded: a single cutoff at 0.85 or at 0.5. @by:person
-- Each judgement joins a per-layer score history, and the report shows every case as stable, degraded, ambiguous or new; a degraded or ambiguous case fails, and the agent reruns it once before bringing the person a decision that names what changed (model, question or case). Discarded: a report that never fails, and the recorded verdict alone. @by:person
-- A case is degraded when its score moves 0.2 or more from the mean of its history; Phase 4 revisits the cutoff with the measured variance. @by:agent
+- Each case uses confidence in its expected verdict: p for yes and 1−p for no. At or above 95% it meets the target, from 90% inclusive to 95% exclusive it passes with a warning, and below 90% it fails. The fixed bands apply to all cases. @by:person
+- Compare the latest raw score with the mean of all earlier observations. An absolute difference of at least 20 percentage points triggers a separate warning. Retain all live observations, including earlier versions, and identify version changes in the report. @by:person
+- Verify architecture/linting through a checked-in Vitest suite. Match executed assertions to the requirement and every example compiled from the delta specification. @by:person
 - The review reads the modules the product declares and the duplicate `review.modules` setting goes away; discarded: setting `review.modules` in `factory.config.ts`, which keeps two sources. @by:person
 - The rubric vocabulary replaces `return` with `refund`, the product concept it meant; discarded: rewording S05 and S17, which leaves the collision for the next question. @by:agent
 - Every file of a semantic case is part of the state the model judges, so cross-file rows are proven in Vitest from this change on. @by:agent
@@ -45,6 +47,8 @@ schema: spec-plan
 
 - A configured review that is incomplete leaves the work order unverified until a complete run. With no configured key the audit is skipped. @by:person
 - Phase 4 may call the production decision model to record approximately 40 case judgements and ten variance observations. @by:person
+
+- The final synthetic budget is 104 model queries across all iterations. Earlier per-fixture baseline approvals remain in the observation history. The fixed thresholds and full-history comparison supersede those approvals for judging cases. @by:person
 
 ## Open questions
 
@@ -158,8 +162,8 @@ A Factory adapter SHALL wrap an external system (a package, an API, the disk). T
 2. Follow the sequential change runbook. In the delta, give the rule a stable slug. Show the smallest case that breaks it and the closest valid case. Include the imported files for checks that resolve imports. For a relaxed rule, exercise the newly accepted example and a nearby violation that should still fail. For a retired rule, remove its requirement, registration, cases and outcome together, and verify neighbouring rules.
 3. Choose a reproducible check where the facts permit it. Fallow can examine references across resolved files, Oxlint can inspect syntax, imports and globals, and ArchUnit can check conventions and relationships specific to the architecture. Keep a rubric row for what only interpretation decides. Reproduce the missed violation before changing the check, and keep a legitimate near miss in the reference.
 4. For a deterministic rule, add the check in the owning layer and run `pnpm exec factory generate` and `pnpm exec factory expect <layer>`. Inspect the recorded diff: the new example must identify the intended file and tool.
-5. For a rubric row, write its binary question and, under `## <row> · <slug>` in the layer's `examples.md`, a counterexample and a closely matched valid case with every file the judgement needs, such as two independent cycle detections against one detection and a caller that delegates to it. Run `pnpm exec factory expect <layer>`: it judges each case with the model and records verdict, score and fingerprint. A case reported ambiguous (score between 0.15 and 0.85) is not recorded: sharpen the case or the question and record again.
-6. Run the generated Vitest suite for the layer, the slug/case consistency tests and `pnpm exec factory check` on Factory, then `pnpm exec factory review` with the key set. Read the judgement report: a degraded case is rerun once; if it stays degraded, name what changed (model, question or case) and bring the decision to the person. A review that reports itself incomplete is rerun once the cause is fixed. Follow the configuration through the consuming schema and the built package; Clean Core is shared by clean-backend and clean-react.
+5. For a rubric row, write its binary question and, under `## <row> · <slug>` in the layer's `examples.md`, a counterexample and a closely matched valid case with every file the judgement needs, such as two independent cycle detections against one detection and a caller that delegates to it. Run `pnpm exec factory expect <layer>`: it judges each case with the model and records verdict, score and fingerprint. Read confidence in the expected answer (p for yes, 1−p for no). Record at 95% or above, or with a warning from 90% inclusive to 95% exclusive. Below 90%, inspect the mismatch before changing the example or question. Use `--changed` to reuse a measurement of the same version.
+6. Run the generated Vitest suite for the layer, the slug/case consistency tests and `pnpm exec factory check` on Factory, then `pnpm exec factory review` with the key set. Read the judgement report: compare each raw score with the mean of all its earlier observations. A shift of at least 20 points raises a warning even when confidence passes. Inspect the named model, question or file changes and retain all observations. A review that reports itself incomplete is rerun once the cause is fixed. Follow the configuration through the consuming schema and the built package; Clean Core is shared by clean-backend and clean-react.
 7. Resolve findings within the existing workflow: the person decides at planning or reviews and gives feedback at verification. Record a correction or an evidenced justification for every review warning before closing.
 
 **Verification** A second maintainer can find the slug or row, reproduce the recorded diagnostic or judgement and verify the valid reference. `pnpm test` passes with the key unset while no case changed. The evidence names the review as complete and lists the disposition of every warning.
@@ -196,11 +200,11 @@ export type AuditReport =
 - The generated acceptance tests of `factory/quality/inspect-work-order`: a configured key with an incomplete review leaves the change not verified; an absent key stays skipped and verified.
 - The rubric unit tests: S05 and S17 load as accepted with the new vocabulary.
 
-- [ ] Remove `review.modules` from the defaults, the review type and the product catalog; pass the product's `modules` to the audit
-- [ ] Replace `return` with `refund` in the product vocabulary of the clean-core and clean-react rubrics
-- [ ] Report the review incomplete with status 4, naming each cause, when no core file is selected in a product that has core files, a row is rejected or the model call fails
-- [ ] Record an incomplete review in the evidence and report the change not verified when the key is configured
-- [ ] Verify the phase: `pnpm run typecheck && pnpm exec factory generate --check && pnpm run test`, then `pnpm exec factory review` on Factory judges more than zero files
+- [x] Remove `review.modules` from the defaults, the review type and the product catalog; pass the product's `modules` to the audit
+- [x] Replace `return` with `refund` in the product vocabulary of the clean-core and clean-react rubrics
+- [x] Report the review incomplete with status 4, naming each cause, when no core file is selected in a product that has core files, a row is rejected or the model call fails
+- [x] Record an incomplete review in the evidence and report the change not verified when the key is configured
+- [x] Verify the phase: `pnpm run typecheck && pnpm exec factory generate --check && pnpm run test`, then `pnpm exec factory review` on Factory judges more than zero files
 
 ### Phase 2: A rubric row is proven by its recorded cases in Vitest
 
@@ -224,14 +228,14 @@ export const judgements: (layer: string, dir: string) => {
 
 **Tests**
 
-- The linting acceptance tests for recorded, replayed, changed and ambiguous judgements, over a fixture decision client.
+- The linting acceptance tests for recorded, replayed, changed and low-confidence judgements, over a fixture decision client.
 - The example-parser tests: a `## S17 · <slug>` heading is a rubric row whose cases are judged, and every file of a case reaches the client.
 
-- [ ] Parse a rubric row heading in `<layer>.examples.md` and judge its cases with every file of the case as the state
-- [ ] Make `factory expect <layer>` judge rubric cases with the configured model and key, record verdict, score and fingerprint, and list an ambiguous case without recording it
-- [ ] Add the SDK steps the generated tests use: replay a matching fingerprint without the model, judge a changed case when the key is present, fail naming `factory expect` when it is absent
-- [ ] Add the Vitest setup file that loads the key from `.env` without printing it
-- [ ] Verify the phase: `pnpm run typecheck && pnpm exec factory generate --check && pnpm run test`
+- [x] Parse a rubric row heading in `<layer>.examples.md` and judge its cases with every file of the case as the state
+- [x] Make `factory expect <layer>` judge rubric cases with the configured model and key, record verdict, score and fingerprint, and report any case below the minimum without recording it
+- [x] Add the SDK steps the generated tests use: replay a matching fingerprint without the model, judge a changed case when the key is present, fail naming `factory expect` when it is absent
+- [x] Add the Vitest setup file that loads the key from `.env` without printing it
+- [x] Verify the phase: `pnpm run typecheck && pnpm exec factory generate --check && pnpm run test`
 
 ### Phase 3: Every judgement joins a score history the report reads
 
@@ -240,16 +244,17 @@ export const judgements: (layer: string, dir: string) => {
 ```ts
 // <layer>.scores.json next to <layer>.examples.md
 type ScoreHistory = Record<string, { score: number; model: string; question: string; case: string; date: string }[]>;
-type CaseState = "stable" | "degraded" | "ambiguous" | "new";
+type ConfidenceState = "target" | "warning" | "failed";
+type HistoricalSignal = { delta?: number; drift: boolean };
 ```
 
 **Tests**
 
-- The linting acceptance tests for the report: a stable, a degraded (|Δ| ≥ 0.2 from the history's mean), an ambiguous and a new case, and the failure of the degraded and the ambiguous one.
+- The linting acceptance tests for the report: confidence on either side of 90% and 95%, empty histories, and independent historical warnings at |Δ| ≥ 0.2.
 
-- [ ] Append every judgement to `<layer>.scores.json` with its model and the fingerprints of question and case
-- [ ] Add the Vitest reporter that prints, per layer, case, history, score now, Δ and state, and fail a degraded or ambiguous case
-- [ ] Verify the phase: `pnpm run typecheck && pnpm exec factory generate --check && pnpm run test`
+- [x] Append every judgement to `<layer>.scores.json` with its model and the fingerprints of question and case
+- [x] Add the Vitest reporter that prints, per layer, case, history, score now, confidence in the expected verdict, Δ and independent warnings, and fail below 90%
+- [x] Verify the phase: `pnpm run typecheck && pnpm exec factory generate --check && pnpm run test`
 
 ### Phase 4: The clean core's rubric rows have recorded cases
 
@@ -257,11 +262,11 @@ type CaseState = "stable" | "degraded" | "ambiguous" | "new";
 
 - The generated suites of every layer that holds a rubric row now replay its counterexample and its near miss.
 
-- [ ] Judge S17 `wrapper-id` and its reference five times each; record the spread under Findings and revisit the 0.2 cutoff when the spread exceeds 0.1
-- [ ] Give every clean-core rubric row a counterexample and a near miss in the `examples.md` of the layer it is asked over (cross-file rows in the layer of their main object); S17 contrasts the `WorkCenterId` wrapper with a `Money` that adds and formats
-- [ ] Do the same for the clean-react rubric rows
-- [ ] Record every case with `pnpm exec factory expect`
-- [ ] Verify the phase: with `OPENAI_API_KEY` unset, `pnpm run test` replays every case and passes
+- [x] Judge S17 `wrapper-id` and its reference five times each; record the spread under Findings and revisit the 0.2 cutoff when the spread exceeds 0.1
+- [x] Give every clean-core rubric row a counterexample and a near miss in the `examples.md` of the layer it is asked over (cross-file rows in the layer of their main object); S17 contrasts the `WorkCenterId` wrapper with a `Money` that adds and formats
+- [x] Do the same for the clean-react rubric rows
+- [x] Record every case with `pnpm exec factory expect`
+- [x] Verify the phase: with `OPENAI_API_KEY` unset, `pnpm run test` replays every case and passes
 
 ### Phase 5: The patterns are taught and the families wait as decisions
 
@@ -269,11 +274,32 @@ type CaseState = "stable" | "degraded" | "ambiguous" | "new";
 
 - None new: the skills are prose, and the decisions and procedures are consolidated on archive.
 
-- [ ] Teach patterns 1–5 and 7 in the `app-domain`, `adapters` and `infrastructure` skills, each naming the rubric row or rule that holds it: delegate to the closest owner; the use case orchestrates; a value object groups several attributes with meaning and behaviour; a domain service is the last resort; an adapter wraps an external system and the repository states the operation; nothing public without a consumer and every class names its role
-- [ ] Verify the phase: `pnpm exec factory check` passes on Factory, and `pnpm exec factory review` with the key set runs complete and its warnings are recorded in the evidence
+- [x] Teach patterns 1–5 and 7 in the `app-domain`, `adapters` and `infrastructure` skills, each naming the rubric row or rule that holds it: delegate to the closest owner; the use case orchestrates; a value object groups several attributes with meaning and behaviour; a domain service is the last resort; an adapter wraps an external system and the repository states the operation; nothing public without a consumer and every class names its role
+- [x] Verify the phase: `pnpm exec factory check` passes on Factory, and `pnpm exec factory review` with the key set runs complete and its warnings are recorded in the evidence
 
 ## Feedback
 
+- The generator rejected the audit delta because its outcome reused an existing action step. Named the new outcome `auditOutcomeIs`; its behaviour and examples are unchanged.
+
+- Product source review requires separate authorization to send selected private TypeScript to OpenAI Decisions. The local selection and controlled decision-client test reached 234 distinct Factory files. On 2026-11-18 the person explicitly authorized sending the selected private TypeScript in Factory to https://api.openai.com/v1/decisions with gpt-6-luna.
+- The first recording accepted 38 of 46 fixtures. S03, S07, S08, S11, S12, S13, S14 and S22 needed sharper examples after one retry. The original observations remain in the layer histories. The final offline run passed 874 of 882 tests. All eight outstanding cases failed with the expected missing recording. Type checking, generated-test freshness, Factory architecture checks and the backend and frontend package builds passed.
+
+- On 2026-11-18 the person authorized up to 80 synthetic queries in total. The replay-aware recording pass used the saved scores for unchanged cases.
+
+- The first authorized product audit exited 4 after a provider refusal. The audit now keeps independent warnings on a partial response, identifies each unanswered file or span and leaves the last complete pass intact.
+
+- The second authorized product run submitted all 235 distinct core files. It retained 281 partial warnings and returned status 4. S19 was refused on the equipment repository field; S10 was refused on the equipment agent-path constant and the work order record class header. Every range and its triage is recorded in `evidence/product-review.md`. The pass was not advanced.
+- Eighty synthetic requests have been used. S07 and S11 now pass; corrected S08 and S22 replay against their approved baselines. Forty-two of 46 cases have recordings. The remaining scores are S03 0.84, S12 0.81, S13 0.55 and S14 0.71. All four fall inside the ambiguity interval. The final offline suite passed 880 of 884 tests. The four failures correspond exactly to these cases; type checking, test generation freshness and the whole-product Factory checks passed.
+
+- The person raised the synthetic limit to 104 total. Four rubric questions now state the evidence needed for each predicate. Eight revised fixtures attained the expected confident verdicts in 100 total requests. S13 shows the ranking and filtering hidden behind the generic verb. S14 contrasts multiple consumers with the two-module boundary.
+- The complete product audit judged 235 of 235 files after file and line provenance were included in the narrowing requests. It reported 63 warnings and exited 0. The incremental run after fixing score-history validation and redundant comments judged eight touched files out of 236, reported four warnings and exited 0. Both passes and their dispositions are recorded in `evidence/product-review.md`.
+
+- The person approved the retained live pairs as baselines for S03/excess-view-state, S12/reference, S13/reference and S14/three-resource-clients. The final resource contract lives in the rubric history ACL. Its incremental review judged all three touched Factory files out of 237 and raised zero warnings.
+
+- The person selected the fixed 95% target, the 90% passing minimum and nonblocking historical warnings. No case-specific approvals are needed. Verification of architecture/linting must use executable evidence. Reusing the matching observations completed all 46 recordings within 100 of 104 authorized synthetic queries.
+
+- Final verification inputs: 902 offline tests in 85 files passed. All 46 semantic cases replayed. Thirty-nine met the confidence target, seven produced confidence warnings and eight produced independent historical warnings. Type checking, generated-test freshness, whole-product checks and both package builds passed. The final incremental audit judged two changed files out of 237 with zero warnings.
+
 ## Next step
 
-Commit the approved plan and implement every phase in order.
+Verify, archive and integrate the completed change following cambio-secuencial.

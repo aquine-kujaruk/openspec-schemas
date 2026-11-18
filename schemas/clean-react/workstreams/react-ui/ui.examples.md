@@ -373,3 +373,25 @@ export const InvoicesPage = () => (
 ```expect
 - src/module/framework/ui/invoices/invoices.page.tsx (fallow, oxlint)
 ```
+
+## S23 · page-flow-state
+
+### local-selection
+
+```tsx src/catalog/framework/ui/search.tsx
+function SearchPage() { const [selectedId, setSelectedId] = useState(null); return <Results selected={selectedId} onSelect={setSelectedId}/>; }
+```
+
+```expect
+- src/catalog/framework/ui/search.tsx (gpt-6-luna yes 0.98 · 704d2478f2da49f8870d5d8bbcc868fcc42a9ac18978cb69b27e9276ab9c07c5)
+```
+
+### reference
+
+```tsx src/catalog/framework/ui/search.tsx
+function SearchPage() { const [selectedId, select] = useSearchPageStore(s => [s.selectedId,s.select]); return <Results selected={selectedId} onSelect={select}/>; }
+```
+
+```expect
+(no findings) (gpt-6-luna no 0 · 0f9dd715037b96514b20a730de220389fd1d3f9a7129acc110bd4e7758f85255)
+```

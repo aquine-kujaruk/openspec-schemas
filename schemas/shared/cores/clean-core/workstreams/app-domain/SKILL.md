@@ -36,4 +36,6 @@ description: Build the app-domain workstream of the implementer: the acceptance 
 6. The module's exceptions are the family the design declares: one base extending `DomainException`, one subclass per business failure.
 7. Follow the core-wide rules even though `modules` checks them: no `any` in the core, only domain exceptions (the provider error in `cause`), the schema package only in `domain/schemas`.
 
+When a use case reads records, hydrate them once through the domain factory (S05, S19). Let the use case orchestrate one operation (S18). Delegate filtering, serialization and business decisions to the object that owns the data (S12, S15). Give a value object a coherent set of attributes and behaviour, such as a money amount and currency that add and format (S06, S17). Try an instance method, then a static method, before introducing a domain service (S12). Require an actual caller for each export, including SDK exports. Keep one-use helpers private. Check this with the whole-product unused-code check. Name exported classes for their architectural role and inspect the class name alongside its filename.
+
 **Check:** `pnpm exec factory check --workstream app-domain [--module <module>]`, plus `pnpm exec factory test acceptance` and `pnpm exec factory test unit`.

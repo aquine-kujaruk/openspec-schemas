@@ -32,6 +32,7 @@ export const createGenerate = <Loaded>({
   DEVELOPING,
   PROJECT_ROOT,
   runTool,
+  rubricExamples,
   config,
   loadSchema,
   schemaNames,
@@ -75,6 +76,7 @@ export const createGenerate = <Loaded>({
         console.error(`${spec}: ${gherkin.stderr.trim()}`);
         return;
       }
+      const feature = gherkin.stdout + (DEVELOPING && !path ? rubricExamples(dir, name) : "");
       const generated = runTool(
         "feat2test",
         [
@@ -89,15 +91,13 @@ export const createGenerate = <Loaded>({
           "vitest",
           ...(check ? ["--check"] : []),
         ],
-        { input: gherkin.stdout, show: true },
+        { input: feature, show: true },
       );
       if (generated.status !== 0) failed = true;
       else if (path) record?.({ path, file: join(dir, `${name}.feature.test.ts`), gherkin: gherkin.stdout });
     };
 
     if (DEVELOPING) {
-      // The repository plans its own changes with the schemas it builds: the specification tool
-      // reads them here, written from their definitions.
       for (const name of schemaNames()) {
         const schema = await loadSchema(name);
         const dir = join(PROJECT_ROOT, "openspec/schemas", name);
@@ -129,7 +129,6 @@ export const createGenerate = <Loaded>({
     try {
       const from = merged?.root ?? PROJECT_ROOT;
       if (DEVELOPING) {
-        // The command's own specs, each generated where its step adapter is, as ready changes leave them.
         const layout = await layoutOf(PROJECT_ROOT);
         for (const file of globSync("openspec/specs/**/spec.md", {
           cwd: from,

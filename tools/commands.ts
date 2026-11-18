@@ -13,7 +13,7 @@ export const commands: Record<string, Command> = {
     run: async (args) => (await import("./proof.ts")).run(args),
   },
   expect: {
-    usage: "expect: records the rule examples",
+    usage: "expect [layer…] [--case Snn/name] [--changed] [--once]: records rule findings and rubric judgements. --changed reuses matching recordings. --once makes one judgement per case.",
     run: async (args) => {
       await (await import("../factory/engineering.ts")).project.initialize();
       return (await import("./expect.ts")).expect(args);

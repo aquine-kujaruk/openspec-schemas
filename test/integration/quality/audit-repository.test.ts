@@ -1,4 +1,6 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { DEFAULTS } from "../../../factory/quality/domain/schemas/audit-settings.schema.ts";
+import { AuditUseCase } from "../../../factory/quality/application/use-cases/audit.use-case.ts";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -142,6 +144,44 @@ const repositoryWith = (resources: AuditAcl) => new AuditRepositoryImplementatio
 const fileAdapter = () => new AuditAdapter(async () => new Map(), () => "abc123");
 
 describe("audit material", () => {
+  it("preserves independent findings and locates an unanswered predicate without advancing the pass", async () => {
+    const root = mkdtempSync(join(tmpdir(), "partial-audit-"));
+    try {
+      const dir = join(root, "factory/catalog/domain");
+      mkdirSync(dir, { recursive: true });
+      for (const name of ["a", "b"]) writeFileSync(join(dir, name + ".ts"), "export const label = 1;");
+      writeFileSync(join(root, "package.json"), "{}");
+      const rubric = join(root, "rubric.md");
+      writeFileSync(rubric, "### Reviewer rubric\n| S19 | Core policy | Is the policy broken? | domain |\n");
+      const adapter = new AuditAdapter(async (_state, questions) =>
+        new Map(questions.filter(q => q.name !== "S19_f0").map(q => [q.name, 1])), () => null);
+      const report = await new AuditUseCase(repositoryWith(adapter)).execute({
+        root, modules: "factory/*", config: DEFAULTS, rubrics: [rubric], key: "fixture",
+      });
+      expect(report).toMatchObject({ code: 4, incomplete: ["the model failed: missing answer for S19_f0 at factory/catalog/domain/a.ts"],
+        findings: [expect.objectContaining({ file: "factory/catalog/domain/b.ts" })] });
+      expect(adapter.readPass(root).files).toEqual({});
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("selects TS and TSX from the configured product root and excludes its test files", () => {
+    const root = mkdtempSync(join(tmpdir(), "audit-roots-"));
+    try {
+      for (const tree of ["factory", "src"]) {
+        const dir = join(root, tree, "catalog", "framework");
+        mkdirSync(dir, { recursive: true });
+        for (const file of ["query.ts", "view.tsx", "view.test.tsx", "query.spec.ts"])
+          writeFileSync(join(dir, file), "export {};");
+      }
+      const files = fileAdapter().listCoreFiles(root, "factory/*", ["framework"]);
+      expect(files.map(file => file.path)).toEqual(["factory/catalog/framework/query.ts", "factory/catalog/framework/view.tsx"]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("splits a class and method through its configured parser", () => {
     const repository = repositoryWith(fileAdapter());
     const [unit] = repository.outlineSource({ path: "order.entity.ts", content: CLASS });

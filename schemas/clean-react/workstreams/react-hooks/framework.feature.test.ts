@@ -304,4 +304,150 @@ describe('Feature: architecture/framework Specification', () => {
       await steps.noBrokenFiles()
     })
   })
+
+  describe('Rule: Recorded rubric judgements', () => {
+    // Line 186
+    test('rubric S01 / business-condition is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `business-condition`
+      await steps.exampleFolder('business-condition')
+      // When rubric row `S01` is judged
+      await steps.rubricJudged('S01')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 186
+    test('rubric S01 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S01` is judged
+      await steps.rubricJudged('S01')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 186
+    test('rubric S02 / cached-record-copy is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `cached-record-copy`
+      await steps.exampleFolder('cached-record-copy')
+      // When rubric row `S02` is judged
+      await steps.rubricJudged('S02')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 186
+    test('rubric S02 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S02` is judged
+      await steps.rubricJudged('S02')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 186
+    test('rubric S03 / excess-view-state is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `excess-view-state`
+      await steps.exampleFolder('excess-view-state')
+      // When rubric row `S03` is judged
+      await steps.rubricJudged('S03')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 186
+    test('rubric S03 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S03` is judged
+      await steps.rubricJudged('S03')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 186
+    test('rubric S04 / copied-range is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `copied-range`
+      await steps.exampleFolder('copied-range')
+      // When rubric row `S04` is judged
+      await steps.rubricJudged('S04')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 186
+    test('rubric S04 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S04` is judged
+      await steps.rubricJudged('S04')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 186
+    test('rubric S21 / raw-query-result is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `raw-query-result`
+      await steps.exampleFolder('raw-query-result')
+      // When rubric row `S21` is judged
+      await steps.rubricJudged('S21')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 186
+    test('rubric S21 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S21` is judged
+      await steps.rubricJudged('S21')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 186
+    test('rubric S22 / rebuilt-money-format is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `rebuilt-money-format`
+      await steps.exampleFolder('rebuilt-money-format')
+      // When rubric row `S22` is judged
+      await steps.rubricJudged('S22')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 186
+    test('rubric S22 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S22` is judged
+      await steps.rubricJudged('S22')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+  })
 })

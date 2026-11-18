@@ -1,3 +1,4 @@
+import { createRubricSteps } from "../../../../../../tools/rubric-steps.ts";
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -17,6 +18,7 @@ const workstream = ruleIds(architecture, basename(import.meta.dirname));
 const CLI = fileURLToPath(new URL("../../../../../../factory/main.ts", import.meta.url));
 
 export function createSteps() {
+  const semantic = createRubricSteps(layer, import.meta.dirname);
   let current = "";
   let asked = "";
   let broken: Findings = new Map();
@@ -71,6 +73,9 @@ export const isReady = (value: Status) => value.status === "ready";
       scopeStatus = result.status;
       scopeOutput = result.stdout + result.stderr;
     },
+    async rubricJudged(row: string): Promise<void> {
+      await semantic.judge(row, current);
+    },
 
     // Outcome
     async brokenAsExpected(): Promise<void> {
@@ -89,6 +94,9 @@ export const isReady = (value: Status) => value.status === "ready";
       } finally {
         rmSync(fixture, { recursive: true, force: true });
       }
+    },
+    rubricVerdict(verdict: string): void {
+      semantic.check(verdict);
     },
   };
 }

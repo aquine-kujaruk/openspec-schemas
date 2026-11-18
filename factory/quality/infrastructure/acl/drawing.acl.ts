@@ -48,6 +48,7 @@ export type DrawingTools<Loaded> = {
   mergedSpecs(root: string): Promise<{ root: string; dispose(): void } | undefined>;
   DEVELOPING: boolean;
   PROJECT_ROOT: string;
+  rubricExamples(dir: string, layer: string): string;
   runTool: RunInspectionTool;
   config: { productSpecs: string; acceptance: string };
   loadSchema(name: string): Promise<Loaded>;

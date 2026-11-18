@@ -68,12 +68,23 @@ export class InspectWorkOrderUseCase {
   private async inspectScenarios(workOrder: FinalInspection, options: InspectionOptions): Promise<ScenarioResult[]> {
     const wanted = workOrder.drawings
       .filter(({ text }) => !removalOnly(text))
-      .map(({ spec, gauge }) => ({ spec, gauge: gauge ? new Gauge({ drawing: spec, file: gauge }) : undefined }));
+      .map(({ spec, gauge, expected }) => ({ spec, expected, gauge: gauge ? new Gauge({ drawing: spec, file: gauge }) : undefined }));
     const files = wanted.flatMap(({ gauge }) => gauge ? [gauge.file] : []);
     const ran = files.length ? await this.records.runGauges(files) : [];
-    return wanted.flatMap(({ spec, gauge }) => {
-      const tests = gauge ? ran.find(({ name }) => name.endsWith(gauge.file))?.assertions : undefined;
-      if (!tests?.length) {
+    return wanted.flatMap(({ spec, gauge, expected }) => {
+      const file = gauge?.file.replaceAll("\\", "/");
+      const tests = file ? ran.find(({ name }) => ("/" + name.replaceAll("\\", "/")).endsWith("/" + file))?.assertions : undefined;
+      if (expected?.length) {
+        const remaining = [...(tests ?? [])];
+        const matches = expected.map(({ requirement, scenario }) => {
+          const index = remaining.findIndex(test => test.requirement === requirement && test.scenario === scenario);
+          const run = index < 0 ? undefined : remaining.splice(index, 1)[0];
+          return new ScenarioResult({ spec, requirement, scenario, result: run ? (run.passed ? "passed" : "failed") : "missing" });
+        });
+        return matches.concat(remaining.filter(test => !test.passed).map(({ requirement, scenario }) =>
+          new ScenarioResult({ spec, requirement, scenario, result: "failed" })));
+      }
+      if (!tests?.length || expected) {
         const proved = workOrder.repository && !gauge && options.proved?.includes(spec);
         return [new ScenarioResult({
           spec,
@@ -148,7 +159,7 @@ export class InspectWorkOrderUseCase {
       return { state: "run", warnings: await this.records.runAudit() };
     } catch (failure) {
       return {
-        state: "skipped", warnings: [],
+        state: "incomplete", warnings: [],
         note: `the review could not run: ${failure instanceof Error ? failure.message : String(failure)}`,
       };
     }

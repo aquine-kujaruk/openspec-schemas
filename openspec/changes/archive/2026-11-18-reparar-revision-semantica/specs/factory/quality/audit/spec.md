@@ -34,7 +34,7 @@
 - **AND** the rubric has `<rejected>` rejected rows <!-- rubricRejectedRows -->
 - **AND** the decision model `<model>` <!-- decisionModelState -->
 - **WHEN** `factory review` runs <!-- reviewRuns -->
-- **THEN** the review reports `<outcome>` <!-- reviewReports -->
+- **THEN** the audit outcome is `<outcome>` <!-- auditOutcomeIs -->
 - **AND** it exits with status `<status>` <!-- exitStatus -->
 
 ##### Examples:

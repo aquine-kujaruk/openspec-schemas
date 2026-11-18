@@ -254,4 +254,120 @@ describe('Feature: factory/quality/audit Specification', () => {
       await steps.rowsAsked('S05, S06, S01, S02')
     })
   })
+
+  describe('Rule: review-judges-declared-modules · review judges the modules the product declares', () => {
+    // Line 131
+    test('modules declared at `factory/*` judge `3` of `3` files', async () => {
+      const steps = createSteps()
+
+      // Given the product declares its modules at `factory/*`
+      await steps.productDeclaresModules('factory/*')
+      // And `3` core files sit under `factory`
+      await steps.coreFilesUnder('3', 'factory')
+      // And no pass is recorded
+      await steps.noPassRecorded()
+      // When `factory review` runs
+      await steps.reviewRuns()
+      // Then `3` files are sent to the model
+      await steps.filesJudged('3')
+    })
+
+    // Line 131
+    test('modules declared at `src/*` judge `3` of `3` files', async () => {
+      const steps = createSteps()
+
+      // Given the product declares its modules at `src/*`
+      await steps.productDeclaresModules('src/*')
+      // And `3` core files sit under `src`
+      await steps.coreFilesUnder('3', 'src')
+      // And no pass is recorded
+      await steps.noPassRecorded()
+      // When `factory review` runs
+      await steps.reviewRuns()
+      // Then `3` files are sent to the model
+      await steps.filesJudged('3')
+    })
+  })
+
+  describe('Rule: review-reports-incomplete · a review that judged nothing or skipped a row says so', () => {
+    // Line 149
+    test('`3` selected files and `0` rejected rows leave the review `complete`', async () => {
+      const steps = createSteps()
+
+      // Given a product with `3` core files
+      await steps.productWithCoreFiles('3')
+      // And the asked folders select `3` of them
+      await steps.foldersSelect('3')
+      // And the rubric has `0` rejected rows
+      await steps.rubricRejectedRows('0')
+      // And the decision model `answers`
+      await steps.decisionModelState('answers')
+      // When `factory review` runs
+      await steps.reviewRuns()
+      // Then the audit outcome is `complete`
+      await steps.auditOutcomeIs('complete')
+      // And it exits with status `0`
+      await steps.exitStatus('0')
+    })
+
+    // Line 149
+    test('`0` selected files and `0` rejected rows leave the review `incomplete: no core file selected`', async () => {
+      const steps = createSteps()
+
+      // Given a product with `3` core files
+      await steps.productWithCoreFiles('3')
+      // And the asked folders select `0` of them
+      await steps.foldersSelect('0')
+      // And the rubric has `0` rejected rows
+      await steps.rubricRejectedRows('0')
+      // And the decision model `answers`
+      await steps.decisionModelState('answers')
+      // When `factory review` runs
+      await steps.reviewRuns()
+      // Then the audit outcome is `incomplete: no core file selected`
+      await steps.auditOutcomeIs('incomplete: no core file selected')
+      // And it exits with status `4`
+      await steps.exitStatus('4')
+    })
+
+    // Line 149
+    test('`3` selected files and `1` rejected rows leave the review `incomplete: a row was rejected`', async () => {
+      const steps = createSteps()
+
+      // Given a product with `3` core files
+      await steps.productWithCoreFiles('3')
+      // And the asked folders select `3` of them
+      await steps.foldersSelect('3')
+      // And the rubric has `1` rejected rows
+      await steps.rubricRejectedRows('1')
+      // And the decision model `answers`
+      await steps.decisionModelState('answers')
+      // When `factory review` runs
+      await steps.reviewRuns()
+      // Then the audit outcome is `incomplete: a row was rejected`
+      await steps.auditOutcomeIs('incomplete: a row was rejected')
+      // And it exits with status `4`
+      await steps.exitStatus('4')
+    })
+
+    // Line 149
+    test('`3` selected files and `0` rejected rows leave the review `incomplete: the model failed`', async () => {
+      const steps = createSteps()
+
+      // Given a product with `3` core files
+      await steps.productWithCoreFiles('3')
+      // And the asked folders select `3` of them
+      await steps.foldersSelect('3')
+      // And the rubric has `0` rejected rows
+      await steps.rubricRejectedRows('0')
+      // And the decision model `fails`
+      await steps.decisionModelState('fails')
+      // When `factory review` runs
+      await steps.reviewRuns()
+      // Then the audit outcome is `incomplete: the model failed`
+      await steps.auditOutcomeIs('incomplete: the model failed')
+      // And it exits with status `4`
+      await steps.exitStatus('4')
+    })
+  })
 })

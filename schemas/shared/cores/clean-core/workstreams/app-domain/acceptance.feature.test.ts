@@ -142,4 +142,30 @@ describe('Feature: Write the acceptance tests', () => {
       await steps.noBrokenFiles()
     })
   })
+
+  describe('Rule: Recorded rubric judgements', () => {
+    // Line 66
+    test('rubric S07 / untested-operation is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `untested-operation`
+      await steps.exampleFolder('untested-operation')
+      // When rubric row `S07` is judged
+      await steps.rubricJudged('S07')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 66
+    test('rubric S07 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S07` is judged
+      await steps.rubricJudged('S07')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+  })
 })

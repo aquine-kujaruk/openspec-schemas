@@ -66,9 +66,6 @@ export function createProductCatalog(
       unit: under(root, merged.unit),
       entry: merged.entry.map((e) => under(root, e)),
       productSpecs,
-      review: merged.review.modules
-        ? { ...merged.review, modules: under(root, merged.review.modules) }
-        : merged.review,
       allowUnmatched: [
         ...new Set([
           ...merged.allowUnmatched,

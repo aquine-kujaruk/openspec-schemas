@@ -44,3 +44,11 @@ describe("project configuration overrides the implementer's defaults", () => {
     expect(resolved.allowUnmatched).toEqual(["only/**"]);
   });
 });
+
+it("ignores the obsolete review root while preserving the product root and other review overrides", () => {
+  const existing = { modules: "factory/*", review: { modules: "src/*", threshold: 0.9 } };
+  const config = resolveConfig(DEFAULTS, existing);
+  expect(config.modules).toBe("factory/*");
+  expect(config.review).not.toHaveProperty("modules");
+  expect(config.review.threshold).toBe(0.9);
+});

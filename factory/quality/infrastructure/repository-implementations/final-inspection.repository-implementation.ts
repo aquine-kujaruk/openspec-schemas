@@ -21,14 +21,16 @@ export class FinalInspectionRepositoryImplementation implements FinalInspectionR
   }
 
   async runGauges(files: string[]): Promise<GaugeReport> {
-    return (await this.records.gauges(files)).map(({ name, assertionResults }) => ({
-      name,
-      assertions: assertionResults.map(({ ancestorTitles, title, status }) => ({
+    return (await this.records.gauges(files)).map(({ name, assertionResults, status }) => {
+      const assertions = assertionResults.map(({ ancestorTitles, title, status }) => ({
         requirement: (ancestorTitles.at(-1) ?? "").replace(/^Rule: /, ""),
         scenario: title,
         passed: status === "passed",
-      })),
-    }));
+      }));
+      if (status === "failed" && assertions.every(test => test.passed))
+        assertions.push({ requirement: "", scenario: "Vitest suite execution", passed: false });
+      return { name, assertions };
+    });
   }
 
   runCheck(workstream: string) {

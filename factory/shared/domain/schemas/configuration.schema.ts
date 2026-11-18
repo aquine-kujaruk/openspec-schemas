@@ -68,6 +68,10 @@ export const resolveConfig = (
     platform,
     ...over
   } = project ?? {};
+  if (over.review && "modules" in over.review) {
+    const { modules: _legacyRoot, ...review } = over.review;
+    over.review = review;
+  }
   const resolved = merge(defaults, project ? over : undefined) as FactoryConfig;
   return platform === undefined
     ? resolved

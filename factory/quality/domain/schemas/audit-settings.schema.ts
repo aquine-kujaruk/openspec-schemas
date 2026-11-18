@@ -6,5 +6,4 @@ export const DEFAULTS: Review = {
   threshold: 0.85,
   spanLines: 40,
   batch: { files: 8, chars: 60_000 },
-  modules: "src/*",
 };

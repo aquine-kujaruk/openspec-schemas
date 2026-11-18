@@ -110,6 +110,8 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.everyCheckPasses()
       // And the project's review key is `configured`
       await steps.reviewKeyIs('configured')
+      // And the review run is `complete`
+      await steps.reviewRunIs('complete')
       // When the change is verified
       await steps.verifyChange()
       // Then the evidence records the review as `run`
@@ -130,6 +132,8 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.everyCheckPasses()
       // And the project's review key is `absent`
       await steps.reviewKeyIs('absent')
+      // And the review run is `not run`
+      await steps.reviewRunIs('not run')
       // When the change is verified
       await steps.verifyChange()
       // Then the evidence records the review as `skipped`
@@ -137,10 +141,32 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       // And the change is reported `verified`
       await steps.changeReportedAs('verified')
     })
+
+    // Line 50
+    test('with the review key `configured` the review is `incomplete` and the change is `not verified`', async () => {
+      const steps = createSteps()
+
+      // Given a built change with `3` scenario(s)
+      await steps.builtChangeWithScenarios('3')
+      // And `3` of them pass their acceptance test
+      await steps.scenariosPassing('3')
+      // And every check of its workstreams passes
+      await steps.everyCheckPasses()
+      // And the project's review key is `configured`
+      await steps.reviewKeyIs('configured')
+      // And the review run is `incomplete`
+      await steps.reviewRunIs('incomplete')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the evidence records the review as `incomplete`
+      await steps.evidenceRecordsReviewAs('incomplete')
+      // And the change is reported `not verified`
+      await steps.changeReportedAs('not verified')
+    })
   })
 
   describe('Rule: A review warning is recorded and fails nothing', () => {
-    // Line 70
+    // Line 72
     test('`2` review warning(s) leave the change `verified`', async () => {
       const steps = createSteps()
 
@@ -162,7 +188,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.changeReportedAs('verified')
     })
 
-    // Line 70
+    // Line 72
     test('`0` review warning(s) leave the change `verified`', async () => {
       const steps = createSteps()
 
@@ -186,7 +212,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
   })
 
   describe('Rule: A procedure is exercised only in the environments where that is safe', () => {
-    // Line 91
+    // Line 93
     test('a procedure tagged for `local` is recorded as `executed`', async () => {
       const steps = createSteps()
 
@@ -200,7 +226,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.evidenceRecordsProcedureAs('local', 'executed')
     })
 
-    // Line 91
+    // Line 93
     test('a procedure tagged for `sandbox` is recorded as `executed`', async () => {
       const steps = createSteps()
 
@@ -214,7 +240,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.evidenceRecordsProcedureAs('sandbox', 'executed')
     })
 
-    // Line 91
+    // Line 93
     test('a procedure tagged for `prod` is recorded as `reviewed only`', async () => {
       const steps = createSteps()
 
@@ -228,7 +254,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.evidenceRecordsProcedureAs('prod', 'reviewed only')
     })
 
-    // Line 103
+    // Line 105
     test('a procedure in `sandbox` probed `declined` with outcome `none` is recorded as `declined` and the change is `verified`', async () => {
       const steps = createSteps()
 
@@ -246,7 +272,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.changeReportedAs('verified')
     })
 
-    // Line 103
+    // Line 105
     test('a procedure in `sandbox` probed `declined` with outcome `passed` is recorded as `executed` and the change is `verified`', async () => {
       const steps = createSteps()
 
@@ -264,7 +290,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.changeReportedAs('verified')
     })
 
-    // Line 103
+    // Line 105
     test('a procedure in `sandbox` probed `2026-11-16` with outcome `none` is recorded as `not executed` and the change is `not verified`', async () => {
       const steps = createSteps()
 
@@ -284,7 +310,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
   })
 
   describe('Rule: A scenario is matched to the test generated from its spec, where generation writes it', () => {
-    // Line 123
+    // Line 125
     test('verifying in `a project`, the scenarios of `orders/get-order` are read from `test/acceptance/orders/get-order.feature.test.ts`', async () => {
       const steps = createSteps()
 
@@ -298,7 +324,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.scenariosReadFromTest('test/acceptance/orders/get-order.feature.test.ts')
     })
 
-    // Line 123
+    // Line 125
     test('verifying in `the command\'s repository`, the scenarios of `architecture/domain` are read from `schemas/shared/cores/clean-core/workstreams/app-domain/domain.feature.test.ts`', async () => {
       const steps = createSteps()
 
@@ -312,7 +338,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.scenariosReadFromTest('schemas/shared/cores/clean-core/workstreams/app-domain/domain.feature.test.ts')
     })
 
-    // Line 123
+    // Line 125
     test('verifying in `the command\'s repository`, the scenarios of `factory/quality/inspect-work-order` are read from `test/acceptance/quality/inspect-work-order.feature.test.ts`', async () => {
       const steps = createSteps()
 
@@ -326,7 +352,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.scenariosReadFromTest('test/acceptance/quality/inspect-work-order.feature.test.ts')
     })
 
-    // Line 123
+    // Line 125
     test('verifying in `a project`, the scenarios of `factory/quality/audit` are read from `test/acceptance/quality/audit.feature.test.ts`', async () => {
       const steps = createSteps()
 
@@ -340,7 +366,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.scenariosReadFromTest('test/acceptance/quality/audit.feature.test.ts')
     })
 
-    // Line 123
+    // Line 125
     test('verifying in `a project`, the scenarios of `api/orders/get-order` are read from `test/acceptance/orders/get-order.feature.test.ts`', async () => {
       const steps = createSteps()
 
@@ -356,7 +382,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
   })
 
   describe('Rule: A spec no test is generated from is proved by the person\'s word', () => {
-    // Line 143
+    // Line 145
     test('in `the command\'s repository`, `flow/plan` with `0` generated test(s) and the person\'s word `none` is `unproved`', async () => {
       const steps = createSteps()
 
@@ -374,7 +400,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.changeReportedAs('not verified')
     })
 
-    // Line 143
+    // Line 145
     test('in `the command\'s repository`, `flow/plan` with `0` generated test(s) and the person\'s word `proved` is `proved by the person\'s word`', async () => {
       const steps = createSteps()
 
@@ -392,7 +418,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.changeReportedAs('verified')
     })
 
-    // Line 143
+    // Line 145
     test('in `a project`, `orders/get-order` with `0` generated test(s) and the person\'s word `proved` is `unproved`', async () => {
       const steps = createSteps()
 
@@ -412,7 +438,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
   })
 
   describe('Rule: Verify proves the product works as a whole', () => {
-    // Line 163
+    // Line 165
     test('on a `web` product, `nothing fails` makes the change `verified`, feedback on `nothing`', async () => {
       const steps = createSteps()
 
@@ -428,7 +454,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.feedbackRaisedOn('nothing')
     })
 
-    // Line 163
+    // Line 165
     test('on a `web` product, `no-unused-files names src/orders/framework/ui/orders-list/old-row.component.tsx` makes the change `not verified`, feedback on `react-ui`', async () => {
       const steps = createSteps()
 
@@ -444,7 +470,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.feedbackRaisedOn('react-ui')
     })
 
-    // Line 163
+    // Line 165
     test('on a `web` product, `duplication-below-threshold names src/orders/domain/entities/order.entity.ts` makes the change `not verified`, feedback on `app-domain`', async () => {
       const steps = createSteps()
 
@@ -460,7 +486,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.feedbackRaisedOn('app-domain')
     })
 
-    // Line 163
+    // Line 165
     test('on a `web` product, `the end-to-end test cancel-order fails` makes the change `not verified`, feedback on `the change`', async () => {
       const steps = createSteps()
 
@@ -476,7 +502,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.feedbackRaisedOn('the change')
     })
 
-    // Line 163
+    // Line 165
     test('on a `node` product, `no-unused-files names src/orders/infrastructure/acl/order.acl.ts` makes the change `not verified`, feedback on `infrastructure`', async () => {
       const steps = createSteps()
 
@@ -492,7 +518,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.feedbackRaisedOn('infrastructure')
     })
 
-    // Line 163
+    // Line 165
     test('on a `node` product, `nothing fails, and it has no end-to-end tests` makes the change `verified`, feedback on `nothing`', async () => {
       const steps = createSteps()
 
@@ -508,7 +534,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.feedbackRaisedOn('nothing')
     })
 
-    // Line 179
+    // Line 181
     test('the end-to-end test `cancel-order` `passes` is recorded `passed`', async () => {
       const steps = createSteps()
 
@@ -522,7 +548,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.evidenceRecordsE2e('cancel-order', 'passed')
     })
 
-    // Line 179
+    // Line 181
     test('the end-to-end test `cancel-order` `fails` is recorded `failed`', async () => {
       const steps = createSteps()
 
@@ -538,7 +564,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
   })
 
   describe('Rule: A delta that only removes requirements needs no acceptance test', () => {
-    // Line 196
+    // Line 198
     test('a removal with `nothing` needs `0` acceptance tests', async () => {
       const steps = createSteps()
 
@@ -554,7 +580,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.changeReportedAs('verified')
     })
 
-    // Line 196
+    // Line 198
     test('a removal with `an addition` needs `1` acceptance tests', async () => {
       const steps = createSteps()
 
@@ -570,7 +596,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.changeReportedAs('not verified')
     })
 
-    // Line 196
+    // Line 198
     test('a removal with `a change` needs `1` acceptance tests', async () => {
       const steps = createSteps()
 
@@ -586,7 +612,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.changeReportedAs('verified')
     })
 
-    // Line 196
+    // Line 198
     test('a removal with `a rename` needs `1` acceptance tests', async () => {
       const steps = createSteps()
 
@@ -598,6 +624,92 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.verifyChange()
       // Then it requests `1` acceptance test files
       await steps.acceptanceFilesRequested('1')
+      // And the change is reported `not verified`
+      await steps.changeReportedAs('not verified')
+    })
+  })
+
+  describe('Rule: Repository suites prove each changed scenario by name', () => {
+    // Line 218
+    test('Repository assertion passing produces passed', async () => {
+      const steps = createSteps()
+
+      // Given a repository suite with a named scenario and an assertion that is `passing`
+      await steps.namedSuiteAssertion('passing')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the evidence for the named scenario is `passed`
+      await steps.namedScenarioProof('passed')
+      // And the change is reported `verified`
+      await steps.changeReportedAs('verified')
+    })
+
+    // Line 218
+    test('Repository assertion failed produces failed', async () => {
+      const steps = createSteps()
+
+      // Given a repository suite with a named scenario and an assertion that is `failed`
+      await steps.namedSuiteAssertion('failed')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the evidence for the named scenario is `failed`
+      await steps.namedScenarioProof('failed')
+      // And the change is reported `not verified`
+      await steps.changeReportedAs('not verified')
+    })
+
+    // Line 218
+    test('Repository assertion skipped produces failed', async () => {
+      const steps = createSteps()
+
+      // Given a repository suite with a named scenario and an assertion that is `skipped`
+      await steps.namedSuiteAssertion('skipped')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the evidence for the named scenario is `failed`
+      await steps.namedScenarioProof('failed')
+      // And the change is reported `not verified`
+      await steps.changeReportedAs('not verified')
+    })
+
+    // Line 218
+    test('Repository assertion absent produces missing', async () => {
+      const steps = createSteps()
+
+      // Given a repository suite with a named scenario and an assertion that is `absent`
+      await steps.namedSuiteAssertion('absent')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the evidence for the named scenario is `missing`
+      await steps.namedScenarioProof('missing')
+      // And the change is reported `not verified`
+      await steps.changeReportedAs('not verified')
+    })
+
+    // Line 218
+    test('Repository assertion other requirement produces missing', async () => {
+      const steps = createSteps()
+
+      // Given a repository suite with a named scenario and an assertion that is `other requirement`
+      await steps.namedSuiteAssertion('other requirement')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the evidence for the named scenario is `missing`
+      await steps.namedScenarioProof('missing')
+      // And the change is reported `not verified`
+      await steps.changeReportedAs('not verified')
+    })
+
+    // Line 218
+    test('Repository assertion other title produces missing', async () => {
+      const steps = createSteps()
+
+      // Given a repository suite with a named scenario and an assertion that is `other title`
+      await steps.namedSuiteAssertion('other title')
+      // When the change is verified
+      await steps.verifyChange()
+      // Then the evidence for the named scenario is `missing`
+      await steps.namedScenarioProof('missing')
       // And the change is reported `not verified`
       await steps.changeReportedAs('not verified')
     })

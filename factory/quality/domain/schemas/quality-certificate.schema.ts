@@ -7,8 +7,9 @@ export const E2eResultSchema = z.object({
   result: z.enum(["passed", "failed"]),
   output: z.string().optional(),
 });
+export const AuditStateSchema = z.enum(["run", "skipped", "incomplete"]);
 const AuditRecordSchema = z.object({
-  state: z.enum(["run", "skipped"]),
+  state: AuditStateSchema,
   warnings: z.array(z.string()),
   note: z.string().optional(),
 });

@@ -1,16 +1,55 @@
-import { readFileSync, writeFileSync } from "node:fs";
-import { basename, dirname, relative } from "node:path";
-import type { Recorded } from "../factory/quality/infrastructure/adapters/sample-file-contract.adapter.ts";
-import { exampleFile as architectureexampleFile } from "../factory/quality.ts";
+import { spawnSync } from "node:child_process";
+import { globSync, readFileSync, writeFileSync } from "node:fs";
+import { assertRubricCase, expectedRubricVerdict, rubricWarnings } from "../factory/quality/infrastructure/adapters/rubric-case.adapter.ts";
+import { basename, dirname, join, relative } from "node:path";
+import type { Judgement, Recorded } from "../factory/quality/infrastructure/adapters/sample-file-contract.adapter.ts";
+import { judgements, exampleFile as architectureexampleFile } from "../factory/quality.ts";
 const { parseExampleText, recordFindings } = architectureexampleFile;
 import { examples as architectureexamples } from "../factory/quality.ts";
 const { examples } = architectureexamples;
 import {
   DEVELOPING,
   PACKAGE_ROOT,
+  SOURCE_EXT,
 } from "../factory/shared/infrastructure/adapters/paths.adapter.ts";
-import { project as architectureproject } from "../factory/engineering.ts";
+import { project as architectureproject, schema } from "../factory/engineering.ts";
 const { EXAMPLE_FILES, exampleArchitecture } = architectureproject;
+
+/** Use each workstream's own defaults. Catalog order places shared cores before their consumers. */
+async function expectAcrossHolders(layers: Set<string>, flags: string[]): Promise<number> {
+  const seen = new Set<string>();
+  const owners = new Map<string, Set<string>>();
+  const available = new Set<string>();
+  for (const holder of await schema.holderNames()) {
+    const { workstreamDirs } = await schema.loadHolder(holder);
+    for (const dir of Object.values(workstreamDirs)) {
+      for (const file of globSync(join(dir, "*.examples.md"))) {
+        if (seen.has(file)) continue;
+        seen.add(file);
+        const layer = basename(file, ".examples.md");
+        available.add(layer);
+        if (layers.size && !layers.has(layer)) continue;
+        const group = owners.get(holder) ?? new Set<string>();
+        group.add(layer);
+        owners.set(holder, group);
+      }
+    }
+  }
+  const unknown = [...layers].filter(layer => !available.has(layer));
+  if (unknown.length) {
+    console.error(`unknown layer: ${unknown.join(", ")}`);
+    return 2;
+  }
+  let status = 0;
+  for (const [holder, group] of owners) {
+    const args = [join(PACKAGE_ROOT, "factory", "main" + SOURCE_EXT), "expect", ...group];
+    args.push(...flags);
+    const child = spawnSync(process.execPath, args, { stdio: "inherit", env: { ...process.env, FACTORY_HOLDER: holder } });
+    if (child.error) throw child.error;
+    status = Math.max(status, child.status ?? 1);
+  }
+  return status;
+}
 
 /**
  * `factory expect [layer…]`: records what the linter says about every case. For each
@@ -28,7 +67,22 @@ export const expect = async (args: string[]): Promise<number> => {
     );
     return 2;
   }
-  const only = new Set(args);
+  const changedOnly = args.includes("--changed");
+  const attempts = args.includes("--once") ? 1 : 2;
+  const flags: string[] = args.filter(arg => arg === "--changed" || arg === "--once");
+  const only = new Set(args.filter(arg => !flags.includes(arg)));
+  const index = args.indexOf("--case");
+  const selected = index >= 0 ? args[index + 1] : undefined;
+  if (index >= 0) {
+    only.delete("--case");
+    if (selected) only.delete(selected);
+    if (only.size !== 1 || !selected || !/^S\d{2}\/[\w.-]+$/.test(selected)) {
+      console.error("use factory expect <layer> --case Snn/name");
+      return 2;
+    }
+    flags.push("--case", selected);
+  }
+  if (!process.env.FACTORY_HOLDER) return expectAcrossHolders(only, flags);
   const todos: string[] = [];
   const all = EXAMPLE_FILES;
   let status = 0;
@@ -40,7 +94,15 @@ export const expect = async (args: string[]): Promise<number> => {
     const text = readFileSync(path, "utf8");
     const ex = examples(exampleArchitecture, dirname(path), layer);
     const out: Recorded = new Map();
-    for (const [rule, cases] of parseExampleText(text, shown).rules) {
+    const parsed = parseExampleText(text, shown);
+    if (selected) {
+      const [row, name] = selected.split("/");
+      if (!parsed.rubric.get(row)?.has(name)) {
+        console.error(`unknown rubric case in ${layer}: ${selected}`);
+        return 2;
+      }
+    }
+    for (const [rule, cases] of selected ? [] : parsed.rules) {
       out.set(rule, new Map());
       for (const name of cases.keys()) {
         out.get(rule)!.set(name, await ex.violations(name, rule));
@@ -48,7 +110,34 @@ export const expect = async (args: string[]): Promise<number> => {
           todos.push(`${layer} · ${rule} · ${name}`);
       }
     }
-    writeFileSync(path, recordFindings(text, shown, out));
+    const scores = new Map<string, Map<string, Judgement>>();
+    try {
+      if (parsed.rubric.size) {
+        const samples = judgements(layer, dirname(path));
+        for (const [row, cases] of parsed.rubric) {
+          const accepted = new Map<string, Judgement>();
+          scores.set(row, accepted);
+          for (const name of cases.keys()) {
+            if (selected && selected !== row + "/" + name) continue;
+            const expected = expectedRubricVerdict(name);
+            for (let attempt = 0; attempt < attempts; attempt++) {
+              const result = await samples.judge(row, name, changedOnly && attempt === 0 ? "record-changed" : "record");
+              try {
+                assertRubricCase(layer, row, name, result, expected);
+                for (const warning of rubricWarnings(result)) console.warn(`${layer} ${row}/${name}: ${warning}`);
+                accepted.set(name, result);
+                break;
+              } catch (error) {
+                console.error(error instanceof Error ? error.message : String(error));
+                if (attempt + 1 === attempts) status = 1;
+              }
+            }
+          }
+        }
+      }
+    } finally {
+      writeFileSync(path, recordFindings(text, shown, out, scores));
+    }
     console.log(`wrote ${shown}`);
   }
   const layers = new Set(all.map((p) => basename(p, ".examples.md")));

@@ -719,3 +719,166 @@ export const useInvoice = (id: string) => new Invoice(id);
 ```expect
 - src/module/domain/entities/invoice.entity.ts (archunit)
 ```
+
+## S01 · controller-orchestration
+
+### business-condition
+
+```ts src/catalog/framework/controllers/book.ts
+function useBookController(member: Member) { if (member.years > 5) member.price = member.price * 0.8; return saveBooking(member); }
+```
+
+```expect
+- src/catalog/framework/controllers/book.ts (gpt-6-luna yes 0.96 · ac4d30dfc571536cf6ab5f4ed8ae0f54cafe1f3fb166a73c09bbc1cd6c89d999)
+```
+
+### reference
+
+```ts src/catalog/framework/controllers/book.ts
+function useBookController(member: Member) { return { onConfirm: () => bookUseCase.execute(member.id) }; }
+```
+
+```expect
+(no findings) (gpt-6-luna no 0 · cbd5883327aab0a7eaea2caaef942ecd3c40629c07f1e03fc8313dcb0b8d44c3)
+```
+
+## S02 · store-owns-flow
+
+### cached-record-copy
+
+```ts src/catalog/framework/stores/search.ts
+const store = createStore({ results: [], pending: false }); query.subscribe(state => store.set({ results: state.data, pending: state.isPending }));
+```
+
+```expect
+- src/catalog/framework/stores/search.ts (gpt-6-luna yes 1 · 9f3ce4e76cd01d7c45e0ca442799277a8eefcb21dbc6d2705644536b95998cee)
+```
+
+### reference
+
+```ts src/catalog/framework/stores/search.ts
+const store = createStore({ filterText: "", selectedId: undefined }); function useResults() { return useQuery(resultsQuery(store.filterText)); }
+```
+
+```expect
+(no findings) (gpt-6-luna no 0.01 · 12a794e9d0f8624c7fa6b1874b73c8eb11f15d911d3bf1af35965000314c86dc)
+```
+
+## S03 · minimal-view-props
+
+### excess-view-state
+
+```tsx src/catalog/framework/ui/card.tsx
+type CardController = { caption: string; costPrice: number; auditLog: string[]; passwordHash: string };
+function useCardController(item: Item): CardController {
+  return { caption: item.name, costPrice: item.costPrice, auditLog: item.auditLog, passwordHash: item.passwordHash };
+}
+export function Card({ item }: { item: Item }) {
+  const controller = useCardController(item);
+  return <h2>{controller.caption}</h2>;
+}
+```
+
+```expect
+- src/catalog/framework/ui/card.tsx (gpt-6-luna yes 1 · e1a49f60bcd1ced1677370168dd2e476d04d30be811f1e7b5981b5b7524de21e)
+```
+
+### reference
+
+```ts src/catalog/framework/controllers/card.ts
+function useCardController(item: Item) { return { caption: item.name }; }
+```
+
+```tsx src/catalog/framework/ui/card.tsx
+const Card = ({ caption }) => <h2>{caption}</h2>;
+```
+
+```expect
+(no findings) (gpt-6-luna no 0 · ce7ce7c67ad1622bfe236349780af8543c1e50e60be3ac9f83272537d4cf3979)
+```
+
+## S04 · view-model-uses-domain-validation
+
+### copied-range
+
+```ts src/catalog/framework/view-models/quantity.ts
+class QuantityForm { validate(n: number) { return n < 1 || n > 50 ? { quantity: "Out of range" } : {}; } }
+```
+
+```ts src/catalog/domain/schemas/quantity.ts
+export const QuantitySchema = z.number().min(1).max(50);
+```
+
+```expect
+- src/catalog/framework/view-models/quantity.ts (gpt-6-luna yes 0.99 · 361149477e1df40fe41e2fd89a438928f0c2e0f660fe1f7101da8245d633c6ed)
+```
+
+### reference
+
+```ts src/catalog/framework/view-models/quantity.ts
+class QuantityForm { validate(n: number) { return QuantitySchema.safeParse(n).error?.flatten().fieldErrors ?? {}; } }
+```
+
+```ts src/catalog/domain/schemas/quantity.ts
+export const QuantitySchema = z.number().min(1).max(50);
+```
+
+```expect
+(no findings) (gpt-6-luna no 0.01 · c1b554ce6483ca34753a69d71dde46fde68a1c38e025e99043e1d3d8db27908e)
+```
+
+## S21 · query-hydration
+
+### raw-query-result
+
+```ts src/catalog/framework/queries/item.ts
+const useItem = id => useQuery({ queryKey: ["item", id], queryFn: () => repository.readItemProps(id) });
+```
+
+```expect
+- src/catalog/framework/queries/item.ts (gpt-6-luna yes 0.91 · 445a6a14494e64479a34f584b2782c214b276226221bd26ff4e5dd8d8429bf04)
+```
+
+### reference
+
+```ts src/catalog/framework/queries/item.ts
+const useItem = id => useQuery({ queryKey: ["item", id], queryFn: () => repository.readItemProps(id), select: props => ItemEntity.from(props) });
+```
+
+```expect
+(no findings) (gpt-6-luna no 0 · b6f283647ffa32e76dd7498aa8ae60c4edecd3ea19caa48e9e7a64a2dba66306)
+```
+
+## S22 · format-in-domain
+
+### rebuilt-money-format
+
+```ts src/pricing/framework/view-models/price.view-model.ts
+import { Money } from "../../domain/value-objects/money.value-object";
+export class PriceViewModel {
+  display(money: Money) {
+    return money.currencyCode + " " + (money.minorUnits / 100).toFixed(2);
+  }
+}
+```
+
+```ts src/pricing/domain/value-objects/money.value-object.ts
+export class Money {
+  constructor(readonly currencyCode: string, readonly minorUnits: number) {}
+  format() { return this.currencyCode + " " + (this.minorUnits / 100).toFixed(2); }
+}
+```
+
+```expect
+- src/pricing/framework/view-models/price.view-model.ts (gpt-6-luna yes 0.96 · 3fe6c25e2883e9fcafbce53b151cde209cca20511b8e4424f8dcff5200f1fa1f)
+```
+
+### reference
+
+```ts src/catalog/framework/view-models/price.ts
+class PriceViewModel { display(price: Money, compact: boolean) { return price.format({ hideCents: compact }); } }
+```
+
+```expect
+(no findings) (gpt-6-luna no 0 · 55267d981d437e5dbd2956c39009e1c48e4bf2bc0989861639600ed59a6b49de)
+```

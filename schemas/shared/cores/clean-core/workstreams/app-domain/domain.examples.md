@@ -591,3 +591,188 @@ export class InvoiceEntity {
 ```expect
 - src/module/domain/entities/invoice.entity.ts (fallow, oxlint)
 ```
+
+## S06 · money-calculation
+
+### literal-currency
+
+```ts src/catalog/domain/entities/bill.ts
+class Bill { total(a: Money, b: Money) { return { amount: a.amount + b.amount, currency: "USD" }; } }
+```
+
+```expect
+- src/catalog/domain/entities/bill.ts (gpt-6-luna yes 1 · 61b532bf1466333147e4103da05042d783a20affba9bc34f6df5a0f27843afdd)
+```
+
+### reference
+
+```ts src/catalog/domain/entities/bill.ts
+class Bill { total(a: Money, b: Money) { return a.add(b); } }
+```
+
+```expect
+(no findings) (gpt-6-luna no 0.06 · 2e432f9fd0dc1940c595ac5a2bb155208c81d2115103f1bee5743fabad875af6)
+```
+
+## S09 · business-names
+
+### provider-name
+
+```ts src/catalog/domain/exceptions/charge.ts
+export class StripeApiException extends Error {}
+```
+
+```expect
+- src/catalog/domain/exceptions/charge.ts (gpt-6-luna yes 1 · f88a6da7a8190732787adbc6d290c2715fd953a6d2ae28a2540191583c7ffe60)
+```
+
+### reference
+
+```ts src/catalog/domain/exceptions/charge.ts
+export class ChargeDeclinedException extends Error {}
+```
+
+```expect
+(no findings) (gpt-6-luna no 0 · 89ec183f8ee3ee748b09059e0a7b1f43e36d369b185a0d45383ebef28ebbeb4a)
+```
+
+## S11 · aggregate-invariant
+
+### aggregate-of-one
+
+```ts src/catalog/domain/aggregates/manifest.ts
+class ManifestAggregate { constructor(readonly label: string) {} }
+```
+
+```expect
+- src/catalog/domain/aggregates/manifest.ts (gpt-6-luna yes 0.94 · 99ed9df7495c039ff0310c56422780e181809c1ca00d664d6f3569c8182eeeed)
+```
+
+### reference
+
+```ts src/scheduling/domain/aggregates/itinerary.aggregate.ts
+export class ItineraryAggregate {
+  constructor(private readonly legs: FlightLegEntity[], private readonly transfers: TransferEntity[]) {
+    for (const transfer of transfers) {
+      const arrival = legs.find(leg => leg.id === transfer.arrivingLegId);
+      const departure = legs.find(leg => leg.id === transfer.departingLegId);
+      if (!arrival || !departure || !arrival.destination.equals(departure.origin))
+        throw new DisconnectedItineraryException();
+    }
+  }
+}
+```
+
+```ts src/scheduling/domain/entities/flight-leg.entity.ts
+export class FlightLegEntity {
+  constructor(readonly id: string, readonly origin: AirportValueObject, readonly destination: AirportValueObject) {}
+}
+```
+
+```ts src/scheduling/domain/entities/transfer.entity.ts
+export class TransferEntity {
+  constructor(readonly arrivingLegId: string, readonly departingLegId: string) {}
+}
+```
+
+```expect
+(no findings) (gpt-6-luna no 0.01 · fb2144afc8899defcd9d35b2609697d7685a5f997840c1ae0ce4613ea2f16722)
+```
+
+## S12 · closest-owner
+
+### misplaced-method
+
+```ts src/catalog/domain/services/slot.ts
+class SlotService { isFull(slot: SlotEntity) { return slot.bookings.length >= slot.limit; } }
+```
+
+```ts src/catalog/domain/entities/slot.ts
+class SlotEntity { constructor(readonly bookings: Booking[], readonly limit: number) {} }
+```
+
+```expect
+- src/catalog/domain/services/slot.ts (gpt-6-luna yes 0.93 · 383eb6814549b8e849eabc6439ab6c7b2c5c68aea22838af16fba9d59f317a46)
+```
+
+### reference
+
+```ts src/catalog/domain/entities/slot.entity.ts
+export class SlotEntity {
+  constructor(private readonly bookings: Booking[], private readonly limit: number) {}
+  isFull() { return this.bookings.length >= this.limit; }
+}
+```
+
+```expect
+(no findings) (gpt-6-luna no 0.07 · 9fc250f3a113651f194d052b0e1fa067122286a4817c2fe7e7702c0e6b84cddd)
+```
+
+## S16 · separate-parsing-paths
+
+### constructor-mode
+
+```ts src/catalog/domain/entities/item.ts
+class ItemEntity { constructor(raw: unknown, forRead: boolean) { Object.assign(this, (forRead ? ReadSchema : WriteSchema).parse(raw)); } }
+```
+
+```expect
+- src/catalog/domain/entities/item.ts (gpt-6-luna yes 1 · ed532c982f82b80fff7a66c770fa9b77ca131c1f644f8e235650748c3d7f7cb1)
+```
+
+### reference
+
+```ts src/catalog/domain/entities/item.ts
+class ItemEntity { constructor(props: ItemProps) { Object.assign(this, ItemSchema.parse(props)); } }
+```
+
+```expect
+(no findings) (gpt-6-luna no 0 · b1a759e8ae77a806a6bad623737e1ffc1954baaa7c31ee5168b1b8a1940a532c)
+```
+
+## S17 · value-object-behaviour
+
+### wrapper-id
+
+```ts src/catalog/domain/value-objects/value.ts
+export class WorkCenterId { constructor(readonly value: string) {} }
+```
+
+```expect
+- src/catalog/domain/value-objects/value.ts (gpt-6-luna yes 1 · f82ad0ff249f895c50f41139d9c3c6f701c10516f303d3ef59533573a2833986)
+```
+
+### reference
+
+```ts src/catalog/domain/value-objects/value.ts
+export class Money { constructor(readonly amount: number, readonly currency: Currency) {} add(other: Money) { if (!this.currency.equals(other.currency)) throw new CurrencyMismatch(); return new Money(this.amount + other.amount, this.currency); } format() { return this.currency.format(this.amount); } }
+```
+
+```expect
+(no findings) (gpt-6-luna no 0 · 6def626a747235c6984b699309117c13262d54792976dcba8c0b74808b28572f)
+```
+
+## S20 · local-comments
+
+### restated-method
+
+```ts src/catalog/domain/entities/total.ts
+class Total { add(n: number) {
+  // Add n to the running total.
+  this.sum += n;
+} }
+```
+
+```expect
+- src/catalog/domain/entities/total.ts (gpt-6-luna yes 1 · 42b9ab8d155fe29a779e6fd8dfba4d6c1e410d00fa36a65e9b4f8be03bc39ab9)
+```
+
+### reference
+
+```ts src/catalog/domain/entities/total.ts
+class Total { add(n: number) { this.sum += n; } }
+```
+
+```expect
+(no findings) (gpt-6-luna no 0 · c7c636d90414cdd9a5b8c24d0a7f3fcd639b31898281ed47026d8634beb3145c)
+```

@@ -1,0 +1,188 @@
+{
+  "S01/business-condition": [
+    {
+      "model": "gpt-6-luna",
+      "question": "2ec20fe1c067dfaa0b21c6aae9d84675439800a9c0acd167d8124f2fa4ed53a7",
+      "case": "fe7bfd77fceef476bf3edd3798f8436e95ac5658a290b1e6ca7ad50de2cbaeb1",
+      "score": 0.96,
+      "date": "2026-11-18T12:23:00.630Z"
+    }
+  ],
+  "S01/reference": [
+    {
+      "model": "gpt-6-luna",
+      "question": "2ec20fe1c067dfaa0b21c6aae9d84675439800a9c0acd167d8124f2fa4ed53a7",
+      "case": "709fdcfb24e67132384f314969af9585fe75528fb73d30331d3529b92672ce00",
+      "score": 0,
+      "date": "2026-11-18T12:23:00.971Z"
+    }
+  ],
+  "S02/cached-record-copy": [
+    {
+      "model": "gpt-6-luna",
+      "question": "e7779ba74b819a29f0fe551d92f3d205cefa6d6c79aa210c72825e05ccd75ce3",
+      "case": "809432129a4c975aed86e914ca7cc5c5a919537aa97d0669855a7f00691aebcf",
+      "score": 1,
+      "date": "2026-11-18T12:23:01.300Z"
+    }
+  ],
+  "S02/reference": [
+    {
+      "model": "gpt-6-luna",
+      "question": "e7779ba74b819a29f0fe551d92f3d205cefa6d6c79aa210c72825e05ccd75ce3",
+      "case": "f58d2c35783a58641afadaab0aad16f700680f7f1a5fd11517227520ecc91a59",
+      "score": 0.01,
+      "date": "2026-11-18T12:23:01.625Z"
+    }
+  ],
+  "S03/excess-view-state": [
+    {
+      "model": "gpt-6-luna",
+      "question": "a8fdb675c4c4b2283f11a0dac3f743d07cb08f23833c9879b2541f0f695c0d4d",
+      "case": "bae007ecb39ace9393d50c17fdcf29b5f57c076fdce1bc4bdf5105f74be278c8",
+      "score": 0.77,
+      "date": "2026-11-18T12:23:02.123Z"
+    },
+    {
+      "model": "gpt-6-luna",
+      "question": "a8fdb675c4c4b2283f11a0dac3f743d07cb08f23833c9879b2541f0f695c0d4d",
+      "case": "bae007ecb39ace9393d50c17fdcf29b5f57c076fdce1bc4bdf5105f74be278c8",
+      "score": 0.77,
+      "date": "2026-11-18T12:23:02.495Z"
+    },
+    {
+      "model": "gpt-6-luna",
+      "question": "a8fdb675c4c4b2283f11a0dac3f743d07cb08f23833c9879b2541f0f695c0d4d",
+      "case": "caf2f1c724da4dfbf34820427b82c449725018a7d8f0d613dc7499694262a9ab",
+      "score": 0,
+      "date": "2026-11-18T12:39:48.737Z"
+    },
+    {
+      "model": "gpt-6-luna",
+      "question": "a8fdb675c4c4b2283f11a0dac3f743d07cb08f23833c9879b2541f0f695c0d4d",
+      "case": "caf2f1c724da4dfbf34820427b82c449725018a7d8f0d613dc7499694262a9ab",
+      "score": 0,
+      "date": "2026-11-18T12:39:49.171Z"
+    },
+    {
+      "model": "gpt-6-luna",
+      "question": "a8fdb675c4c4b2283f11a0dac3f743d07cb08f23833c9879b2541f0f695c0d4d",
+      "case": "7cfaa02ca0241c109e1bc65b891bbe6186b5357e59eb3615f4160d8da5348a37",
+      "score": 0.84,
+      "date": "2026-11-18T12:42:04.017Z"
+    },
+    {
+      "model": "gpt-6-luna",
+      "question": "d2cfc709270d70f1ebc15fdfa962541d4b26ae462c66e520f48a81cb846747a0",
+      "case": "7cfaa02ca0241c109e1bc65b891bbe6186b5357e59eb3615f4160d8da5348a37",
+      "score": 1,
+      "date": "2026-11-18T12:58:18.174Z",
+      "baseline": {
+        "by": "person",
+        "reason": "The person approved this revised version after two matching live verdicts on 2026-11-18."
+      }
+    },
+    {
+      "model": "gpt-6-luna",
+      "question": "d2cfc709270d70f1ebc15fdfa962541d4b26ae462c66e520f48a81cb846747a0",
+      "case": "7cfaa02ca0241c109e1bc65b891bbe6186b5357e59eb3615f4160d8da5348a37",
+      "score": 1,
+      "date": "2026-11-18T12:58:18.512Z"
+    }
+  ],
+  "S03/reference": [
+    {
+      "model": "gpt-6-luna",
+      "question": "a8fdb675c4c4b2283f11a0dac3f743d07cb08f23833c9879b2541f0f695c0d4d",
+      "case": "6bb4141069c08b3bf70e7bd01ac3af31bb42838ec66d3664684293f6fe3648cc",
+      "score": 0,
+      "date": "2026-11-18T12:23:02.656Z"
+    },
+    {
+      "model": "gpt-6-luna",
+      "question": "d2cfc709270d70f1ebc15fdfa962541d4b26ae462c66e520f48a81cb846747a0",
+      "case": "6bb4141069c08b3bf70e7bd01ac3af31bb42838ec66d3664684293f6fe3648cc",
+      "score": 0,
+      "date": "2026-11-18T12:58:18.818Z"
+    }
+  ],
+  "S04/copied-range": [
+    {
+      "model": "gpt-6-luna",
+      "question": "c4d2192725e133bdf987f8bbdb69b6f8c34316d6b003bbeba5cd4198b3e0fcad",
+      "case": "340da93b3b7b4f06cccf42db47d54126beaf223157f9d92c188f0d2e43c6d597",
+      "score": 0.99,
+      "date": "2026-11-18T12:23:03.024Z"
+    }
+  ],
+  "S04/reference": [
+    {
+      "model": "gpt-6-luna",
+      "question": "c4d2192725e133bdf987f8bbdb69b6f8c34316d6b003bbeba5cd4198b3e0fcad",
+      "case": "96c2c3dd218a5fc9f71b835c7b7aa53d285c22f3a253aa1233bc9829996c8abc",
+      "score": 0.01,
+      "date": "2026-11-18T12:23:03.298Z"
+    }
+  ],
+  "S21/raw-query-result": [
+    {
+      "model": "gpt-6-luna",
+      "question": "43b45ca40c14d9ecfb9451da185cf025f76171d40712217753a3286b6d89b36e",
+      "case": "5a049cdfeb6c4b377fef073a93b70b17beafe7b286be6db8c0da2324725f3af6",
+      "score": 0.91,
+      "date": "2026-11-18T12:23:03.602Z"
+    }
+  ],
+  "S21/reference": [
+    {
+      "model": "gpt-6-luna",
+      "question": "43b45ca40c14d9ecfb9451da185cf025f76171d40712217753a3286b6d89b36e",
+      "case": "3f53dbfa4f3fd58fbcd75442ddd22e4cfadc6a0f8f1a08a2760322db72c7f7ea",
+      "score": 0,
+      "date": "2026-11-18T12:23:03.894Z"
+    }
+  ],
+  "S22/rebuilt-money-format": [
+    {
+      "model": "gpt-6-luna",
+      "question": "3fb39db4c9afc1d81e39d41a59cac31bc1425718fc0ceac08c5ae7bea4b0a847",
+      "case": "b3055945571ac376537d1c79aa5b3f10555d58a6e6579a15bc93a606b4dc6bab",
+      "score": 0.01,
+      "date": "2026-11-18T12:23:04.155Z"
+    },
+    {
+      "model": "gpt-6-luna",
+      "question": "3fb39db4c9afc1d81e39d41a59cac31bc1425718fc0ceac08c5ae7bea4b0a847",
+      "case": "b3055945571ac376537d1c79aa5b3f10555d58a6e6579a15bc93a606b4dc6bab",
+      "score": 0.01,
+      "date": "2026-11-18T12:23:04.500Z"
+    },
+    {
+      "model": "gpt-6-luna",
+      "question": "3fb39db4c9afc1d81e39d41a59cac31bc1425718fc0ceac08c5ae7bea4b0a847",
+      "case": "b1676a2dd276e4e1381082675b2067b34dc970fd2ab4204bb330f8623f6f714f",
+      "score": 0.96,
+      "date": "2026-11-18T12:39:49.558Z",
+      "baseline": {
+        "by": "person",
+        "reason": "Accepted the corrected fixture as a new baseline after two identical live scores on 2026-11-18."
+      }
+    },
+    {
+      "model": "gpt-6-luna",
+      "question": "3fb39db4c9afc1d81e39d41a59cac31bc1425718fc0ceac08c5ae7bea4b0a847",
+      "case": "b1676a2dd276e4e1381082675b2067b34dc970fd2ab4204bb330f8623f6f714f",
+      "score": 0.96,
+      "date": "2026-11-18T12:39:49.911Z"
+    }
+  ],
+  "S22/reference": [
+    {
+      "model": "gpt-6-luna",
+      "question": "3fb39db4c9afc1d81e39d41a59cac31bc1425718fc0ceac08c5ae7bea4b0a847",
+      "case": "6fab118b3af9843adf9dfd9397693c488df0f0d57e5cd8ea8d9db453dd86e6ce",
+      "score": 0,
+      "date": "2026-11-18T12:23:04.863Z"
+    }
+  ]
+}

@@ -464,3 +464,103 @@ export class InvoiceRepositoryImplementation {
 ```expect
 - src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (oxlint)
 ```
+
+## S05 · repository-hydration
+
+### domain-return
+
+```ts src/catalog/infrastructure/repository-implementations/catalog.ts
+async function listItems() { const rows = await db.list(); return rows.map(row => new ItemEntity(row)); }
+```
+
+```expect
+- src/catalog/infrastructure/repository-implementations/catalog.ts (gpt-6-luna yes 0.99 · b132c2b69b615625a2ee3b770aabeab0519fbec9ac874c63a2197b3caa449fd0)
+```
+
+### reference
+
+```ts src/catalog/infrastructure/repository-implementations/catalog.ts
+async function listItems() { const rows = await db.list(); return ItemRecordSchema.array().parse(rows); }
+```
+
+```expect
+(no findings) (gpt-6-luna no 0 · a1387742177a8e2cc585c3f49889ed52932861ae1790c7654069037774c2f189)
+```
+
+## S10 · external-record-validation
+
+### unparsed-record
+
+```ts src/catalog/infrastructure/acl/contact.ts
+export async function readContact() { return (await response.json()) as ContactRecord; }
+```
+
+```expect
+- src/catalog/infrastructure/acl/contact.ts (gpt-6-luna yes 0.94 · 0ffaa59390cc59e9ea764c14c85893e60fdd157c3acf44202d4569fe30ae6b2c)
+```
+
+### reference
+
+```ts src/catalog/infrastructure/acl/contact.ts
+export async function readContact() { const raw: unknown = await response.json(); return ContactRecordSchema.parse(raw); }
+```
+
+```expect
+(no findings) (gpt-6-luna no 0 · c8cf45196961bc785ad0e9eaabd73524edc81cdcc5f275e90d628e86ee45f6b3)
+```
+
+## S14 · shared-resource-owner
+
+### three-resource-clients
+
+```ts src/payments/infrastructure/adapters/backoff.adapter.ts
+export class BackoffAdapter {
+  afterFailure(attempt: number) { return new Promise(resolve => setTimeout(resolve, 2 ** attempt * 100)); }
+}
+```
+
+```ts src/payments/infrastructure/adapters/payments.adapter.ts
+import { BackoffAdapter } from "./backoff.adapter";
+export class PaymentsAdapter { readonly retryDelay = new BackoffAdapter(); }
+```
+
+```ts src/shipping/infrastructure/adapters/shipping.adapter.ts
+import { BackoffAdapter } from "../../../payments/infrastructure/adapters/backoff.adapter";
+export class ShippingAdapter { readonly retryDelay = new BackoffAdapter(); }
+```
+
+```ts src/inventory/infrastructure/adapters/inventory.adapter.ts
+import { BackoffAdapter } from "../../../payments/infrastructure/adapters/backoff.adapter";
+export class InventoryAdapter { readonly retryDelay = new BackoffAdapter(); }
+```
+
+```ts src/billing/infrastructure/adapters/billing.adapter.ts
+import { BackoffAdapter } from "../../../payments/infrastructure/adapters/backoff.adapter";
+export class BillingAdapter { readonly retryDelay = new BackoffAdapter(); }
+```
+
+```expect
+- src/payments/infrastructure/adapters/backoff.adapter.ts (gpt-6-luna yes 1 · d95efaeea010d84fe65cd8c8e4b38084dd0adcbf37302692d4b95fbc31615318)
+```
+
+### reference
+
+```ts src/payments/infrastructure/adapters/backoff.adapter.ts
+export class BackoffAdapter {
+  afterFailure(attempt: number) { return new Promise(resolve => setTimeout(resolve, 2 ** attempt * 100)); }
+}
+```
+
+```ts src/payments/infrastructure/adapters/payments.adapter.ts
+import { BackoffAdapter } from "./backoff.adapter";
+export class PaymentsAdapter { readonly retryDelay = new BackoffAdapter(); }
+```
+
+```ts src/shipping/infrastructure/adapters/shipping.adapter.ts
+import { BackoffAdapter } from "../../../payments/infrastructure/adapters/backoff.adapter";
+export class ShippingAdapter { readonly retryDelay = new BackoffAdapter(); }
+```
+
+```expect
+(no findings) (gpt-6-luna no 0 · ba367fdd2f552431c3848cd835ebc152bcc07f0f387af4e7d93d9e90eb203e45)
+```

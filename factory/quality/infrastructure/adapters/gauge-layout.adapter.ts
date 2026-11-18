@@ -37,7 +37,6 @@ export const createGenerated = ({
         product: name || undefined,
         adapterFolder: () => undefined,
       };
-    // A layer's spec is proved in the folder of the workstream that owns the layer, whoever holds it.
     const owners = new Map<string, string>();
     for (const holder of await holderNames(root))
       for (const dir of Object.values(

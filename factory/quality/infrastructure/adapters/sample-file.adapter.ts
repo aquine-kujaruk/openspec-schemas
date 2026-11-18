@@ -1,6 +1,8 @@
+import { canRecordRubricScore, expectedRubricVerdict } from "./rubric-case.adapter.ts";
 import { QualityException } from "../../domain/exceptions/quality.exceptions.ts";
 import type {
   Files,
+  Judgement,
   Case,
   ExampleFile,
   Recorded,
@@ -41,6 +43,7 @@ export const createExampleFile = ({
       reference: new Map(),
       scaffolds: new Map(),
       rules: new Map(),
+      rubric: new Map(),
     };
     const spans: Span[] = [];
     let section = "";
@@ -57,7 +60,15 @@ export const createExampleFile = ({
         if (line.startsWith(open.ticks) && /^`+\s*$/.test(line)) {
           if (open.path) target!.set(open.path, open.lines.join("\n") + "\n");
           else {
-            current!.case.expected = parseFindingLines(
+            if (file.rubric.has(section)) {
+              const match = /^(?:- \S+|\(no findings\)) \((\S+) (yes|no) ([\d.e+-]+) · ([a-f0-9]+)\)$/.exec(open.lines.join("\n"));
+              if (!match) throw new QualityException(`${name}:${open.at + 2}: invalid recorded judgement`, { cause: open.lines });
+              const score = Number(match[3]);
+              const verdict = match[2] as "yes" | "no";
+              if (!Number.isFinite(score) || score < 0 || score > 1 || (verdict === "yes" ? score < 0.85 : score > 0.15))
+                fail("score does not support the recorded verdict");
+              current!.case.judgement = { model: match[1], verdict, score, fingerprint: match[4] };
+            } else current!.case.expected = parseFindingLines(
               open.lines,
               name,
               open.at + 2,
@@ -69,7 +80,8 @@ export const createExampleFile = ({
         } else open.lines.push(line);
         continue;
       }
-      const heading = /^(#{2,3}) (\S+)\s*$/.exec(line);
+      const semantic = /^## (S\d{2}) · ([a-z0-9-]+)\s*$/.exec(line);
+      const heading = semantic ? ["", "##", semantic[1]] : /^(#{2,3}) (\S+)\s*$/.exec(line);
       const expect = EXPECT.exec(line);
       if (heading?.[1] === "##") {
         section = heading[2];
@@ -80,16 +92,20 @@ export const createExampleFile = ({
               ? file.scaffolds
               : undefined;
         current = undefined;
-        if (!PLACES.has(section)) file.rules.set(section, new Map());
+        if (semantic) {
+          if (file.rubric.has(section)) fail(`repeated rubric row ${section}`);
+          file.rubric.set(section, new Map());
+        } else if (!PLACES.has(section)) file.rules.set(section, new Map());
       } else if (heading?.[1] === "###") {
         const c: Case = { files: new Map(), expected: undefined };
-        const rule = file.rules.get(section);
+        const rule = file.rubric.get(section) ?? file.rules.get(section);
         target = c.files;
         current = rule && {
           case: c,
           span: { rule: section, name: heading[2], end: i },
         };
         if (current) {
+          if (rule!.has(heading[2])) fail(`repeated case ${section}/${heading[2]}`);
           rule!.set(heading[2], c);
           spans.push(current.span);
         }
@@ -127,21 +143,23 @@ export const createExampleFile = ({
   const parseExampleFile = (path: string): ExampleFile =>
     parseExampleText(readFileSync(path, "utf8"), path);
 
-  /**
-   * Writes the recorded findings into an example file's text: the lines between a case's `expect`
-   * fences are replaced, and a case without a block gets a blank line and one after its last
-   * non-blank line. Every other line is kept as is; a text that does not parse throws.
-   */
   const recordFindings = (
     text: string,
     name: string,
     recorded: Recorded,
+    judgements: Map<string, Map<string, Judgement>> = new Map(),
   ): string => {
     const lines = text.split("\n");
-    for (const span of scan(lines, name).spans.reverse()) {
+    const { file, spans } = scan(lines, name);
+    for (const span of spans.reverse()) {
       const findings = recorded.get(span.rule)?.get(span.name);
-      if (!findings) continue;
-      const body = findingLines(findings);
+      const judgement = judgements.get(span.rule)?.get(span.name);
+      if (!findings && !judgement) continue;
+      if (judgement && (judgement.verdict !== expectedRubricVerdict(span.name) || !canRecordRubricScore(span.name, judgement.score))) continue;
+      const path = file.rubric.get(span.rule)?.get(span.name)?.files.keys().next().value;
+      const body = judgement
+        ? [`${judgement.verdict === "yes" ? "- " + path : "(no findings)"} (${judgement.model} ${judgement.verdict} ${judgement.score} · ${judgement.fingerprint})`]
+        : findingLines(findings!);
       if (span.block)
         lines.splice(
           span.block.open + 1,
