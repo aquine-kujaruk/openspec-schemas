@@ -104,6 +104,8 @@ The recording is session `20261118-103440`. Each row below connects a requested 
 | 19:53 · 10:54:34, 22:05 · 10:56:46 and 27:00 · 11:01:41 | The repository specifies the query or operation, the resource adapter executes it, and the external contract schema may transform its record. | A contract adapter can compose a disk or HTTP adapter. An in-memory implementation satisfies the same ACL. The internal callback forwarding case is checked separately. |
 | 22:42 · 10:57:23 | Keep comments that help the local reader and keep architectural rationale in specs and plans. | Apply the existing S20 question to a comment repeating the method and an explanation of a subtle constraint. |
 
+**Runbook rehearsal, 2026-11-18.** Followed `acl-adapter-paired` from its requirement through both negative cases and the valid reference. Running `pnpm exec factory expect adapters` reproduced the recorded paths with no diff. Both built backend and frontend packages contained the example under the installed implement skill. The 15 adapter tests and 18 rule/case consistency tests passed. Both `pnpm exec factory generate --check` and the full `pnpm exec factory check` exited zero. The two synthetic model verdicts and the current selector limitations are recorded in Findings.
+
 ## Next step
 
 The person approved the plan and synthesis in Easel on 2026-11-18. Validate and commit the approved plan, exercise the procedure, verify and archive it, then integrate this change through the sequential runbook. Open the next family only after this one closes.
