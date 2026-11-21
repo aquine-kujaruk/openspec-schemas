@@ -116,7 +116,9 @@ When a workstream cannot go on without a decision the plan does not settle and t
 
 ### Requirement: The spike workstream builds the approved screens and writes their end-to-end tests
 
-In a change whose schema declares a spike workstream, that workstream SHALL be the first the implementation builds for the screens listed under `## Screens`: it SHALL build each one from its approved spike, against stub controllers that return the spike's literal data, and SHALL write the end-to-end test of every journey the screen lists, under `test/e2e/<module>/`, with the actions in natural language and deterministic checks on what the screen shows, passing against the stubs. When a journey writes, the stub controller behind its screen SHALL keep that literal data in its own local state and apply the write to it, with no store and no query cache, so that the screen shows the result. The workstreams built after it SHALL keep those tests passing as the real controllers, use cases and in-memory adapters take the stubs' place. The first web change of a product SHALL write the end-to-end configuration from the product's local-run procedure.
+`@by:person`
+
+In a change whose schema declares a spike workstream, that workstream SHALL be the first the implementation builds for the screens listed under `## Screens`: it SHALL build each one from its approved spike, against stub controllers that return the spike's literal data, and SHALL write the end-to-end test of every journey the screen lists, under `test/e2e/<module>/`, with the actions in natural language and deterministic checks on what the screen shows, passing against the stubs. When a journey writes, the stub controller behind its screen SHALL keep that literal data in its own local state and apply the write to it, with no store and no query cache, so that the screen shows the result. In a later phase, whose seams sign the use cases and adapters the real controllers compose, the same workstream SHALL replace the body of each stub controller with the real one, keeping its shape, after the core's tasks of that phase, and the same tests SHALL keep passing with the real controllers, use cases and in-memory adapters behind the screens. The first web change of a product SHALL write the end-to-end configuration from the product's local-run procedure.
 
 #### Scenario Outline: the journey `<journey>` is `<state>` once `<workstream>` is built
 
@@ -126,10 +128,10 @@ In a change whose schema declares a spike workstream, that workstream SHALL be t
 
 ##### Examples:
 
-  | journey                | workstream  | state                                   |
-  | ---------------------- | ----------- | --------------------------------------- |
-  | cancel a pending order | react-ui    | passing against the stub controllers    |
-  | cancel a pending order | react-hooks | passing against the in-memory adapters  |
+  | journey                | workstream                                       | state                                   |
+  | ---------------------- | ------------------------------------------------ | --------------------------------------- |
+  | cancel a pending order | react, its screens against stubs                 | passing against the stub controllers    |
+  | cancel a pending order | react, its real controllers after the core       | passing against the in-memory adapters  |
 
 #### Scenario Outline: the stub behind `<action>` paints `<after>` once the action is done
 

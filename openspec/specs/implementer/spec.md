@@ -495,7 +495,9 @@ The defaults of a schema SHALL name one platform, and the globals that platform 
 
 ### Requirement: A schema's own workstreams join its core's in one topology
 
-The workstreams a schema adds SHALL be ordered together with the workstreams of its core: each one waits for the workstreams the schema's defaults name, and a workstream of the core waits, besides its own dependencies, for the ones the schema adds to it. Every layer a schema adds SHALL be owned by exactly one of the schema's own workstreams.
+`@by:person`
+
+The workstreams a schema adds SHALL be ordered together with the workstreams of its core: each one waits for the workstreams the schema's defaults name, and a workstream of the core waits, besides its own dependencies, for the ones the schema adds to it. Every layer a schema adds SHALL be owned by exactly one of the schema's own workstreams, and a schema that adds a framework SHALL add it as one workstream that owns every layer of it.
 
 #### Scenario Outline: in `<schema>`, `<workstream>` waits for `<dependency>`
 
@@ -507,7 +509,6 @@ The workstreams a schema adds SHALL be ordered together with the workstreams of 
 
   | schema      | workstream  | dependency  |
   | ----------- | ----------- | ----------- |
-  | clean-react | react-hooks | react-ui    |
   | clean-react | modules     | app-domain  |
 
 #### Scenario Outline: in `<schema>`, `<workstream>` and `<other>` may run at the same time
@@ -520,10 +521,10 @@ The workstreams a schema adds SHALL be ordered together with the workstreams of 
 
   | schema      | workstream | other          |
   | ----------- | ---------- | -------------- |
-  | clean-react | react-ui   | app-domain     |
-  | clean-react | react-ui   | infrastructure |
-  | clean-react | react-ui   | adapters       |
-  | clean-react | react-hooks | modules       |
+  | clean-react | react      | app-domain     |
+  | clean-react | react      | infrastructure |
+  | clean-react | react      | adapters       |
+  | clean-react | react      | modules        |
 
 #### Scenario Outline: in `<schema>`, layer `<layer>` belongs to `<workstream>`
 
@@ -535,8 +536,8 @@ The workstreams a schema adds SHALL be ordered together with the workstreams of 
 
   | schema      | layer     | workstream  |
   | ----------- | --------- | ----------- |
-  | clean-react | ui        | react-ui    |
-  | clean-react | framework | react-hooks |
+  | clean-react | ui        | react       |
+  | clean-react | framework | react       |
   | clean-react | domain    | app-domain  |
   | clean-react | modules   | modules     |
 

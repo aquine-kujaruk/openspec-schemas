@@ -157,7 +157,7 @@ export function createSteps() {
       product.set(file!, "export const unused = 1;");
       before.push([file!, product.get(file!)!]);
       wholeOutput = `${rule}: ${file}`;
-      if (file!.includes("/framework/ui/")) workstreamOwners.set(file!, "react-ui");
+      if (file!.includes("/framework/ui/")) workstreamOwners.set(file!, "react");
       else if (file!.includes("/domain/")) workstreamOwners.set(file!, "app-domain");
       else if (file!.includes("/infrastructure/")) workstreamOwners.set(file!, "infrastructure");
     },

@@ -59,28 +59,25 @@ describe("clean-backend builds through the clean core", () => {
 
 /** Spec: `implementer`, "A schema's own workstreams join its core's in one topology". */
 describe("clean-react joins its workstreams to the core's", () => {
-  it.each([
-    ["react-hooks", "react-ui"],
-    ["modules", "app-domain"],
-  ])("%s waits for %s", async (workstream, dependency) => {
+  it.each([["modules", "app-domain"]])("%s waits for %s", async (workstream, dependency) => {
     const d = await loadDefinition("clean-react");
     expect(d.defaults.workstreams[workstream]!.dependsOn).toContain(dependency);
   });
 
-  it.each([["app-domain"], ["infrastructure"], ["adapters"]])(
-    "react-ui and %s may run at the same time",
+  it.each([["app-domain"], ["infrastructure"], ["adapters"], ["modules"]])(
+    "react and %s may run at the same time",
     async (other) => {
       const d = await loadDefinition("clean-react");
-      expect(d.defaults.workstreams["react-ui"]!.dependsOn).toEqual([]);
+      expect(d.defaults.workstreams.react!.dependsOn).toEqual([]);
       expect(d.defaults.workstreams[other]!.dependsOn).not.toContain(
-        "react-ui",
+        "react",
       );
     },
   );
 
   it.each([
-    ["ui", "react-ui"],
-    ["framework", "react-hooks"],
+    ["ui", "react"],
+    ["framework", "react"],
     ["domain", "app-domain"],
     ["modules", "modules"],
   ])("layer %s belongs to %s", async (layer, workstream) => {
@@ -119,13 +116,11 @@ describe("the whole-product checks belong to no workstream", () => {
       );
   });
 
-  it("react-hooks and modules may run at the same time in clean-react", async () => {
+  it("clean-react adds its framework as one workstream that owns every layer of it", async () => {
     const d = await loadDefinition("clean-react");
-    expect(d.defaults.workstreams["react-hooks"]!.dependsOn).not.toContain(
-      "modules",
-    );
-    expect(d.defaults.workstreams.modules!.dependsOn).not.toContain(
-      "react-hooks",
-    );
+    expect(d.workstreams.at(-1)).toBe("react");
+    expect(d.workstreams).not.toContain("react-ui");
+    expect(d.workstreams).not.toContain("react-hooks");
+    expect(d.spike?.workstream).toBe("react");
   });
 });

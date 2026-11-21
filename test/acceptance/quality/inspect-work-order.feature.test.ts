@@ -455,7 +455,7 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
     })
 
     // Line 165
-    test('on a `web` product, `no-unused-files names src/orders/framework/ui/orders-list/old-row.component.tsx` makes the change `not verified`, feedback on `react-ui`', async () => {
+    test('on a `web` product, `no-unused-files names src/orders/framework/ui/orders-list/old-row.component.tsx` makes the change `not verified`, feedback on `react`', async () => {
       const steps = createSteps()
 
       // Given a built change of a `web` product
@@ -466,8 +466,8 @@ describe('Feature: factory/quality/inspect-work-order Specification', () => {
       await steps.verifyChange()
       // Then the change is reported `not verified`
       await steps.changeReportedAs('not verified')
-      // And feedback is raised on `react-ui`
-      await steps.feedbackRaisedOn('react-ui')
+      // And feedback is raised on `react`
+      await steps.feedbackRaisedOn('react')
     })
 
     // Line 165

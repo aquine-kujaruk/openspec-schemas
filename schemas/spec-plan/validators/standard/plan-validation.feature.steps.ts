@@ -193,7 +193,7 @@ export function createSteps() {
       } else throw new Error(`unknown spike: ${spike}`);
     },
     async planSpikeTasks(tasks: string): Promise<void> {
-      if (Number(tasks)) phaseTasks = ["react-ui: build the orders list page", ...phaseTasks];
+      if (Number(tasks)) phaseTasks = ["react: build the orders list page", ...phaseTasks];
     },
     async decisionOfKindTaggedBy(kind: string, name: string, by: string): Promise<void> {
       const tags = by === "none" ? [] : by.split(" ");
