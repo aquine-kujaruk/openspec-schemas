@@ -10,9 +10,9 @@ The plan phase SHALL smoke-test, with a minimal authenticated read under the age
 
 ### Decision: spike-while-planning · A web change is spiked as throwaway HTML while planning and tested end to end while implementing
 
-@origin:2026-11-17-throwaway-spikes @applies:phases,schemas,toolkit @enforced:screen-approved
+@origin:2026-11-21-one-react-workstream @applies:phases,schemas,toolkit @enforced:screen-approved @by:person
 
-A schema whose platform is `web` SHALL declare a spike workstream. The plan of a change that touches what a user sees SHALL spike its screens as self-contained HTML files under the change's `spikes/` folder, SHALL get each screen approved by whoever can decide it (`@approved`), and SHALL write the journeys through it in plain words; it SHALL NOT write the product's code. The spike workstream SHALL be the first the implementation builds for those screens, from the approved spikes and against stub controllers, and SHALL write the end-to-end tests of their journeys; the later workstreams SHALL keep them passing with the real code behind the screens, the doubles sitting at the adapters.
+A schema whose platform is `web` SHALL declare a spike workstream. The plan of a change that touches what a user sees SHALL spike its screens as self-contained HTML files under the change's `spikes/` folder, SHALL get each screen approved by whoever can decide it (`@approved`), and SHALL write the journeys through it in plain words; it SHALL NOT write the product's code. The spike workstream SHALL build those screens first, from the approved spikes and against stub controllers, and SHALL write the end-to-end tests of their journeys. When it later replaces its stubs with the real controllers over the core, the same tests SHALL keep passing, the doubles sitting at the adapters.
 
 **Why** The person saw the screens only at the end of the implementation, when changing them is expensive. Building the spike in the product asked the planner for a product that may not exist yet, with its framework and tools installed and a way to run it, and opened the product to a change not yet approved. A throwaway page costs an agent little; a plan coupled to the product costs a lot.
 

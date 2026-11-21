@@ -74,16 +74,21 @@ A schema whose platform is `web` SHALL declare a spike workstream. The plan of a
 
 **Tests**
 
-The generated tests of `implementer` (`test/schemas/core.test.ts`): `react` depends on nothing and may run beside `app-domain`, `infrastructure`, `adapters` and `modules`; `ui` and `framework` belong to `react`. The generated test of `repository/build` (`tools/build.feature.test.ts`): `clean-react` builds through `app-domain, infrastructure, adapters, modules, react`. The generated test of `factory/quality/inspect-work-order`: a whole-product finding in `framework/ui` is raised on `react`. `flow/implement` is proved by the person's word.
+The scenarios of `implementer` have no step adapter and are proved by `test/schemas/core.test.ts`: `react` depends on nothing and may run beside `app-domain`, `infrastructure`, `adapters` and `modules`; `ui` and `framework` belong to `react`. The generated test of `repository/build` (`tools/build.feature.test.ts`): `clean-react` builds through `app-domain, infrastructure, adapters, modules, react`. The generated test of `factory/quality/inspect-work-order`: a whole-product finding in `framework/ui` is raised on `react`. `flow/implement` is proved by the person's word.
 
-- [ ] Move `schemas/clean-react/workstreams/react-ui/*` and `react-hooks/*` into `schemas/clean-react/workstreams/react/` with `git mv`, keeping the per-layer files (`ui.*`, `framework.*`). Write one `workstream.ts` declaring `layers: (o) => [ui(o), framework(o)]`. Remove the old folders.
-- [ ] In `schemas/clean-react/schema.ts`: `workstreams: ["react"]`, `spike: { workstream: "react" }`, `defaults.workstreams: { react: { dependsOn: [] } }`. Reword the doc comment. Rewrite `PHASES` so the seams of a phase that replaces stubs are the use-case signatures and adapter instances the framework composes, and the controller is not a seam.
-- [ ] Write `workstreams/react/SKILL.md` from both skills: Owns (both layers' folders and the entry), Receives (screens with spikes and journeys, then the signed use cases and adapters), Fakes (the controller, until the phase that replaces it), "Screens, against stubs" and "Controllers, over the core", end to end, declared skills, Check (`factory check --workstream react` and the type check; `factory test e2e` at each phase's close).
-- [ ] Rename `react-ui` and `react-hooks` to `react` in the implement and plan skills where they name them, `RUBRIC.md` S23, the `modules` skill, `CONTRIBUTING.md`, `docs/flow.md`, the README if it names them, and the step adapter `test/acceptance/quality/inspect-work-order.feature.steps.ts`. Update `test/schemas/core.test.ts` to the new topology and owners.
-- [ ] Regenerate the generated tests of the changed specs with `pnpm exec factory generate`. Raise the package and command version to 0.15.0.
-- [ ] Verify `pnpm run check` passes, `factory build frontend --check` and `factory build fullstack --check` are fresh after a build, and `factory verify one-react-workstream --proved flow/implement` records the evidence.
+- [x] Move `schemas/clean-react/workstreams/react-ui/*` and `react-hooks/*` into `schemas/clean-react/workstreams/react/` with `git mv`, keeping the per-layer files (`ui.*`, `framework.*`). Write one `workstream.ts` declaring `layers: (o) => [ui(o), framework(o)]`. Remove the old folders.
+- [x] In `schemas/clean-react/schema.ts`: `workstreams: ["react"]`, `spike: { workstream: "react" }`, `defaults.workstreams: { react: { dependsOn: [] } }`. Reword the doc comment. Rewrite `PHASES` so the seams of a phase that replaces stubs are the use-case signatures and adapter instances the framework composes, and the controller is not a seam.
+- [x] Write `workstreams/react/SKILL.md` from both skills: Owns (both layers' folders and the entry), Receives (screens with spikes and journeys, then the signed use cases and adapters), Fakes (the controller, until the phase that replaces it), "Screens, against stubs" and "Controllers, over the core", end to end, declared skills, Check (`factory check --workstream react` and the type check; `factory test e2e` at each phase's close).
+- [x] Rename `react-ui` and `react-hooks` to `react` in the implement and plan skills where they name them, `RUBRIC.md` S23, the `modules` skill, `CONTRIBUTING.md`, `docs/flow.md`, the README if it names them, and the step adapter `test/acceptance/quality/inspect-work-order.feature.steps.ts`. Update `test/schemas/core.test.ts` to the new topology and owners.
+- [x] Regenerate the generated tests of the changed specs with `pnpm exec factory generate`. Raise the package and command version to 0.15.0.
+- [x] Verify `pnpm run check` passes, `factory build frontend --check` and `factory build fullstack --check` are fresh after a build, and `factory verify one-react-workstream --proved flow/implement --proved implementer` records the evidence.
 
 ## Feedback
+
+- Built on 2026-11-21 by the agent, at the person's request ("Sí, apruébalo e implementa").
+- Found while building: the scenario name of `flow/implement` cannot be renamed by a MODIFIED block, so the journey scenario keeps its `<workstream>` column, valued with the two parts of `react`.
+- Found while building: `plan-validation.feature.steps.ts` writes a `clean-react` plan with a `react-ui:` task for the screen scenarios; it now writes `react:`. Its spec is unchanged, since its rows name no workstream of `clean-react`.
+- Found while building: `test/integration/production/stage-start-repository.test.ts` (keeps a spec-plan stage open) fails in this checkout whenever the untracked `.env` is present, on `main` too, and passes without it; it is unrelated to this change.
 
 ## Next step
 

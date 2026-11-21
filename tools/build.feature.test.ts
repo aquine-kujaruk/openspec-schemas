@@ -438,7 +438,7 @@ describe('Feature: repository/build Specification', () => {
   })
 
   describe('Rule: A schema builds through the workstreams of its core and its own', () => {
-    // Line 154
+    // Line 156
     test('`clean-backend` naming the core `clean-core` and its own `none` builds through `app-domain, infrastructure, adapters, modules`', async () => {
       const steps = createSteps()
 
@@ -454,23 +454,23 @@ describe('Feature: repository/build Specification', () => {
       await steps.builtSchemaLetsTaskName('clean-backend', 'app-domain, infrastructure, adapters, modules')
     })
 
-    // Line 154
-    test('`clean-react` naming the core `clean-core` and its own `react-ui, react-hooks` builds through `app-domain, infrastructure, adapters, modules, react-ui, react-hooks`', async () => {
+    // Line 156
+    test('`clean-react` naming the core `clean-core` and its own `react` builds through `app-domain, infrastructure, adapters, modules, react`', async () => {
       const steps = createSteps()
 
       // Given a package manifest `frontend` listing the schemas `clean-react`
       await steps.manifestListingSchemas('frontend', 'clean-react')
       // And the core `clean-core` lists the workstreams `app-domain, infrastructure, adapters, modules`
       await steps.coreListsWorkstreams('clean-core', 'app-domain, infrastructure, adapters, modules')
-      // And the definition of `clean-react` names the core `clean-core` and the workstreams `react-ui, react-hooks`
-      await steps.definitionNamesCoreAndWorkstreams('clean-react', 'clean-core', 'react-ui, react-hooks')
+      // And the definition of `clean-react` names the core `clean-core` and the workstreams `react`
+      await steps.definitionNamesCoreAndWorkstreams('clean-react', 'clean-core', 'react')
       // When the package `frontend` is built
       await steps.buildPackage('frontend')
-      // Then the built schema `clean-react` lets a task name `app-domain, infrastructure, adapters, modules, react-ui, react-hooks`
-      await steps.builtSchemaLetsTaskName('clean-react', 'app-domain, infrastructure, adapters, modules, react-ui, react-hooks')
+      // Then the built schema `clean-react` lets a task name `app-domain, infrastructure, adapters, modules, react`
+      await steps.builtSchemaLetsTaskName('clean-react', 'app-domain, infrastructure, adapters, modules, react')
     })
 
-    // Line 166
+    // Line 168
     test('`clean-backend` naming `modules`, which its core `clean-core` already lists, stops the build', async () => {
       const steps = createSteps()
 
@@ -490,7 +490,7 @@ describe('Feature: repository/build Specification', () => {
   })
 
   describe('Rule: A package declares a skill that lives in a repository of its own', () => {
-    // Line 182
+    // Line 184
     test('the skill `component-patterns` of the repository `acme/agent-skills` at `1a2c79d` is declared as `acme/agent-skills/skills/component-patterns#1a2c79d`', async () => {
       const steps = createSteps()
 
@@ -506,7 +506,7 @@ describe('Feature: repository/build Specification', () => {
       await steps.skillCopiesHeld('0', 'component-patterns')
     })
 
-    // Line 182
+    // Line 184
     test('the skill `interface-review` of the repository `acme/agent-skills` at `1a2c79d` is declared as `acme/agent-skills/skills/interface-review#1a2c79d`', async () => {
       const steps = createSteps()
 
@@ -522,7 +522,7 @@ describe('Feature: repository/build Specification', () => {
       await steps.skillCopiesHeld('0', 'interface-review')
     })
 
-    // Line 194
+    // Line 196
     test('the skill `component-patterns` taken from `acme/agent-skills` with no commit stops the build', async () => {
       const steps = createSteps()
 
@@ -540,7 +540,7 @@ describe('Feature: repository/build Specification', () => {
   })
 
   describe('Rule: A built package\'s command offers only what a project runs', () => {
-    // Line 211
+    // Line 213
     test('the command built into `backend` offers `verify` as `present`', async () => {
       const steps = createSteps()
 
@@ -552,7 +552,7 @@ describe('Feature: repository/build Specification', () => {
       await steps.builtCommandOffers('verify', 'present')
     })
 
-    // Line 211
+    // Line 213
     test('the command built into `backend` offers `check` as `present`', async () => {
       const steps = createSteps()
 
@@ -564,7 +564,7 @@ describe('Feature: repository/build Specification', () => {
       await steps.builtCommandOffers('check', 'present')
     })
 
-    // Line 211
+    // Line 213
     test('the command built into `backend` offers `guard` as `present`', async () => {
       const steps = createSteps()
 
@@ -576,7 +576,7 @@ describe('Feature: repository/build Specification', () => {
       await steps.builtCommandOffers('guard', 'present')
     })
 
-    // Line 211
+    // Line 213
     test('the command built into `backend` offers `build` as `absent`', async () => {
       const steps = createSteps()
 
@@ -588,7 +588,7 @@ describe('Feature: repository/build Specification', () => {
       await steps.builtCommandOffers('build', 'absent')
     })
 
-    // Line 211
+    // Line 213
     test('the command built into `backend` offers `release` as `absent`', async () => {
       const steps = createSteps()
 
@@ -600,7 +600,7 @@ describe('Feature: repository/build Specification', () => {
       await steps.builtCommandOffers('release', 'absent')
     })
 
-    // Line 211
+    // Line 213
     test('the command built into `backend` offers `proof` as `absent`', async () => {
       const steps = createSteps()
 
@@ -612,7 +612,7 @@ describe('Feature: repository/build Specification', () => {
       await steps.builtCommandOffers('proof', 'absent')
     })
 
-    // Line 211
+    // Line 213
     test('the command built into `backend` offers `expect` as `absent`', async () => {
       const steps = createSteps()
 

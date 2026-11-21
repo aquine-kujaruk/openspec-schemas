@@ -185,7 +185,7 @@ In the repository the command is developed in, generation writes no test for a s
 
 ### Requirement: Verify proves the product works as a whole
 
-`@by:agent`
+`@by:person`
 
 Verify SHALL run, besides every workstream's check and the product tests, the whole-product checks and, for a product whose platform is `web`, its end-to-end tests. It SHALL record each end-to-end test in the evidence with its result. A failing whole-product check or end-to-end test SHALL make the change not verified and SHALL be raised as feedback on the workstream that owns the file it names, or on the change when it names none. Verify SHALL change no file of the product.
 
@@ -202,7 +202,7 @@ Verify SHALL run, besides every workstream's check and the product tests, the wh
   | platform | failure                                                                              | verdict      | raisedOn          |
   | -------- | ------------------------------------------------------------------------------------ | ------------ | ----------------- |
   | web      | nothing fails                                                                        | verified     | nothing           |
-  | web      | no-unused-files names src/orders/framework/ui/orders-list/old-row.component.tsx      | not verified | react-ui          |
+  | web      | no-unused-files names src/orders/framework/ui/orders-list/old-row.component.tsx      | not verified | react             |
   | web      | duplication-below-threshold names src/orders/domain/entities/order.entity.ts         | not verified | app-domain        |
   | web      | the end-to-end test cancel-order fails                                               | not verified | the change        |
   | node     | no-unused-files names src/orders/infrastructure/acl/order.acl.ts                     | not verified | infrastructure    |
