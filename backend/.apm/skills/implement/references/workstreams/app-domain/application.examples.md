@@ -288,3 +288,112 @@ export class ListInvoicesUseCase {
 ```expect
 - src/module/application/use-cases/list-invoices.use-case.ts (fallow, oxlint)
 ```
+
+## S13 · expressive-repository-verb
+
+### vague-operation
+
+```ts src/catalog/application/repository-interfaces/vacancies.ts
+interface VacancyRepositoryInterface { get(shift: Shift, skills: Skill[]): Promise<QualifiedAvailableWorker[]>; }
+```
+
+```ts src/catalog/infrastructure/repository-implementations/vacancies.repository-implementation.ts
+export class VacancyRepositoryImplementation implements VacancyRepositoryInterface {
+  constructor(private readonly workers: WorkerRecord[]) {}
+
+  async get(shift: Shift, skills: Skill[]) {
+    return this.workers
+      .filter(worker => worker.isAvailableDuring(shift) && skills.every(skill => worker.hasSkill(skill)))
+      .sort((first, second) => first.overtimeHours - second.overtimeHours);
+  }
+}
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/application/repository-interfaces/vacancies.repository-interface.ts
+export interface VacancyRepositoryInterface {
+  rankEligibleWorkersByAvailability(shift: Shift, requiredSkills: Skill[]): Promise<RankedWorker[]>;
+}
+```
+
+```ts src/catalog/application/use-cases/rank-candidates.use-case.ts
+export class RankCandidatesUseCase {
+  constructor(private readonly vacancies: VacancyRepositoryInterface) {}
+  execute(shift: Shift) { return this.vacancies.rankEligibleWorkersByAvailability(shift, shift.requiredSkills); }
+}
+```
+
+```expect
+no
+```
+
+## S15 · consumer-shape
+
+### field-copy
+
+```ts src/catalog/application/use-cases/summary.ts
+function execute(item: ItemEntity) { return { code: item.code, caption: item.name, count: item.stock }; }
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/application/use-cases/summary.ts
+function execute(item: ItemEntity) { return item.summary(); }
+```
+
+```expect
+no
+```
+
+## S18 · atomic-use-case
+
+### unrelated-methods
+
+```ts src/catalog/application/use-cases/items.ts
+class ItemsUseCase { createItem(name: string) { return this.repo.create(name); } deleteInvoice(id: string) { return this.invoices.delete(id); } }
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/application/use-cases/items.ts
+class CreateItemUseCase { execute(name: string) { return this.repo.create(name); } }
+```
+
+```expect
+no
+```
+
+## S19 · use-case-hydration
+
+### raw-props
+
+```ts src/catalog/application/use-cases/read.ts
+class ReadItemUseCase { async execute(id: string) { const props = await this.repo.readItemProps(id); return props; } }
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/application/use-cases/read.ts
+class ReadItemUseCase { async execute(id: string) { const props = await this.repo.readItemProps(id); return ItemEntity.from(props); } }
+```
+
+```expect
+no
+```

@@ -719,3 +719,166 @@ export const useInvoice = (id: string) => new Invoice(id);
 ```expect
 - src/module/domain/entities/invoice.entity.ts (archunit)
 ```
+
+## S01 · controller-orchestration
+
+### business-condition
+
+```ts src/catalog/framework/controllers/book.ts
+function useBookController(member: Member) { if (member.years > 5) member.price = member.price * 0.8; return saveBooking(member); }
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/framework/controllers/book.ts
+function useBookController(member: Member) { return { onConfirm: () => bookUseCase.execute(member.id) }; }
+```
+
+```expect
+no
+```
+
+## S02 · store-owns-flow
+
+### cached-record-copy
+
+```ts src/catalog/framework/stores/search.ts
+const store = createStore({ results: [], pending: false }); query.subscribe(state => store.set({ results: state.data, pending: state.isPending }));
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/framework/stores/search.ts
+const store = createStore({ filterText: "", selectedId: undefined }); function useResults() { return useQuery(resultsQuery(store.filterText)); }
+```
+
+```expect
+no
+```
+
+## S03 · minimal-view-props
+
+### excess-view-state
+
+```tsx src/catalog/framework/ui/card.tsx
+type CardController = { caption: string; costPrice: number; auditLog: string[]; passwordHash: string };
+function useCardController(item: Item): CardController {
+  return { caption: item.name, costPrice: item.costPrice, auditLog: item.auditLog, passwordHash: item.passwordHash };
+}
+export function Card({ item }: { item: Item }) {
+  const controller = useCardController(item);
+  return <h2>{controller.caption}</h2>;
+}
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/framework/controllers/card.ts
+function useCardController(item: Item) { return { caption: item.name }; }
+```
+
+```tsx src/catalog/framework/ui/card.tsx
+const Card = ({ caption }) => <h2>{caption}</h2>;
+```
+
+```expect
+no
+```
+
+## S04 · view-model-uses-domain-validation
+
+### copied-range
+
+```ts src/catalog/framework/view-models/quantity.ts
+class QuantityForm { validate(n: number) { return n < 1 || n > 50 ? { quantity: "Out of range" } : {}; } }
+```
+
+```ts src/catalog/domain/schemas/quantity.ts
+export const QuantitySchema = z.number().min(1).max(50);
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/framework/view-models/quantity.ts
+class QuantityForm { validate(n: number) { return QuantitySchema.safeParse(n).error?.flatten().fieldErrors ?? {}; } }
+```
+
+```ts src/catalog/domain/schemas/quantity.ts
+export const QuantitySchema = z.number().min(1).max(50);
+```
+
+```expect
+no
+```
+
+## S21 · query-hydration
+
+### raw-query-result
+
+```ts src/catalog/framework/queries/item.ts
+const useItem = id => useQuery({ queryKey: ["item", id], queryFn: () => repository.readItemProps(id) });
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/framework/queries/item.ts
+const useItem = id => useQuery({ queryKey: ["item", id], queryFn: () => repository.readItemProps(id), select: props => ItemEntity.from(props) });
+```
+
+```expect
+no
+```
+
+## S22 · format-in-domain
+
+### rebuilt-money-format
+
+```ts src/pricing/framework/view-models/price.view-model.ts
+import { Money } from "../../domain/value-objects/money.value-object";
+export class PriceViewModel {
+  display(money: Money) {
+    return money.currencyCode + " " + (money.minorUnits / 100).toFixed(2);
+  }
+}
+```
+
+```ts src/pricing/domain/value-objects/money.value-object.ts
+export class Money {
+  constructor(readonly currencyCode: string, readonly minorUnits: number) {}
+  format() { return this.currencyCode + " " + (this.minorUnits / 100).toFixed(2); }
+}
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/framework/view-models/price.ts
+class PriceViewModel { display(price: Money, compact: boolean) { return price.format({ hideCents: compact }); } }
+```
+
+```expect
+no
+```

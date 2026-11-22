@@ -268,3 +268,46 @@ export class InvoiceRepositoryImplementation {
 ```expect
 - src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
 ```
+
+## S08 · shared-domain-owner
+
+### cross-module-import
+
+```ts src/invoicing/domain/value-objects/money.value-object.ts
+export class Money {
+  constructor(readonly currencyCode: string, readonly minorUnits: number) {}
+  format() { return this.currencyCode + " " + (this.minorUnits / 100).toFixed(2); }
+}
+```
+
+```ts src/invoicing/domain/entities/invoice.entity.ts
+import { Money } from "../value-objects/money.value-object";
+export class InvoiceEntity { constructor(readonly total: Money) {} }
+```
+
+```ts src/payroll/domain/entities/paycheck.entity.ts
+import { Money } from "../../../invoicing/domain/value-objects/money.value-object";
+export class PaycheckEntity { constructor(readonly grossPay: Money) {} }
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/sales/domain/entities/sale.ts
+import { Unit } from "../../shared/domain/unit"; export class Sale { unit = new Unit(); }
+```
+
+```ts src/shared/domain/unit.ts
+export class Unit { round(n: number) { return Math.round(n); } }
+```
+
+```ts src/catalog/domain/item.ts
+import { Unit } from "../../shared/domain/unit"; export class Item { unit = new Unit(); }
+```
+
+```expect
+no
+```

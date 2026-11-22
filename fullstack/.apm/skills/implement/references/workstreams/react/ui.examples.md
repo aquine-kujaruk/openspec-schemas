@@ -373,3 +373,25 @@ export const InvoicesPage = () => (
 ```expect
 - src/module/framework/ui/invoices/invoices.page.tsx (fallow, oxlint)
 ```
+
+## S23 · page-flow-state
+
+### local-selection
+
+```tsx src/catalog/framework/ui/search.tsx
+function SearchPage() { const [selectedId, setSelectedId] = useState(null); return <Results selected={selectedId} onSelect={setSelectedId}/>; }
+```
+
+```expect
+yes
+```
+
+### reference
+
+```tsx src/catalog/framework/ui/search.tsx
+function SearchPage() { const [selectedId, select] = useSearchPageStore(s => [s.selectedId,s.select]); return <Results selected={selectedId} onSelect={select}/>; }
+```
+
+```expect
+no
+```

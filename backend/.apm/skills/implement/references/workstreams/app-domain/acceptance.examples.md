@@ -30,7 +30,7 @@ The system SHALL list every invoice the repository holds.
 ```
 
 ```ts test/acceptance/module/repositories/in-memory-invoice.repository.ts
-import type { InvoiceRepositoryInterface } from "../../../../src/module/application/repository-interfaces/invoice.repository-interface";
+import type { InvoiceRepositoryInterface } from "../../../../src/module/application/repository-interfaces/invoice.repository-interface.ts";
 import type { InvoiceProps } from "../../../../src/module/domain/schemas/invoice.schema";
 export class InMemoryInvoiceRepository implements InvoiceRepositoryInterface {
   private invoices: InvoiceProps[] = [];
@@ -324,4 +324,39 @@ export class InMemoryInvoiceRepository implements InvoiceRepositoryInterface {
 
 ```expect
 - test/acceptance/module/repositories/in-memory-invoice.repository.ts (archunit)
+```
+
+## S07 · core-test-coverage
+
+### untested-operation
+
+```ts src/catalog/application/use-cases/close.ts
+export class CloseUseCase { execute() { return "closed"; } }
+```
+
+```ts test/catalog.test.ts
+it("starts the delivery server", () => expect(server.listening).toBe(true));
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/application/use-cases/close.ts
+export class CloseUseCase { execute() { return "closed"; } }
+```
+
+```ts test/acceptance/catalog/close.feature.test.ts
+import { expect, it } from "vitest";
+import { CloseUseCase } from "../../../src/catalog/application/use-cases/close";
+it("closes the catalog through its public use case", () => {
+  const close = new CloseUseCase();
+  expect(close.execute()).toEqual("closed");
+});
+```
+
+```expect
+no
 ```

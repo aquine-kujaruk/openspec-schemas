@@ -18,10 +18,15 @@ export interface InvoiceAcl {
 import type { InvoiceRepositoryInterface } from "../../application/repository-interfaces/invoice.repository-interface";
 import type { InvoiceProps } from "../../domain/schemas/invoice.schema";
 import type { InvoiceAcl } from "../acl/invoice.acl";
+import { InvoiceUnavailableException } from "../../domain/exceptions/invoice.exceptions.ts";
 export class InvoiceRepositoryImplementation implements InvoiceRepositoryInterface {
   constructor(private readonly invoices: InvoiceAcl) {}
-  listInvoices(): Promise<InvoiceProps[]> {
-    return this.invoices.listInvoices();
+  async listInvoices(): Promise<InvoiceProps[]> {
+    try {
+      return await this.invoices.listInvoices();
+    } catch (cause) {
+      throw new InvoiceUnavailableException({ cause });
+    }
   }
   findInvoice(invoiceId: string): Promise<InvoiceProps | null> {
     return this.invoices.findInvoice(invoiceId);
@@ -209,6 +214,34 @@ export const invoiceAdapter: InvoiceAcl = { listInvoices: async () => [] };
 ```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
 import type { InvoiceAcl } from "../acl/invoice.acl";
 import { invoiceAdapter } from "../adapters/invoice.adapter";
+export class InvoiceRepositoryImplementation {
+  constructor(private readonly invoices: InvoiceAcl = invoiceAdapter) {}
+  listInvoices() {
+    return this.invoices.listInvoices();
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
+```
+
+### imports-adapter-with-extension
+
+```ts src/module/infrastructure/acl/invoice.acl.ts
+export interface InvoiceAcl {
+  listInvoices(): Promise<string[]>;
+}
+```
+
+```ts src/module/infrastructure/adapters/invoice.adapter.ts
+import type { InvoiceAcl } from "../acl/invoice.acl";
+export const invoiceAdapter: InvoiceAcl = { listInvoices: async () => [] };
+```
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+import type { InvoiceAcl } from "../acl/invoice.acl";
+import { invoiceAdapter } from "../adapters/invoice.adapter.ts";
 export class InvoiceRepositoryImplementation {
   constructor(private readonly invoices: InvoiceAcl = invoiceAdapter) {}
   listInvoices() {
@@ -430,4 +463,104 @@ export class InvoiceRepositoryImplementation {
 
 ```expect
 - src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (oxlint)
+```
+
+## S05 · repository-hydration
+
+### domain-return
+
+```ts src/catalog/infrastructure/repository-implementations/catalog.ts
+async function listItems() { const rows = await db.list(); return rows.map(row => new ItemEntity(row)); }
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/infrastructure/repository-implementations/catalog.ts
+async function listItems() { const rows = await db.list(); return ItemRecordSchema.array().parse(rows); }
+```
+
+```expect
+no
+```
+
+## S10 · external-record-validation
+
+### unparsed-record
+
+```ts src/catalog/infrastructure/acl/contact.ts
+export async function readContact() { return (await response.json()) as ContactRecord; }
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/infrastructure/acl/contact.ts
+export async function readContact() { const raw: unknown = await response.json(); return ContactRecordSchema.parse(raw); }
+```
+
+```expect
+no
+```
+
+## S14 · shared-resource-owner
+
+### three-resource-clients
+
+```ts src/payments/infrastructure/adapters/backoff.adapter.ts
+export class BackoffAdapter {
+  afterFailure(attempt: number) { return new Promise(resolve => setTimeout(resolve, 2 ** attempt * 100)); }
+}
+```
+
+```ts src/payments/infrastructure/adapters/payments.adapter.ts
+import { BackoffAdapter } from "./backoff.adapter";
+export class PaymentsAdapter { readonly retryDelay = new BackoffAdapter(); }
+```
+
+```ts src/shipping/infrastructure/adapters/shipping.adapter.ts
+import { BackoffAdapter } from "../../../payments/infrastructure/adapters/backoff.adapter";
+export class ShippingAdapter { readonly retryDelay = new BackoffAdapter(); }
+```
+
+```ts src/inventory/infrastructure/adapters/inventory.adapter.ts
+import { BackoffAdapter } from "../../../payments/infrastructure/adapters/backoff.adapter";
+export class InventoryAdapter { readonly retryDelay = new BackoffAdapter(); }
+```
+
+```ts src/billing/infrastructure/adapters/billing.adapter.ts
+import { BackoffAdapter } from "../../../payments/infrastructure/adapters/backoff.adapter";
+export class BillingAdapter { readonly retryDelay = new BackoffAdapter(); }
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/payments/infrastructure/adapters/backoff.adapter.ts
+export class BackoffAdapter {
+  afterFailure(attempt: number) { return new Promise(resolve => setTimeout(resolve, 2 ** attempt * 100)); }
+}
+```
+
+```ts src/payments/infrastructure/adapters/payments.adapter.ts
+import { BackoffAdapter } from "./backoff.adapter";
+export class PaymentsAdapter { readonly retryDelay = new BackoffAdapter(); }
+```
+
+```ts src/shipping/infrastructure/adapters/shipping.adapter.ts
+import { BackoffAdapter } from "../../../payments/infrastructure/adapters/backoff.adapter";
+export class ShippingAdapter { readonly retryDelay = new BackoffAdapter(); }
+```
+
+```expect
+no
 ```

@@ -63,9 +63,9 @@ export type InvoiceBookProps = z.infer<typeof InvoiceBookSchema>;
 ```
 
 ```ts src/module/domain/entities/invoice.entity.ts
-import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
+import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
 import { InvoiceAlreadyPaidException } from "../exceptions/invoice.exceptions";
-import { InvoiceSchema, InvoiceStatus, type InvoiceProps } from "../schemas/invoice.schema";
+import { InvoiceSchema, InvoiceStatus, type InvoiceProps } from "../schemas/invoice.schema.ts";
 export class InvoiceEntity {
   public readonly id!: string;
   public readonly total!: number;
@@ -85,8 +85,8 @@ export class InvoiceEntity {
 
 ```ts src/module/domain/aggregates/invoice-book.aggregate.ts
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
-import { InvoiceEntity } from "../entities/invoice.entity";
-import { InvoiceBookSchema, type InvoiceBookProps } from "../schemas/invoice-book.schema";
+import { InvoiceEntity } from "../entities/invoice.entity.ts";
+import { InvoiceBookSchema, type InvoiceBookProps } from "../schemas/invoice-book.schema.ts";
 export class InvoiceBookAggregate {
   public readonly year!: number;
   public readonly invoices: InvoiceEntity[];
@@ -101,7 +101,7 @@ export class InvoiceBookAggregate {
 ```
 
 ```ts src/module/domain/exceptions/invoice.exceptions.ts
-import { DomainException } from "../../../shared/domain/exceptions/domain.exceptions";
+import { DomainException } from "../../../shared/domain/exceptions/domain.exceptions.ts";
 export class ModuleException extends DomainException {}
 export class InvoiceNotFoundException extends ModuleException {
   constructor(
@@ -590,4 +590,189 @@ export class InvoiceEntity {
 
 ```expect
 - src/module/domain/entities/invoice.entity.ts (fallow, oxlint)
+```
+
+## S06 · money-calculation
+
+### literal-currency
+
+```ts src/catalog/domain/entities/bill.ts
+class Bill { total(a: Money, b: Money) { return { amount: a.amount + b.amount, currency: "USD" }; } }
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/domain/entities/bill.ts
+class Bill { total(a: Money, b: Money) { return a.add(b); } }
+```
+
+```expect
+no
+```
+
+## S09 · business-names
+
+### provider-name
+
+```ts src/catalog/domain/exceptions/charge.ts
+export class StripeApiException extends Error {}
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/domain/exceptions/charge.ts
+export class ChargeDeclinedException extends Error {}
+```
+
+```expect
+no
+```
+
+## S11 · aggregate-invariant
+
+### aggregate-of-one
+
+```ts src/catalog/domain/aggregates/manifest.ts
+class ManifestAggregate { constructor(readonly label: string) {} }
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/scheduling/domain/aggregates/itinerary.aggregate.ts
+export class ItineraryAggregate {
+  constructor(private readonly legs: FlightLegEntity[], private readonly transfers: TransferEntity[]) {
+    for (const transfer of transfers) {
+      const arrival = legs.find(leg => leg.id === transfer.arrivingLegId);
+      const departure = legs.find(leg => leg.id === transfer.departingLegId);
+      if (!arrival || !departure || !arrival.destination.equals(departure.origin))
+        throw new DisconnectedItineraryException();
+    }
+  }
+}
+```
+
+```ts src/scheduling/domain/entities/flight-leg.entity.ts
+export class FlightLegEntity {
+  constructor(readonly id: string, readonly origin: AirportValueObject, readonly destination: AirportValueObject) {}
+}
+```
+
+```ts src/scheduling/domain/entities/transfer.entity.ts
+export class TransferEntity {
+  constructor(readonly arrivingLegId: string, readonly departingLegId: string) {}
+}
+```
+
+```expect
+no
+```
+
+## S12 · closest-owner
+
+### misplaced-method
+
+```ts src/catalog/domain/services/slot.ts
+class SlotService { isFull(slot: SlotEntity) { return slot.bookings.length >= slot.limit; } }
+```
+
+```ts src/catalog/domain/entities/slot.ts
+class SlotEntity { constructor(readonly bookings: Booking[], readonly limit: number) {} }
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/domain/entities/slot.entity.ts
+export class SlotEntity {
+  constructor(private readonly bookings: Booking[], private readonly limit: number) {}
+  isFull() { return this.bookings.length >= this.limit; }
+}
+```
+
+```expect
+no
+```
+
+## S16 · separate-parsing-paths
+
+### constructor-mode
+
+```ts src/catalog/domain/entities/item.ts
+class ItemEntity { constructor(raw: unknown, forRead: boolean) { Object.assign(this, (forRead ? ReadSchema : WriteSchema).parse(raw)); } }
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/domain/entities/item.ts
+class ItemEntity { constructor(props: ItemProps) { Object.assign(this, ItemSchema.parse(props)); } }
+```
+
+```expect
+no
+```
+
+## S17 · value-object-behaviour
+
+### wrapper-id
+
+```ts src/catalog/domain/value-objects/value.ts
+export class WorkCenterId { constructor(readonly value: string) {} }
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/domain/value-objects/value.ts
+export class Money { constructor(readonly amount: number, readonly currency: Currency) {} add(other: Money) { if (!this.currency.equals(other.currency)) throw new CurrencyMismatch(); return new Money(this.amount + other.amount, this.currency); } format() { return this.currency.format(this.amount); } }
+```
+
+```expect
+no
+```
+
+## S20 · local-comments
+
+### restated-method
+
+```ts src/catalog/domain/entities/total.ts
+class Total { add(n: number) {
+  // Add n to the running total.
+  this.sum += n;
+} }
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/domain/entities/total.ts
+class Total { add(n: number) { this.sum += n; } }
+```
+
+```expect
+no
 ```

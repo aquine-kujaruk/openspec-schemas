@@ -1,0 +1,34 @@
+{
+  "S07/untested-operation": [
+    {
+      "model": "gpt-6-luna",
+      "question": "d7dd60e81f9bff38793f7bf9041d0c37e02f8dfd5b660cf8c262b2ae0d39feaf",
+      "case": "a55acc7fa30527cb0769237593d16d41ebb3983bcc0a6a79056e5b7e9df881a5",
+      "score": 0.93,
+      "date": "2026-11-18T12:22:48.041Z"
+    }
+  ],
+  "S07/reference": [
+    {
+      "model": "gpt-6-luna",
+      "question": "d7dd60e81f9bff38793f7bf9041d0c37e02f8dfd5b660cf8c262b2ae0d39feaf",
+      "case": "13bc82fc4ca3caaf378cb526d53b89fe2f2770ca5bf63de04f8927acab8bd656",
+      "score": 0.16,
+      "date": "2026-11-18T12:22:49.780Z"
+    },
+    {
+      "model": "gpt-6-luna",
+      "question": "d7dd60e81f9bff38793f7bf9041d0c37e02f8dfd5b660cf8c262b2ae0d39feaf",
+      "case": "13bc82fc4ca3caaf378cb526d53b89fe2f2770ca5bf63de04f8927acab8bd656",
+      "score": 0.16,
+      "date": "2026-11-18T12:22:50.163Z"
+    },
+    {
+      "model": "gpt-6-luna",
+      "question": "d7dd60e81f9bff38793f7bf9041d0c37e02f8dfd5b660cf8c262b2ae0d39feaf",
+      "case": "83700ce5e82ae28da037daa72f71c0be35ed239ad1bcb65724bdd3ecb3237bf3",
+      "score": 0,
+      "date": "2026-11-18T12:39:30.030Z"
+    }
+  ]
+}
