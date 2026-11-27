@@ -3,7 +3,7 @@
 import { expect } from "vitest";
 import { HoldStageUseCase } from "../../../factory/quality/application/use-cases/hold-stage.use-case.ts";
 import type { StageRecord, StageWorkstream } from "../../../factory/quality/domain/schemas/stage-hold.schema.ts";
-import type { StageHold } from "../../../factory/quality/domain/value-objects/stage-hold.value-object.ts";
+import type { StageHoldValueObject } from "../../../factory/quality/domain/value-objects/stage-hold.value-object.ts";
 import { InMemoryStageHoldRepository } from "./repositories/in-memory-stage-hold.repository.ts";
 
 const CHANGE = "add-orders";
@@ -25,7 +25,7 @@ export function createSteps() {
   let failingProduct: string | undefined;
   let findings: string[] = [];
   let productFails = false;
-  let outcome: StageHold;
+  let outcome: StageHoldValueObject;
   let currentStage = "task pending in phase one";
 
   return {

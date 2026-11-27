@@ -51,7 +51,7 @@ Every file in `schemas` SHALL export at least one runtime schema, a constant nam
 
 `@by:person`
 
-The schema a value object validates with SHALL be a `z.object` with two or more keys. A value of one field is a validated field of its owner's schema, not a class that wraps it.
+The schema a value object validates with SHALL NOT be a `z.object` of exactly one key. A value of one field is a validated field of its owner's schema, not a class that wraps it; an empty `z.object({})` is a scaffold not yet filled in.
 
 #### Scenario Outline: `<example>` breaks value-object-holds-several-values
 

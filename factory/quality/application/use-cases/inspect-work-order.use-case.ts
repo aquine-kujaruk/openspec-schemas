@@ -1,8 +1,8 @@
-import { QualityCertificate } from "../../domain/aggregates/quality-certificate.aggregate.ts";
+import { QualityCertificateAggregate } from "../../domain/aggregates/quality-certificate.aggregate.ts";
 import type { FinalInspection } from "../../domain/schemas/inspect-work-order.schema.ts";
 import type { CheckFailure, ProcedureEvidence, QualityCertificateProps } from "../../domain/schemas/quality-certificate.schema.ts";
-import { Gauge } from "../../domain/value-objects/gauge.value-object.ts";
-import { ScenarioResult } from "../../domain/value-objects/scenario-result.value-object.ts";
+import { GaugeValueObject } from "../../domain/value-objects/gauge.value-object.ts";
+import { ScenarioResultValueObject } from "../../domain/value-objects/scenario-result.value-object.ts";
 import type { FinalInspectionRepositoryInterface } from "../repository-interfaces/final-inspection.repository-interface.ts";
 
 export type InspectionOptions = {
@@ -39,7 +39,7 @@ export class InspectWorkOrderUseCase {
     this.records = records;
   }
 
-  async execute(name: string, options: InspectionOptions = {}): Promise<QualityCertificate> {
+  async execute(name: string, options: InspectionOptions = {}): Promise<QualityCertificateAggregate> {
     const workOrder = await this.records.loadInspection(name);
     const scenarios = await this.inspectScenarios(workOrder, options);
     const failing = await this.inspectWorkstreams(workOrder);
@@ -51,7 +51,7 @@ export class InspectWorkOrderUseCase {
         failing.push({ workstream: name, output: output ?? `the end-to-end test ${test} fails` });
 
     const review = await this.audit(workOrder);
-    const certificate = new QualityCertificate({
+    const certificate = new QualityCertificateAggregate({
       workOrder: name,
       digest: await this.records.readDigest(name),
       scenarios,
@@ -65,10 +65,10 @@ export class InspectWorkOrderUseCase {
     return certificate;
   }
 
-  private async inspectScenarios(workOrder: FinalInspection, options: InspectionOptions): Promise<ScenarioResult[]> {
+  private async inspectScenarios(workOrder: FinalInspection, options: InspectionOptions): Promise<ScenarioResultValueObject[]> {
     const wanted = workOrder.drawings
       .filter(({ text }) => !removalOnly(text))
-      .map(({ spec, gauge, expected }) => ({ spec, expected, gauge: gauge ? new Gauge({ drawing: spec, file: gauge }) : undefined }));
+      .map(({ spec, gauge, expected }) => ({ spec, expected, gauge: gauge ? new GaugeValueObject({ drawing: spec, file: gauge }) : undefined }));
     const files = wanted.flatMap(({ gauge }) => gauge ? [gauge.file] : []);
     const ran = files.length ? await this.records.runGauges(files) : [];
     return wanted.flatMap(({ spec, gauge, expected }) => {
@@ -79,14 +79,14 @@ export class InspectWorkOrderUseCase {
         const matches = expected.map(({ requirement, scenario }) => {
           const index = remaining.findIndex(test => test.requirement === requirement && test.scenario === scenario);
           const run = index < 0 ? undefined : remaining.splice(index, 1)[0];
-          return new ScenarioResult({ spec, requirement, scenario, result: run ? (run.passed ? "passed" : "failed") : "missing" });
+          return new ScenarioResultValueObject({ spec, requirement, scenario, result: run ? (run.passed ? "passed" : "failed") : "missing" });
         });
         return matches.concat(remaining.filter(test => !test.passed).map(({ requirement, scenario }) =>
-          new ScenarioResult({ spec, requirement, scenario, result: "failed" })));
+          new ScenarioResultValueObject({ spec, requirement, scenario, result: "failed" })));
       }
       if (!tests?.length || expected) {
         const proved = workOrder.repository && !gauge && options.proved?.includes(spec);
-        return [new ScenarioResult({
+        return [new ScenarioResultValueObject({
           spec,
           requirement: "",
           scenario: "",
@@ -94,7 +94,7 @@ export class InspectWorkOrderUseCase {
           ...(proved ? { by: "the person" as const } : {}),
         })];
       }
-      return tests.map(({ requirement, scenario, passed }) => new ScenarioResult({
+      return tests.map(({ requirement, scenario, passed }) => new ScenarioResultValueObject({
         spec, requirement, scenario, result: passed ? "passed" : "failed",
       }));
     });
@@ -176,7 +176,7 @@ export class InspectWorkOrderUseCase {
     );
   }
 
-  private async reportFindings(certificate: QualityCertificate, workOrder: FinalInspection): Promise<void> {
+  private async reportFindings(certificate: QualityCertificateAggregate, workOrder: FinalInspection): Promise<void> {
     const { failing, unproved, unexercised } = certificate;
     const source = "the verify phase";
     for (const { workstream, output } of failing)

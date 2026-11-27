@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LineRoots } from "../../../../../factory/shared/domain/value-objects/line-roots.value-object.ts";
+import { LineRootsValueObject } from "../../../../../factory/shared/domain/value-objects/line-roots.value-object.ts";
 import { ValidationException } from "../../../../../factory/shared/domain/exceptions/validation.exceptions.ts";
 
 const roots = {
@@ -17,12 +17,12 @@ const roots = {
 
 describe("LineRoots", () => {
   it("retains the resolved paths and ordered patterns exactly as configured", () => {
-    expect(new LineRoots(roots)).toEqual(expect.objectContaining(roots));
+    expect(new LineRootsValueObject(roots)).toEqual(expect.objectContaining(roots));
   });
 
   it("keeps its own copy of configured lists", () => {
     const entries = ["src/main.ts"];
-    const lineRoots = new LineRoots({ ...roots, entry: entries });
+    const lineRoots = new LineRootsValueObject({ ...roots, entry: entries });
 
     entries.push("src/worker.ts");
     expect(lineRoots.entry).toEqual(["src/main.ts"]);
@@ -30,12 +30,12 @@ describe("LineRoots", () => {
 
   it("preserves default preparation when the optional base is absent", () => {
     const { base: _base, ...configured } = roots;
-    expect(new LineRoots(configured).base).toBeUndefined();
+    expect(new LineRootsValueObject(configured).base).toBeUndefined();
   });
 
   it("reports invalid path shapes at construction", () => {
-    const invalid = () => Reflect.construct(LineRoots, [{ ...roots, entry: [null] }]);
+    const invalid = () => Reflect.construct(LineRootsValueObject, [{ ...roots, entry: [null] }]);
     expect(invalid).toThrow(ValidationException);
-    expect(invalid).toThrow("LineRoots rejected its props");
+    expect(invalid).toThrow("LineRootsValueObject rejected its props");
   });
 });

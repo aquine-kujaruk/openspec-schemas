@@ -1,7 +1,7 @@
 import { validateSchema } from "../schemas/validation.schema.ts";
 import { LineRootsSchema, type LineRootsProps } from "../schemas/line-roots.schema.ts";
 
-export class LineRoots {
+export class LineRootsValueObject {
   readonly modules!: string;
   readonly productSpecs!: string;
   readonly entry!: string[];

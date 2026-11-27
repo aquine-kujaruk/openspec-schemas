@@ -2,16 +2,16 @@ import type { Review } from "../../../shared/domain/schemas/line-types.schema.ts
 import { AuditFunnelService } from "../../domain/services/audit-funnel.service.ts";
 import { AuditRecordService } from "../../domain/services/audit-record.service.ts";
 import { AuditRubricService } from "../../domain/services/audit-rubric.service.ts";
-import type { AuditFinding } from "../../domain/value-objects/audit-finding.value-object.ts";
+import type { AuditFindingValueObject } from "../../domain/value-objects/audit-finding.value-object.ts";
 import type { AuditRepositoryInterface } from "../repository-interfaces/audit.repository-interface.ts";
 
 export type AuditInput = { root: string; modules: string; config: Review; rubrics: string[]; key?: string };
 export type AuditReport =
-  | { code: 0; findings: AuditFinding[]; lines: string[] }
+  | { code: 0; findings: AuditFindingValueObject[]; lines: string[] }
   | { code: 2 | 3; issue: string }
-  | { code: 4; incomplete: string[]; findings: AuditFinding[]; lines: string[] };
+  | { code: 4; incomplete: string[]; findings: AuditFindingValueObject[]; lines: string[] };
 
-const byRange = (a: AuditFinding, b: AuditFinding): number =>
+const byRange = (a: AuditFindingValueObject, b: AuditFindingValueObject): number =>
   a.file.localeCompare(b.file) ||
   a.from - b.from ||
   a.to - b.to ||
@@ -42,7 +42,7 @@ export class AuditUseCase {
       };
     }
     const incomplete: string[] = [];
-    const reportIncomplete = (findings: AuditFinding[] = [], coverage?: string): AuditReport => ({
+    const reportIncomplete = (findings: AuditFindingValueObject[] = [], coverage?: string): AuditReport => ({
       code: 4, incomplete, findings,
       lines: [
         ...findings.map(finding => finding.format()),

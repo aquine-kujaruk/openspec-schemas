@@ -1,51 +1,51 @@
 import type { Refusal } from "../../domain/schemas/authorization.schema.ts";
 import type { ReleasedWorkOrder, WritableLine, WriteBoundary } from "../../domain/schemas/write-boundary.schema.ts";
-import { Authorization } from "../../domain/value-objects/authorization.value-object.ts";
-import { ProtectedArea } from "../../domain/value-objects/protected-area.value-object.ts";
-import type { WriteRequest } from "../../domain/value-objects/write-request.value-object.ts";
+import { AuthorizationValueObject } from "../../domain/value-objects/authorization.value-object.ts";
+import { ProtectedAreaValueObject } from "../../domain/value-objects/protected-area.value-object.ts";
+import type { WriteRequest } from "../../domain/schemas/write-request.schema.ts";
 import type { ReleasedWorkOrderRepositoryInterface } from "../repository-interfaces/released-work-order.repository-interface.ts";
 import type { WriteBoundaryRepositoryInterface } from "../repository-interfaces/write-boundary.repository-interface.ts";
 
 const within = (path: string, folder: string): boolean => path === folder || path.startsWith(`${folder}/`);
 
-const harness = ({ lines, changes, decisions, procedures }: WriteBoundary): ProtectedArea[] => [
-  new ProtectedArea({
+const harness = ({ lines, changes, decisions, procedures }: WriteBoundary): ProtectedAreaValueObject[] => [
+  new ProtectedAreaValueObject({
     name: "factory configuration", patterns: ["^factory\\.config\\.[cm]?[jt]s$"],
     regularExpression: true, guidance: "the person edits it",
   }),
-  new ProtectedArea({
+  new ProtectedAreaValueObject({
     name: "generated tests", patterns: lines.map(({ acceptance }) => acceptance), suffix: ".feature.test.ts",
     guidance: "change the spec they come from and run `pnpm exec factory generate`",
   }),
-  new ProtectedArea({
+  new ProtectedAreaValueObject({
     name: "installed schemas", patterns: ["openspec/schemas"],
     guidance: "they change when the package is installed again",
   }),
-  new ProtectedArea({
+  new ProtectedAreaValueObject({
     name: "consolidated specs", patterns: ["openspec/specs"],
     guidance: "write a delta spec in a change; archiving merges it",
   }),
-  new ProtectedArea({
+  new ProtectedAreaValueObject({
     name: "consolidated decisions", patterns: [decisions],
     guidance: "write an architecture decision in a plan; archiving consolidates it",
   }),
-  new ProtectedArea({
+  new ProtectedAreaValueObject({
     name: "consolidated procedures", patterns: [procedures],
     guidance: "write a procedure in a plan; archiving consolidates it",
   }),
-  new ProtectedArea({
+  new ProtectedAreaValueObject({
     name: "archived changes", patterns: [`${changes}/archive`],
     guidance: "an archived change is history; open a new change",
   }),
-  new ProtectedArea({
+  new ProtectedAreaValueObject({
     name: "agent skills", patterns: [".claude/skills", ".agents/skills"],
     guidance: "they change when the package is installed again",
   }),
-  new ProtectedArea({
+  new ProtectedAreaValueObject({
     name: "agent guards", patterns: [".claude/settings.json", ".claude/settings.local.json", ".codex"],
     guidance: "they change when the package is installed again",
   }),
-  new ProtectedArea({
+  new ProtectedAreaValueObject({
     name: "installed command", patterns: ["node_modules"],
     guidance: "it changes when the command is pinned again",
   }),
@@ -71,16 +71,16 @@ export class AuthorizeWriteUseCase {
     this.orders = orders;
   }
 
-  async execute(request: WriteRequest): Promise<Authorization> {
+  async execute(request: WriteRequest): Promise<AuthorizationValueObject> {
     const configured = await this.boundary.getBoundary();
     const declared = configured.lines.some(({ name }) => name !== "");
     const protectedAreas = harness(configured);
     const implicitRoots = configured.lines[0]?.roots ?? [];
     const refusals: Refusal[] = [];
-    let blockedBy: ProtectedArea | undefined;
+    let blockedBy: ProtectedAreaValueObject | undefined;
     let started: ReleasedWorkOrder[] | undefined;
 
-    for (const file of request.files) {
+    for (const file of request) {
       const path = this.boundary.findProjectPath(file);
       if (path === null) continue;
       const area = protectedAreas.find((candidate) => candidate.covers(path));
@@ -103,6 +103,6 @@ export class AuthorizeWriteUseCase {
       refusals.push({ path, reason: refusalFor(path, started, line) });
     }
 
-    return new Authorization({ blockedBy, refusals });
+    return new AuthorizationValueObject({ blockedBy, refusals });
   }
 }

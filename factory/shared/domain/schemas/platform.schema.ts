@@ -1,4 +1,8 @@
-import type { Platform } from "./line-types.schema.ts";
+import { z } from "zod";
+
+/** What the platform provides: which globals exist and which ones are persistence or network. */
+export const PlatformSchema = z.object({ name: z.string(), all: z.array(z.string()), persistence: z.array(z.string()) });
+export type Platform = z.infer<typeof PlatformSchema>;
 
 /**
  * The platforms a schema or a project can pick. The only place that knows which globals reach the

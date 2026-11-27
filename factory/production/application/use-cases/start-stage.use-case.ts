@@ -1,4 +1,4 @@
-import { WorkOrderName } from "../../domain/value-objects/work-order-name.value-object.ts";
+
 import type { WorkOrderRepositoryInterface } from "../repository-interfaces/work-order.repository-interface.ts";
 import type { StageStartRepositoryInterface } from "../repository-interfaces/stage-start.repository-interface.ts";
 
@@ -24,7 +24,7 @@ export class StartStageUseCase {
       state: "not ready",
       findings: findings.map(({rule, message}) => `[${rule}] ${message}`),
     };
-    const order = await this.orders.findWorkOrder(new WorkOrderName({value: name}));
+    const order = await this.orders.findWorkOrder(name);
     if (!order || order.plan.stages.every(({complete}) => complete))
       return { state: "nothing to build" };
     const stage = order.startNextStage();

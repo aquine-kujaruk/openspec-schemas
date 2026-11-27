@@ -1,7 +1,7 @@
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
 import { GaugeSchema, type GaugeProps } from "../schemas/gauge.schema.ts";
 
-export class Gauge {
+export class GaugeValueObject {
   readonly drawing!: string;
   readonly file!: string;
 

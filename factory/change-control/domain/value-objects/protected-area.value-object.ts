@@ -1,7 +1,7 @@
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
 import { ProtectedAreaSchema, type ProtectedAreaProps } from "../schemas/protected-area.schema.ts";
 
-export class ProtectedArea {
+export class ProtectedAreaValueObject {
   readonly name!: string;
   readonly patterns!: string[];
   readonly guidance!: string;

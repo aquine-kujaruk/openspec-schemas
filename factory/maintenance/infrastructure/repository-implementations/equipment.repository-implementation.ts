@@ -1,6 +1,6 @@
-import { ProcessName } from "../../../shared/domain/value-objects/process-name.value-object.ts";
+
 import type { EquipmentRepositoryInterface, MaintenanceOptions } from "../../application/repository-interfaces/equipment.repository-interface.ts";
-import { Equipment } from "../../domain/aggregates/equipment.aggregate.ts";
+import { EquipmentEntity } from "../../domain/entities/equipment.entity.ts";
 import { MaintenanceException } from "../../domain/exceptions/maintenance.exceptions.ts";
 import type { EquipmentRepair } from "../../domain/schemas/equipment-reading.schema.ts";
 import type { EquipmentAcl } from "../acl/equipment.acl.ts";
@@ -12,15 +12,15 @@ export class EquipmentRepositoryImplementation implements EquipmentRepositoryInt
     this.resources = resources;
   }
 
-  findEquipment(root: string): Equipment | null {
+  findEquipment(root: string): EquipmentEntity | null {
     return this.read(() => {
       const found = this.resources.readInstalled(root);
       if (!found) return null;
       const { installed, assets } = found;
-      return new Equipment({
+      return new EquipmentEntity({
         name: installed.package,
         version: installed.version,
-        processes: installed.schemas.map((value) => new ProcessName({ value })),
+        processes: installed.schemas,
         workInstructions: installed.phases,
         controls: installed.guards,
         command: installed.command,
@@ -33,15 +33,15 @@ export class EquipmentRepositoryImplementation implements EquipmentRepositoryInt
     });
   }
 
-  async inspectEquipment(root: string, equipment: Equipment, node?: string) {
+  async inspectEquipment(root: string, equipment: EquipmentEntity, node?: string) {
     return await this.resources.inspectEquipment(root, equipment, node);
   }
 
-  repairEquipment(root: string, equipment: Equipment, repair: EquipmentRepair): void {
+  repairEquipment(root: string, equipment: EquipmentEntity, repair: EquipmentRepair): void {
     this.read(() => this.resources.repairEquipment(root, equipment, repair));
   }
 
-  readNotes(root: string, equipment: Equipment, env?: MaintenanceOptions["env"]) {
+  readNotes(root: string, equipment: EquipmentEntity, env?: MaintenanceOptions["env"]) {
     return this.read(() => this.resources.readNotes(root, equipment, env));
   }
 

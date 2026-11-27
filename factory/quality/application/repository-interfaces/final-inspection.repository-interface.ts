@@ -1,4 +1,4 @@
-import type { QualityCertificate } from "../../domain/aggregates/quality-certificate.aggregate.ts";
+import type { QualityCertificateAggregate } from "../../domain/aggregates/quality-certificate.aggregate.ts";
 import type { FinalInspection, Finding, GaugeReport, ResourceRun } from "../../domain/schemas/inspect-work-order.schema.ts";
 import type { E2eResult } from "../../domain/schemas/quality-certificate.schema.ts";
 
@@ -13,6 +13,6 @@ export interface FinalInspectionRepositoryInterface {
   findWorkstream(file: string): Promise<string | undefined>;
   runAudit(): Promise<string[]>;
   readDigest(name: string): Promise<string>;
-  saveCertificate(certificate: QualityCertificate): Promise<void>;
+  saveCertificate(certificate: QualityCertificateAggregate): Promise<void>;
   pullAndon(name: string, finding: Finding): Promise<void>;
 }

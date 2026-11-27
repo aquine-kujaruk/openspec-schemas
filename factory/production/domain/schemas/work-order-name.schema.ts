@@ -1,5 +1,4 @@
 import { z } from "zod";
-export const WorkOrderNameSchema = z.object({
-  value: z.string().min(1),
-});
-export type WorkOrderNameProps = z.input<typeof WorkOrderNameSchema>;
+
+export const WorkOrderNameSchema = z.string().min(1);
+export type WorkOrderName = z.infer<typeof WorkOrderNameSchema>;

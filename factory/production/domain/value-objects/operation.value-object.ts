@@ -2,7 +2,7 @@ import { validateSchema } from "../../../shared/domain/schemas/validation.schema
 import { OperationSchema, type OperationProps } from "../schemas/operation.schema.ts";
 import type { WorkCenterId } from "../schemas/operation.schema.ts";
 
-export class Operation {
+export class OperationValueObject {
   readonly workCenter?: WorkCenterId;
   readonly text!: string;
   readonly done!: boolean;

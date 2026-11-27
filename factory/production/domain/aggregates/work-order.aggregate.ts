@@ -1,48 +1,48 @@
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
-import type { LineName } from "../../../shared/domain/value-objects/line-name.value-object.ts";
-import type { ProcessName } from "../../../shared/domain/value-objects/process-name.value-object.ts";
-import { Plan } from "../entities/plan.entity.ts";
-import type { Stage } from "../entities/stage.entity.ts";
+import type { LineName } from "../../../shared/domain/schemas/line-name.schema.ts";
+import type { ProcessName } from "../../../shared/domain/schemas/process-name.schema.ts";
+import { PlanEntity } from "../entities/plan.entity.ts";
+import type { StageEntity } from "../entities/stage.entity.ts";
 import { WorkOrderException } from "../exceptions/work-order.exceptions.ts";
 import type { Day } from "../schemas/day.schema.ts";
 import { WorkOrderSchema, type WorkOrderProps } from "../schemas/work-order.schema.ts";
-import type { AndonPull } from "../value-objects/andon-pull.value-object.ts";
-import type { DrawingRevision } from "../value-objects/drawing-revision.value-object.ts";
-import type { WorkOrderName } from "../value-objects/work-order-name.value-object.ts";
+import type { AndonPullValueObject } from "../value-objects/andon-pull.value-object.ts";
+import type { DrawingRevisionValueObject } from "../value-objects/drawing-revision.value-object.ts";
+import type { WorkOrderName } from "../schemas/work-order-name.schema.ts";
 
 export type ClosedWorkOrder = {
   readonly name: WorkOrderName;
   readonly process: ProcessName;
   readonly line?: LineName;
-  readonly plan: Plan;
-  readonly revisions: readonly DrawingRevision[];
-  readonly andonPulls: readonly AndonPull[];
+  readonly plan: PlanEntity;
+  readonly revisions: readonly DrawingRevisionValueObject[];
+  readonly andonPulls: readonly AndonPullValueObject[];
   readonly closedOn: Day;
 };
 
-export class WorkOrder {
+export class WorkOrderAggregate {
   readonly name!: WorkOrderName;
   readonly process!: ProcessName;
   readonly line?: LineName;
-  readonly revisions!: DrawingRevision[];
-  readonly andonPulls!: AndonPull[];
-  private currentPlan!: Plan;
+  readonly revisions!: DrawingRevisionValueObject[];
+  readonly andonPulls!: AndonPullValueObject[];
+  private currentPlan!: PlanEntity;
 
   constructor(props: WorkOrderProps) {
     validateSchema(this, WorkOrderSchema, props);
   }
 
-  get plan(): Plan {
+  get plan(): PlanEntity {
     return this.currentPlan;
   }
 
   release(on: Day): void {
     if (this.plan.openQuestions.length)
       throw new WorkOrderException("the plan has open questions");
-    this.currentPlan = new Plan({ ...this.plan, releasedOn: on });
+    this.currentPlan = new PlanEntity({ ...this.plan, releasedOn: on });
   }
 
-  startNextStage(): Stage {
+  startNextStage(): StageEntity {
     this.requireRelease();
     const next = this.plan.stages.find((stage) => !stage.complete);
     if (!next) throw new WorkOrderException("nothing to build");

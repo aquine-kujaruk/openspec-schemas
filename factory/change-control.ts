@@ -1,14 +1,14 @@
 import { change, consolidated, validate } from "./production.ts";
 import { products } from "./engineering.ts";
 import { AuthorizeWriteUseCase } from "./change-control/application/use-cases/authorize-write.use-case.ts";
-import { WriteRequest } from "./change-control/domain/value-objects/write-request.value-object.ts";
+import { writeRequestOfHook } from "./change-control/domain/schemas/write-request.schema.ts";
 import { ReleasedWorkOrderAdapter } from "./change-control/infrastructure/adapters/released-work-order.adapter.ts";
 import { WriteBoundaryAdapter } from "./change-control/infrastructure/adapters/write-boundary.adapter.ts";
 import { ReleasedWorkOrderRepositoryImplementation } from "./change-control/infrastructure/repository-implementations/released-work-order.repository-implementation.ts";
 import { WriteBoundaryRepositoryImplementation } from "./change-control/infrastructure/repository-implementations/write-boundary.repository-implementation.ts";
 import { runtime } from "./shared/infrastructure/adapters/runtime.adapter.ts";
 
-export const filesOf = (input: unknown): string[] => WriteRequest.fromHook(input).files;
+export const filesOf = (input: unknown): string[] => writeRequestOfHook(input);
 export const projectOf = WriteBoundaryAdapter.projectOf;
 export const hookInput = WriteBoundaryAdapter.hookInput;
 
@@ -29,7 +29,7 @@ export async function guard(root: string, paths: string[], cwd = root) {
       name, process: schema, line: product, builds,
     })),
   ));
-  const check = await new AuthorizeWriteUseCase(boundary, orders).execute(new WriteRequest({ files: paths }));
+  const check = await new AuthorizeWriteUseCase(boundary, orders).execute(paths);
   return check.refusals;
 }
 

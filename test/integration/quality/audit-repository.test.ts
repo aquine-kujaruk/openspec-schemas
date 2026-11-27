@@ -1,4 +1,4 @@
-import { DEFAULTS } from "../../../factory/quality/domain/schemas/audit-settings.schema.ts";
+import { DEFAULTS } from "../../../factory/shared/domain/schemas/review.schema.ts";
 import { AuditUseCase } from "../../../factory/quality/application/use-cases/audit.use-case.ts";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";

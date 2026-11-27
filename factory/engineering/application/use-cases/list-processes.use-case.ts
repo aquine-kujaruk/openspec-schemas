@@ -1,4 +1,4 @@
-import type { Process } from "../../domain/aggregates/process.aggregate.ts";
+import type { ProcessAggregate } from "../../domain/aggregates/process.aggregate.ts";
 import type { ProcessRepositoryInterface } from "../repository-interfaces/process.repository-interface.ts";
 
 export class ListProcessesUseCase {
@@ -8,7 +8,7 @@ export class ListProcessesUseCase {
     this.processes = processes;
   }
 
-  execute(): Promise<Process[]> {
+  execute(): Promise<ProcessAggregate[]> {
     return this.processes.listProcesses();
   }
 }

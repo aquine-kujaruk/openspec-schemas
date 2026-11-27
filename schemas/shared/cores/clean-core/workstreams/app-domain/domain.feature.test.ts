@@ -301,8 +301,86 @@ describe('Feature: Build the domain layer', () => {
     })
   })
 
+  describe('Rule: class-name-carries-role · domain classes carry their role in their exported name', () => {
+    // Line 168
+    test('`entity-without-role` breaks class-name-carries-role', async () => {
+      const steps = createSteps()
+
+      // Given the example `entity-without-role`
+      await steps.exampleFolder('entity-without-role')
+      // When rule `class-name-carries-role` is checked
+      await steps.ruleChecked('class-name-carries-role')
+      // Then it is broken in the files the expectation records
+      await steps.brokenAsExpected()
+    })
+
+    // Line 168
+    test('`aggregate-without-role` breaks class-name-carries-role', async () => {
+      const steps = createSteps()
+
+      // Given the example `aggregate-without-role`
+      await steps.exampleFolder('aggregate-without-role')
+      // When rule `class-name-carries-role` is checked
+      await steps.ruleChecked('class-name-carries-role')
+      // Then it is broken in the files the expectation records
+      await steps.brokenAsExpected()
+    })
+
+    // Line 168
+    test('`value-object-without-role` breaks class-name-carries-role', async () => {
+      const steps = createSteps()
+
+      // Given the example `value-object-without-role`
+      await steps.exampleFolder('value-object-without-role')
+      // When rule `class-name-carries-role` is checked
+      await steps.ruleChecked('class-name-carries-role')
+      // Then it is broken in the files the expectation records
+      await steps.brokenAsExpected()
+    })
+  })
+
+  describe('Rule: schema-validates-at-runtime · domain schemas export a runtime schema', () => {
+    // Line 185
+    test('`type-only-schema` breaks schema-validates-at-runtime', async () => {
+      const steps = createSteps()
+
+      // Given the example `type-only-schema`
+      await steps.exampleFolder('type-only-schema')
+      // When rule `schema-validates-at-runtime` is checked
+      await steps.ruleChecked('schema-validates-at-runtime')
+      // Then it is broken in the files the expectation records
+      await steps.brokenAsExpected()
+    })
+
+    // Line 185
+    test('`interface-schema` breaks schema-validates-at-runtime', async () => {
+      const steps = createSteps()
+
+      // Given the example `interface-schema`
+      await steps.exampleFolder('interface-schema')
+      // When rule `schema-validates-at-runtime` is checked
+      await steps.ruleChecked('schema-validates-at-runtime')
+      // Then it is broken in the files the expectation records
+      await steps.brokenAsExpected()
+    })
+  })
+
+  describe('Rule: value-object-holds-several-values · value objects hold a coherent set of values', () => {
+    // Line 201
+    test('`single-value-wrapper` breaks value-object-holds-several-values', async () => {
+      const steps = createSteps()
+
+      // Given the example `single-value-wrapper`
+      await steps.exampleFolder('single-value-wrapper')
+      // When rule `value-object-holds-several-values` is checked
+      await steps.ruleChecked('value-object-holds-several-values')
+      // Then it is broken in the files the expectation records
+      await steps.brokenAsExpected()
+    })
+  })
+
   describe('Rule: Recorded rubric judgements', () => {
-    // Line 164
+    // Line 212
     test('rubric S06 / literal-currency is yes', async () => {
       const steps = createSteps()
 
@@ -314,7 +392,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.rubricVerdict('yes')
     })
 
-    // Line 164
+    // Line 212
     test('rubric S06 / reference is no', async () => {
       const steps = createSteps()
 
@@ -326,7 +404,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.rubricVerdict('no')
     })
 
-    // Line 164
+    // Line 212
     test('rubric S09 / provider-name is yes', async () => {
       const steps = createSteps()
 
@@ -338,7 +416,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.rubricVerdict('yes')
     })
 
-    // Line 164
+    // Line 212
     test('rubric S09 / reference is no', async () => {
       const steps = createSteps()
 
@@ -350,7 +428,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.rubricVerdict('no')
     })
 
-    // Line 164
+    // Line 212
     test('rubric S11 / aggregate-of-one is yes', async () => {
       const steps = createSteps()
 
@@ -362,7 +440,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.rubricVerdict('yes')
     })
 
-    // Line 164
+    // Line 212
     test('rubric S11 / reference is no', async () => {
       const steps = createSteps()
 
@@ -374,7 +452,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.rubricVerdict('no')
     })
 
-    // Line 164
+    // Line 212
     test('rubric S12 / misplaced-method is yes', async () => {
       const steps = createSteps()
 
@@ -386,7 +464,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.rubricVerdict('yes')
     })
 
-    // Line 164
+    // Line 212
     test('rubric S12 / reference is no', async () => {
       const steps = createSteps()
 
@@ -398,7 +476,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.rubricVerdict('no')
     })
 
-    // Line 164
+    // Line 212
     test('rubric S16 / constructor-mode is yes', async () => {
       const steps = createSteps()
 
@@ -410,7 +488,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.rubricVerdict('yes')
     })
 
-    // Line 164
+    // Line 212
     test('rubric S16 / reference is no', async () => {
       const steps = createSteps()
 
@@ -422,7 +500,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.rubricVerdict('no')
     })
 
-    // Line 164
+    // Line 212
     test('rubric S17 / wrapper-id is yes', async () => {
       const steps = createSteps()
 
@@ -434,7 +512,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.rubricVerdict('yes')
     })
 
-    // Line 164
+    // Line 212
     test('rubric S17 / reference is no', async () => {
       const steps = createSteps()
 
@@ -446,7 +524,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.rubricVerdict('no')
     })
 
-    // Line 164
+    // Line 212
     test('rubric S20 / restated-method is yes', async () => {
       const steps = createSteps()
 
@@ -458,7 +536,7 @@ describe('Feature: Build the domain layer', () => {
       await steps.rubricVerdict('yes')
     })
 
-    // Line 164
+    // Line 212
     test('rubric S20 / reference is no', async () => {
       const steps = createSteps()
 

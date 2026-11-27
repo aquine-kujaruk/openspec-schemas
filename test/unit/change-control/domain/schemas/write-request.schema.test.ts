@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { WriteRequest } from "../../../../../factory/change-control/domain/value-objects/write-request.value-object.ts";
+import { writeRequestOfHook } from "../../../../../factory/change-control/domain/schemas/write-request.schema.ts";
 
-const filesOf = (input: unknown) => WriteRequest.fromHook(input).files;
+const filesOf = (input: unknown) => writeRequestOfHook(input);
 const PATCH = [
   "*** Begin Patch",
   "*** Add File: src/orders/domain/order.entity.ts",

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ProcessName } from "../../../shared/domain/value-objects/process-name.value-object.ts";
+import { ProcessNameSchema } from "../../../shared/domain/schemas/process-name.schema.ts";
 
 const packageManager = z.object({ name: z.string(), version: z.string() });
 const project = z.object({
@@ -11,7 +11,7 @@ const project = z.object({
 export const EquipmentSchema = z.object({
   name: z.string(),
   version: z.string(),
-  processes: z.array(z.instanceof(ProcessName)),
+  processes: z.array(ProcessNameSchema),
   workInstructions: z.array(z.string()),
   controls: z.array(z.string()),
   command: z.string(),

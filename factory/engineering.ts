@@ -1,7 +1,7 @@
 import type { Validator } from "./production/domain/services/work-order-assessment.service.ts";
 import { ListProcessesUseCase } from "./engineering/application/use-cases/list-processes.use-case.ts";
 import { PrepareLineUseCase } from "./engineering/application/use-cases/prepare-line.use-case.ts";
-import { WorkCenterTopologyService } from "./engineering/domain/services/work-center-topology.service.ts";
+import { ProcessAggregate } from "./engineering/domain/aggregates/process.aggregate.ts";
 import type { Product } from "./engineering/infrastructure/acl/plant.acl.ts";
 import type { CatalogSchema } from "./engineering/infrastructure/acl/process.acl.ts";
 import { createActiveProject } from "./engineering/infrastructure/adapters/active-project.adapter.ts";
@@ -13,7 +13,7 @@ import { createProductCatalog } from "./engineering/infrastructure/adapters/prod
 import { PlantRepositoryImplementation } from "./engineering/infrastructure/repository-implementations/plant.repository-implementation.ts";
 import { ProcessRepositoryImplementation } from "./engineering/infrastructure/repository-implementations/process.repository-implementation.ts";
 import { resolveConfig } from "./shared/domain/schemas/configuration.schema.ts";
-import { LineName } from "./shared/domain/value-objects/line-name.value-object.ts";
+
 import { PACKAGE_ROOT, PROJECT_ROOT, SOURCE_EXT } from "./shared/infrastructure/adapters/paths.adapter.ts";
 import { runtime } from "./shared/infrastructure/adapters/runtime.adapter.ts";
 
@@ -24,7 +24,14 @@ export const schema = createProcessCatalog<Validator>(PACKAGE_ROOT, SOURCE_EXT, 
 export const products = createProductCatalog(
   PACKAGE_ROOT, schema, runtime.environment, resolveConfig, runtime.loadModule,
 );
-export const graph = WorkCenterTopologyService;
+export const graph = {
+  loadWorkstreams: ProcessAggregate.loadWorkstreams,
+  upstream: ProcessAggregate.upstream,
+  runOrder: ProcessAggregate.runOrder,
+  mayRunTogether: ProcessAggregate.mayRunTogether,
+  ownerOf: ProcessAggregate.ownerOf,
+  withUpstream: ProcessAggregate.withUpstream,
+};
 export const project = createActiveProject(
   PROJECT_ROOT, SOURCE_EXT, { loadHolder: schema.loadHolder, currentProduct: products.currentProduct }, graph.loadWorkstreams,
 );
@@ -54,19 +61,19 @@ async function listSchemas(root: string) {
     }));
   }));
   return (await new ListProcessesUseCase(processes).execute()).map((process) => ({
-    name: process.name.value,
+    name: process.name,
     description: process.description,
-    workstreams: process.workCenters.map(({ id }) => id.value),
-    ...(process.pilot ? { spike: process.pilot.value } : {}),
+    workstreams: process.workCenters.map(({ id }) => id),
+    ...(process.pilot ? { spike: process.pilot } : {}),
   }));
 }
 
 export async function listProducts(root: string) {
   if (!await products.declaresProducts(root)) return [];
   return (await plant(root, products.projectProducts).getPlant()).lines.map((line) => ({
-    name: line.name.value,
+    name: line.name,
     root: line.folder,
-    schema: line.process.value,
+    schema: line.process,
   }));
 }
 
@@ -92,7 +99,7 @@ export async function listProcessesCommand(args: string[]): Promise<number> {
 export async function prepareLineCommand(): Promise<number> {
   await project.initialize();
   const prepareLine = new PrepareLineUseCase(plant(PROJECT_ROOT, async () => [project.product]));
-  const folders = await prepareLine.execute(new LineName({ value: project.product.name }));
+  const folders = await prepareLine.execute(project.product.name);
   console.log(folders.length ? folders.map((folder) => `created ${folder}`).join("\n") : "nothing to prepare");
   return 0;
 }

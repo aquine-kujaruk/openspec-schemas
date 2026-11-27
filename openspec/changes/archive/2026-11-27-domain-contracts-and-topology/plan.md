@@ -29,7 +29,7 @@ The factory's domain reads the way the clean core's reference writes a domain: e
 - The rules live in the clean core, so they fail `factory check` here and in every product built with `backend`, `frontend` or `fullstack`; discarded: rules only for the factory, and review only. @by:person
 - The person approved this plan by approving the hash-it-out synthesis of 2026-11-27, which approves the three plans written from it. @by:person
 - `schema-validates-at-runtime` asks for at least one exported `XSchema` constant in each domain schema file; a type that describes a function (`Layer.archunit`) may stay hand-written next to it. Discarded: requiring every exported type to be `z.infer`, which a function type cannot meet. The shared validation helper (`validation.schema.ts`, which exports `validateSchema`) is exempt. @by:agent
-- `value-object-holds-several-values` counts the top-level keys of the `z.object` the value object validates with and asks for two or more; discarded: a review question only, since S17 already asks it and the person wants a check. @by:agent
+- `value-object-holds-several-values` counts the top-level keys of the `z.object` the value object validates with and refuses exactly one (an empty one is the scaffold's blank); discarded: a review question only, since S17 already asks it and the person wants a check. @by:agent
 - A single-value value object becomes a validated field of its owner's schema (`name: z.string().min(1)`), and the code compares plain strings; discarded: keeping them as wrappers with a method. @by:person
 - The configured workstream topology becomes a `ProcessAggregate` built from the declarations, so the loader asks the aggregate for the run order, the upstream of a center, whether two may run together and the cycle; `WorkCenterTopologyService` is removed. Discarded: keeping the service as a façade over the aggregate. @by:agent
 - The version goes to 0.16.0: a product that breaks a new rule fails its check after updating. @by:agent
@@ -88,11 +88,11 @@ export class ProcessAggregate {
 
 - The factory's unit, integration and acceptance tests keep passing with the renamed classes and the folded value objects; `process.aggregate.test.ts` adds the loader's cases (run order, upstream, a cycle named in the error).
 
-- [ ] Rename every role-less class of the factory's domain to carry its role, and update its imports across `factory/`, `test/`, `schemas/` and `tools/`
-- [ ] Fold `LineName`, `ProcessName`, `WorkCenterId`, `StandardId`, `WorkOrderName` and `Decision` into validated string fields of their owners' schemas, and remove their files
-- [ ] Give each of the 10 type-only schema files an exported runtime schema for the data it describes, its types inferred from it where the shapes match
-- [ ] Move ordering, upstream, parallelism and cycle detection of the workstream topology into `ProcessAggregate`, make the loader use it, remove `WorkCenterTopologyService`, and cover it in `process.aggregate.test.ts`
-- [ ] Verify the phase: `pnpm run check`
+- [x] Rename every role-less class of the factory's domain to carry its role, and update its imports across `factory/`, `test/`, `schemas/` and `tools/`
+- [x] Fold `LineName`, `ProcessName`, `WorkCenterId`, `StandardId`, `WorkOrderName` and `Decision` into validated string fields of their owners' schemas, and remove their files
+- [x] Give each of the 10 type-only schema files an exported runtime schema for the data it describes, its types inferred from it where the shapes match
+- [x] Move ordering, upstream, parallelism and cycle detection of the workstream topology into `ProcessAggregate`, make the loader use it, remove `WorkCenterTopologyService`, and cover it in `process.aggregate.test.ts`
+- [x] Verify the phase: `pnpm run check`
 
 ### Phase 2: The clean core holds the three rules
 
@@ -102,7 +102,7 @@ export class ProcessAggregate {
 // schemas/shared/cores/clean-core/workstreams/app-domain/domain.rules.ts: three new archunit rules
 id: "class-name-carries-role"            // entities → XEntity, aggregates → XAggregate, value-objects → XValueObject
 id: "schema-validates-at-runtime"        // every domain schema file exports `const XSchema`
-id: "value-object-holds-several-values"  // a value object's z.object has two or more keys
+id: "value-object-holds-several-values"  // a value object's z.object is not one of a single key
 ```
 
 **Tests**
@@ -110,12 +110,19 @@ id: "value-object-holds-several-values"  // a value object's z.object has two or
 - The tests generated from `architecture/domain`: each new case of `domain.examples.md` breaks its rule in the files its `expect` block records, and the reference breaks none.
 - `factory check` over this repository passes with the new rules.
 
-- [ ] Write the three rules in `domain.rules.ts`
-- [ ] Add one case per way of breaking each rule to `domain.examples.md` and record each `expect` block with `pnpm exec factory expect domain`
-- [ ] Generate the tests of the delta spec with `pnpm exec factory generate`
-- [ ] Name the three rules in the `app-domain` skill, and raise `package.json` to 0.16.0
-- [ ] Verify the phase: `pnpm run check`
+- [x] Write the three rules in `domain.rules.ts`
+- [x] Add one case per way of breaking each rule to `domain.examples.md` and record each `expect` block with `pnpm exec factory expect domain`
+- [x] Generate the tests of the delta spec with `pnpm exec factory generate`
+- [x] Name the three rules in the `app-domain` skill, and raise `package.json` to 0.16.0
+- [x] Verify the phase: `pnpm run check`
 
 ## Feedback
+
+- **the implement phase**: `Decision` holds two values (`text`, `by`), not one; the plan's count missed its enum field. It was renamed `DecisionValueObject` instead of folded.
+- **the implement phase**: the new rule `value-object-holds-several-values` found a sixth single-value value object the plan's count missed, `WriteRequest` (`files`). It became `WriteRequestSchema` (`z.array(z.string())`) with `writeRequestOfHook` in its schema file, and its unit test moved to `test/unit/change-control/domain/schemas/write-request.schema.test.ts`.
+- **the implement phase**: folding `ProcessName` left `Equipment` composing no entity or value object, so `aggregate-composes-domain-objects` refused it; it is now `EquipmentEntity` in `domain/entities`.
+- **the implement phase**: `Review` moved with `DEFAULTS` to `factory/shared/domain/schemas/review.schema.ts`, since `line-types` in `shared` may not import the `quality` module; `audit-settings.schema.ts` is gone. The ACL `FinalInspectionRecordSchema` now reuses the domain's `FinalInspectionSchema` instead of repeating it.
+- **the implement phase**: the clean core's value object scaffold renders `z.object({})`, which a "two or more keys" rule refused; the rule refuses exactly one key, and the requirement says so. The `modules` step fixture for a module-scoped check wrote type-only schema files; it now writes a runtime schema in each, so the scenario still isolates the rule it is about.
+- **the verify phase**: `stage-start-repository.test.ts` › "keeps a spec-plan stage open…" fails while the untracked `.env` is present, as on `main`; the checks ran with `.env` set aside.
 
 ## Next step

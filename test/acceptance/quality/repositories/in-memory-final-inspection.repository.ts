@@ -1,6 +1,6 @@
 import { QualityException } from "../../../../factory/quality/domain/exceptions/quality.exceptions.ts";
 import type { FinalInspectionRepositoryInterface } from "../../../../factory/quality/application/repository-interfaces/final-inspection.repository-interface.ts";
-import type { QualityCertificate } from "../../../../factory/quality/domain/aggregates/quality-certificate.aggregate.ts";
+import type { QualityCertificateAggregate } from "../../../../factory/quality/domain/aggregates/quality-certificate.aggregate.ts";
 import type {
   FinalInspection, Finding, GaugeReport, ResourceRun,
 } from "../../../../factory/quality/domain/schemas/inspect-work-order.schema.ts";
@@ -19,7 +19,7 @@ const pass: ResourceRun = { status: 0, output: "" };
 
 export class InMemoryFinalInspectionRepository implements FinalInspectionRepositoryInterface {
   private data!: Seed;
-  readonly certificates = new Map<string, QualityCertificate>();
+  readonly certificates = new Map<string, QualityCertificateAggregate>();
   readonly findings: Finding[] = [];
   requested: string[] = [];
   auditUnavailable = false;
@@ -71,7 +71,7 @@ export class InMemoryFinalInspectionRepository implements FinalInspectionReposit
     return `digest of ${name}`;
   }
 
-  async saveCertificate(certificate: QualityCertificate): Promise<void> {
+  async saveCertificate(certificate: QualityCertificateAggregate): Promise<void> {
     this.certificates.set(certificate.workOrder, certificate);
   }
 

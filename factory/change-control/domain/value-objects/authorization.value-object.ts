@@ -1,9 +1,9 @@
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
 import { AuthorizationSchema, type AuthorizationProps, type Refusal } from "../schemas/authorization.schema.ts";
-import type { ProtectedArea } from "./protected-area.value-object.ts";
+import type { ProtectedAreaValueObject } from "./protected-area.value-object.ts";
 
-export class Authorization {
-  readonly blockedBy?: ProtectedArea;
+export class AuthorizationValueObject {
+  readonly blockedBy?: ProtectedAreaValueObject;
   readonly refusals!: Refusal[];
 
   constructor(props: AuthorizationProps) {

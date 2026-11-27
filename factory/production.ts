@@ -33,7 +33,7 @@ import { DrawingProjectionAdapter } from "./production/infrastructure/adapters/d
 import { WorkOrderAssessmentAdapter } from "./production/infrastructure/adapters/work-order-assessment.adapter.ts";
 import { WorkOrderAssessmentRepositoryImplementation } from "./production/infrastructure/repository-implementations/work-order-assessment.repository-implementation.ts";
 import { DrawingProjectionRepositoryImplementation } from "./production/infrastructure/repository-implementations/drawing-projection.repository-implementation.ts";
-import { DEFAULTS as REVIEW_DEFAULTS } from "./quality/domain/schemas/audit-settings.schema.ts";
+import { DEFAULTS as REVIEW_DEFAULTS } from "./shared/domain/schemas/review.schema.ts";
 import { DecisionJudgeAdapter } from "./production/infrastructure/adapters/decision-judge.adapter.ts";
 import { loadEnv } from "./shared/infrastructure/adapters/env.adapter.ts";
 import { runtime } from "./shared/infrastructure/adapters/runtime.adapter.ts";

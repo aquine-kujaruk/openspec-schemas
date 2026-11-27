@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /** The operations a durable block of a plan may declare on the consolidated tree. */
 export const OPERATIONS = [
   "adds",
@@ -9,33 +11,39 @@ export const OPERATIONS = [
 export type Operation = (typeof OPERATIONS)[number];
 
 /** A tag of a block: `@name` or `@name:value`. */
-export type Tag = { name: string; value?: string };
+export const TagSchema = z.object({ name: z.string(), value: z.string().optional() });
+export type Tag = z.infer<typeof TagSchema>;
 
 /** A block of a plan: an architecture decision, a procedure or a screen, with the tags under its heading. */
-export type Block = { slug: string; title: string; tags: Tag[]; body: string };
+export const BlockSchema = z.object({ slug: z.string(), title: z.string(), tags: z.array(TagSchema), body: z.string() });
+export type Block = z.infer<typeof BlockSchema>;
 
 /** A checkbox of the plan. `workstream` is what it names before the colon, when it names one. */
-export type Task = { text: string; done: boolean; workstream?: string };
+export const TaskSchema = z.object({ text: z.string(), done: z.boolean(), workstream: z.string().optional() });
+export type Task = z.infer<typeof TaskSchema>;
 
-export type Phase = { title: string; tasks: Task[] };
+export const PhaseSchema = z.object({ title: z.string(), tasks: z.array(TaskSchema) });
+export type Phase = z.infer<typeof PhaseSchema>;
 
 /** A line under `## Decisions`: a decision that matters only to the change, with its tags. */
-export type ChangeDecision = { text: string; tags: Tag[] };
+export const ChangeDecisionSchema = z.object({ text: z.string(), tags: z.array(TagSchema) });
+export type ChangeDecision = z.infer<typeof ChangeDecisionSchema>;
 
-export type Plan = {
-  openQuestions: string[];
+export const PlanSchema = z.object({
+  openQuestions: z.array(z.string()),
   /** The lines under `## Decisions`. */
-  changeDecisions: ChangeDecision[];
+  changeDecisions: z.array(ChangeDecisionSchema),
   /** `approved_at` of the front matter, as written: the day the person approved the plan. */
-  approvedAt?: string;
-  decisions: Block[];
-  procedures: Block[];
+  approvedAt: z.string().optional(),
+  decisions: z.array(BlockSchema),
+  procedures: z.array(BlockSchema),
   /** The screens a web change spikes, under `## Screens`. */
-  screens: Block[];
-  phases: Phase[];
+  screens: z.array(BlockSchema),
+  phases: z.array(PhaseSchema),
   /** Checkboxes that sit outside every phase. */
-  strayTasks: Task[];
-};
+  strayTasks: z.array(TaskSchema),
+});
+export type Plan = z.infer<typeof PlanSchema>;
 
 const TAG = /@([a-z][a-z-]*)(?::(\S+))?/g;
 const TASK = /^\s*[-*] \[([ xX])\] (.*)$/;
@@ -163,7 +171,8 @@ export const parsePlan = (text: string): Plan => {
 };
 
 /** A requirement a delta spec adds or modifies, with the tags of the first line of its text. */
-export type DeltaRequirement = { name: string; tags: Tag[] };
+export const DeltaRequirementSchema = z.object({ name: z.string(), tags: z.array(TagSchema) });
+export type DeltaRequirement = z.infer<typeof DeltaRequirementSchema>;
 
 /**
  * The requirements under `## ADDED Requirements` and `## MODIFIED Requirements` of a delta spec.

@@ -1,6 +1,6 @@
 import type { Installed } from "../../../shared/domain/schemas/line-types.schema.ts";
 import type { MaintenanceOptions } from "../../application/repository-interfaces/equipment.repository-interface.ts";
-import type { Equipment } from "../../domain/aggregates/equipment.aggregate.ts";
+import type { EquipmentEntity } from "../../domain/entities/equipment.entity.ts";
 import type {
   EquipmentNotes,
   EquipmentPlace,
@@ -39,9 +39,9 @@ export const PLACES: Record<string, EquipmentPlace> = {
 
 export interface EquipmentAcl {
   readInstalled(root: string): EquipmentInstallation | undefined;
-  inspectEquipment(root: string, equipment: Equipment, node?: string): Promise<EquipmentReading>;
-  repairEquipment(root: string, equipment: Equipment, repair: EquipmentRepair): void;
-  readNotes(root: string, equipment: Equipment, env?: MaintenanceOptions["env"]): EquipmentNotes;
+  inspectEquipment(root: string, equipment: EquipmentEntity, node?: string): Promise<EquipmentReading>;
+  repairEquipment(root: string, equipment: EquipmentEntity, repair: EquipmentRepair): void;
+  readNotes(root: string, equipment: EquipmentEntity, env?: MaintenanceOptions["env"]): EquipmentNotes;
   listProcedures(root: string): Map<string, EquipmentProcedure>;
   readHoldings(root: string): Promise<EquipmentHoldings>;
 }

@@ -5,7 +5,7 @@ import type {
   AuditRow,
   AuditSpan,
 } from "../schemas/audit-material.schema.ts";
-import { AuditFinding } from "../value-objects/audit-finding.value-object.ts";
+import { AuditFindingValueObject } from "../value-objects/audit-finding.value-object.ts";
 
 export type AuditFunnelOptions = {
   ask: (state: string, questions: AuditQuestion[], locations: string[]) => Promise<AuditAnswers>;
@@ -57,11 +57,11 @@ const batches = (
  * narrows, it never widens. A file may yield several ranges for one row.
  */
 export class AuditFunnelService {
-  async inspect(o: AuditFunnelOptions): Promise<AuditFinding[]> {
+  async inspect(o: AuditFunnelOptions): Promise<AuditFindingValueObject[]> {
     const rows = o.rows.filter((r) => !r.crossFile);
     const yes = (p: number | undefined): p is number =>
       p !== undefined && p >= o.threshold;
-    const findings: AuditFinding[] = [];
+    const findings: AuditFindingValueObject[] = [];
     // Stage 1, per folder: the rows of that folder over its files.
     const folders = [...new Set(rows.flatMap((r) => r.folders))];
     const candidates = new Map<string, Map<string, number>>(); // file path → row id → p
@@ -119,7 +119,7 @@ export class AuditFunnelService {
         const parts =
           span.to - span.from + 1 > o.spanLines ? span.parts : [];
         if (!parts.length) {
-          findings.push(new AuditFinding({
+          findings.push(new AuditFindingValueObject({
             row: row.id,
             p,
             file: path,
@@ -134,7 +134,7 @@ export class AuditFunnelService {
       };
       for (const row of rowsHere) {
         if (!units.length) {
-          findings.push(new AuditFinding({
+          findings.push(new AuditFindingValueObject({
             row: row.id,
             p: byRow.get(row.id)!,
             file: path,

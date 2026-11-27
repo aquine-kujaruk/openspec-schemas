@@ -1,11 +1,11 @@
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
 import { WorkCenterSchema, type WorkCenterProps } from "../schemas/work-center.schema.ts";
-import type { WorkCenterId } from "../value-objects/work-center-id.value-object.ts";
-import type { Part } from "../value-objects/part.value-object.ts";
+import type { WorkCenterId } from "../schemas/work-center-id.schema.ts";
+import type { PartValueObject } from "../value-objects/part.value-object.ts";
 
-export class WorkCenter {
+export class WorkCenterEntity {
   readonly id!: WorkCenterId;
-  readonly parts!: Part[];
+  readonly parts!: PartValueObject[];
   readonly waitsFor!: WorkCenterId[];
 
   constructor(props: WorkCenterProps) {

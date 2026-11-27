@@ -1,8 +1,8 @@
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
 import { StandardSchema, type StandardProps } from "../schemas/standard.schema.ts";
-import type { StandardId } from "../value-objects/standard-id.value-object.ts";
+import type { StandardId } from "../schemas/standard-id.schema.ts";
 
-export class Standard {
+export class StandardValueObject {
   readonly id!: StandardId;
   readonly title!: string;
 

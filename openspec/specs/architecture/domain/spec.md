@@ -193,3 +193,60 @@ The reference module of the workstream that owns this layer, assembled from the 
 - **GIVEN** the example `reference` <!-- referenceFolder -->
 - **WHEN** every rule of the workstream is checked <!-- workstreamChecked -->
 - **THEN** no file breaks any rule <!-- noBrokenFiles -->
+
+### Requirement: class-name-carries-role · domain classes carry their role in their exported name
+
+`@by:person`
+
+Every class exported from a file in `entities`, `aggregates` or `value-objects` SHALL end in the role its folder names: `XEntity`, `XAggregate`, `XValueObject`. The file name and the class name say the same thing, so a reader never has to open the file to know what the class is.
+
+#### Scenario Outline: `<example>` breaks class-name-carries-role
+
+- **GIVEN** the example `<example>` <!-- exampleFolder -->
+- **WHEN** rule `<rule>` is checked <!-- ruleChecked -->
+- **THEN** it is broken in the files the expectation records <!-- brokenAsExpected -->
+
+##### Examples:
+
+  | example                   | rule                    |
+  | ------------------------- | ----------------------- |
+  | entity-without-role       | class-name-carries-role |
+  | aggregate-without-role    | class-name-carries-role |
+  | value-object-without-role | class-name-carries-role |
+
+### Requirement: schema-validates-at-runtime · domain schemas export a runtime schema
+
+`@by:person`
+
+Every file in `schemas` SHALL export at least one runtime schema, a constant named `XSchema`, and infer its types from it where the shapes match; a type that describes a function may stay hand-written next to it. The shared validation helper that exports `validateSchema` is exempt. A file of TypeScript types alone validates nothing, though its name says it does.
+
+#### Scenario Outline: `<example>` breaks schema-validates-at-runtime
+
+- **GIVEN** the example `<example>` <!-- exampleFolder -->
+- **WHEN** rule `<rule>` is checked <!-- ruleChecked -->
+- **THEN** it is broken in the files the expectation records <!-- brokenAsExpected -->
+
+##### Examples:
+
+  | example          | rule                        |
+  | ---------------- | --------------------------- |
+  | type-only-schema | schema-validates-at-runtime |
+  | interface-schema | schema-validates-at-runtime |
+
+### Requirement: value-object-holds-several-values · value objects hold a coherent set of values
+
+`@by:person`
+
+The schema a value object validates with SHALL NOT be a `z.object` of exactly one key. A value of one field is a validated field of its owner's schema, not a class that wraps it; an empty `z.object({})` is a scaffold not yet filled in.
+
+#### Scenario Outline: `<example>` breaks value-object-holds-several-values
+
+- **GIVEN** the example `<example>` <!-- exampleFolder -->
+- **WHEN** rule `<rule>` is checked <!-- ruleChecked -->
+- **THEN** it is broken in the files the expectation records <!-- brokenAsExpected -->
+
+##### Examples:
+
+  | example              | rule                              |
+  | -------------------- | --------------------------------- |
+  | single-value-wrapper | value-object-holds-several-values |

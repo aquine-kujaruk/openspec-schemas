@@ -1,5 +1,5 @@
 import type { FinalInspectionRepositoryInterface } from "../../application/repository-interfaces/final-inspection.repository-interface.ts";
-import type { QualityCertificate } from "../../domain/aggregates/quality-certificate.aggregate.ts";
+import type { QualityCertificateAggregate } from "../../domain/aggregates/quality-certificate.aggregate.ts";
 import { QualityException } from "../../domain/exceptions/quality.exceptions.ts";
 import type { Finding, GaugeReport } from "../../domain/schemas/inspect-work-order.schema.ts";
 import { FinalInspectionRecordSchema, type FinalInspectionAcl } from "../acl/final-inspection.acl.ts";
@@ -65,7 +65,7 @@ export class FinalInspectionRepositoryImplementation implements FinalInspectionR
     return this.records.digest(name);
   }
 
-  saveCertificate(certificate: QualityCertificate) {
+  saveCertificate(certificate: QualityCertificateAggregate) {
     const { change, verdict, digest, scenarios, failing, review, procedures, e2e } = certificate;
     return this.records.save({ change, verdict, digest, scenarios, failing, review, procedures, e2e });
   }
