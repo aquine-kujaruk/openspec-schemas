@@ -48,9 +48,9 @@ schema: spec-plan
 
 - The generated tests of `plan-validation` run the modified authorship outline and the basis outline.
 
-- [ ] Replace the 0.15.2 rule: `decision-authored` accepts `@by:agent` on an architecture decision again, and a new rule `decision-basis` asks an agent's architecture decision for exactly one `@basis:no-fork` or `@basis:precedent:<slug>` naming a consolidated decision.
-- [ ] Rewrite `questions/ask-on-commitment.md` and the plan instruction in `schemas/spec-plan/schema.ts` with the three cases and the basis tags.
-- [ ] Step adapter `architectureDecisionTagged`; regenerate the tests and run them.
+- [x] Replace the 0.15.2 rule: `decision-authored` accepts `@by:agent` on an architecture decision again, and a new rule `decision-basis` asks an agent's architecture decision for exactly one `@basis:no-fork` or `@basis:precedent:<slug>` naming a consolidated decision.
+- [x] Rewrite `questions/ask-on-commitment.md` and the plan instruction in `schemas/spec-plan/schema.ts` with the three cases and the basis tags.
+- [x] Step adapter `architectureDecisionTagged`; regenerate the tests and run them.
 
 ### Phase 2: The decision model judges the basis
 
@@ -70,13 +70,19 @@ export type Validator = { ready: (candidate: Candidate) => Finding[]; judgements
 - A unit test of `AssessWorkOrderUseCase` with a fake judge: asks once per new text, records, reuses a record of the same model, and reports an error as an answer.
 - The whole suite, `pnpm exec factory generate --check` and `pnpm exec factory check` pass.
 
-- [ ] Move `openAiClient`, `inspect` and `DECISIONS_ENDPOINT` to `factory/shared/infrastructure/adapters/decision-model.adapter.ts`, re-exported by the quality adapter.
-- [ ] `AssessWorkOrderUseCase` asks the validator's `judgements` through the repository (the product's review key and model, the recorded judgements), records new answers and hands `judged` to `ready`; wire it in `factory/production.ts`.
-- [ ] The spec-plan validator declares one question per agent architecture decision and `decision-basis-holds` reports one below 0.9 or unanswered, telling the agent to ask the person.
-- [ ] Step adapters `decisionModelKey`, `agentDecisionJudgedAt`, `changeValidatedOnce`, `decisionTextAfterJudgement`, `decisionModelAsked`; unit test of the use case; regenerate and run the whole suite and the factory checks.
+- [x] Move `openAiClient`, `inspect` and `DECISIONS_ENDPOINT` to `factory/shared/infrastructure/adapters/decision-model.adapter.ts`, re-exported by the quality adapter.
+- [x] `AssessWorkOrderUseCase` asks the validator's `judgements` through the repository (the product's review key and model, the recorded judgements), records new answers and hands `judged` to `ready`; wire it in `factory/production.ts`.
+- [x] The spec-plan validator declares one question per agent architecture decision and `decision-basis-holds` reports one below 0.9 or unanswered, telling the agent to ask the person.
+- [x] Step adapters `decisionModelKey`, `agentDecisionJudgedAt`, `changeValidatedOnce`, `decisionTextAfterJudgement`, `decisionModelAsked`; unit test of the use case; regenerate and run the whole suite and the factory checks.
 
 ## Feedback
 
+- The test generator counts a backticked literal as no input, so the outline on asking again takes its key, basis and confidence as placeholders, as the other judge outline does.
+- In a project with two schemas that build code and no products declared, no product resolves: the decision model is then read from the project's `review` over the defaults (`OPENAI_API_KEY`, the default model), as the rubric review does.
+- `factory check` asked for exceptions of each module's family: `DecisionModelUnavailable` (shared) and `JudgementUnanswered` (production), and for the unit test at the path of its use case.
+- The rubric review warned S20 (the why lives in the artifacts) on the doc comments this change added to the repository interface, the use case and the validator type; they are gone. Its remaining warnings fall on spans this change does not alter in substance or that hold no comment: S20 on `Validator`, `Building` and `changesInImplementation`, and S19 on `execute` and `judgeAndValidate`, which build the candidate from the change as read, as `execute` did before this change.
+- The whole offline suite passed 924 of 925 tests. The one failure, `stage-start-repository.test.ts` (`record-outage` evidence), fails the same on `main`, as the previous change recorded.
+
 ## Next step
 
-Implement phase 1.
+Verify and archive the change.

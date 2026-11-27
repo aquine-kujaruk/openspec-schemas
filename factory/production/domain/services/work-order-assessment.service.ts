@@ -38,10 +38,21 @@ export type Candidate = {
   workstreams: string[];
   /** The workstream that builds the change's approved spikes first, when its schema has one. */
   spike?: string;
+  /** What the decision model answered to the validator's questions. */
+  judged: Judged;
 };
 
+/** A question to the decision model about one block. */
+export type JudgementRequest = { block: string; state: string; instructions: string };
+
+/** By block, the probability the decision model gave, or why it could not be asked. */
+export type Judged = { configured: boolean; answers: Map<string, number | { error: string }> };
+
 /** What "ready" means for the schemas that pick this validator: no finding. */
-export type Validator = { ready: (candidate: Candidate) => Finding[] };
+export type Validator = {
+  ready: (candidate: Candidate) => Finding[];
+  judgements?: (candidate: Omit<Candidate, "judged">) => JudgementRequest[];
+};
 
 export type Verdict = {
   change: string;

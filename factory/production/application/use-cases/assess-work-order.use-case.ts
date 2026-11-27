@@ -1,6 +1,6 @@
 import { NotValidatable } from "../../domain/exceptions/work-order.exceptions.ts";
 import { parsePlan } from "../../domain/schemas/plan-document.schema.ts";
-import { WorkOrderAssessmentService, type Building, type Verdict } from "../../domain/services/work-order-assessment.service.ts";
+import { WorkOrderAssessmentService, type Building, type Change, type Judged, type JudgementRequest, type Verdict } from "../../domain/services/work-order-assessment.service.ts";
 import type { WorkOrderAssessmentRepositoryInterface } from "../repository-interfaces/work-order-assessment.repository-interface.ts";
 
 export class AssessWorkOrderUseCase {
@@ -34,13 +34,7 @@ export class AssessWorkOrderUseCase {
               message: "the change has no plan.md: every change has a plan",
             },
           ]
-        : schema.validator.ready({
-            change,
-            plan: parsePlan(change.plan),
-            consolidated: this.records.listStanding(root),
-            workstreams: schema.workstreams,
-            spike: schema.spike,
-          });
+        : await this.judgeAndValidate(root, change, change.plan, schema);
     findings.push(
       ...this.policy.productFindings(change, await this.records.listProducts(root)),
       ...this.policy.linkFindings(change, (name) => this.records.findWorkOrder(root, name) ?? this.records.findArchivedWorkOrder(root, name)),
@@ -51,6 +45,40 @@ export class AssessWorkOrderUseCase {
       ready: findings.length === 0,
       findings,
     };
+  }
+
+  private async judgeAndValidate(root: string, change: Change, plan: string, schema: Awaited<ReturnType<WorkOrderAssessmentRepositoryInterface["loadProcess"]>>) {
+    const candidate = {
+      change,
+      plan: parsePlan(plan),
+      consolidated: this.records.listStanding(root),
+      workstreams: schema.workstreams,
+      spike: schema.spike,
+    };
+    const judged = await this.judge(root, change, schema.validator.judgements?.(candidate) ?? []);
+    return schema.validator.ready({ ...candidate, judged });
+  }
+
+  private async judge(root: string, change: Change, requests: JudgementRequest[]): Promise<Judged> {
+    const answers: Judged["answers"] = new Map();
+    if (!requests.length) return { configured: false, answers };
+    const judge = await this.records.findJudge(root, change.product);
+    if (!judge) return { configured: false, answers };
+    for (const request of requests) {
+      const recorded = this.records.findJudgement(root, change.name, judge.model, request);
+      if (recorded !== undefined) {
+        answers.set(request.block, recorded);
+        continue;
+      }
+      try {
+        const probability = await judge.ask(request);
+        this.records.recordJudgement(root, change.name, judge.model, request, probability);
+        answers.set(request.block, probability);
+      } catch (e) {
+        answers.set(request.block, { error: e instanceof Error ? e.message : String(e) });
+      }
+    }
+    return { configured: true, answers };
   }
 
   /** The changes in implementation: those the implement phase started and whose plan is still ready. */

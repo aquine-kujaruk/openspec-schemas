@@ -6,6 +6,7 @@ export type { ClassDecl } from "./quality/domain/services/architecture-standards
 export type { CoreDefinition } from "./shared/domain/schemas/line-types.schema.ts";
 export type { FactoryConfig } from "./shared/domain/schemas/line-types.schema.ts";
 export type { Finding } from "./production/domain/services/work-order-assessment.service.ts";
+export type { JudgementRequest, Judged } from "./production/domain/services/work-order-assessment.service.ts";
 export type { Findings } from "./quality/infrastructure/adapters/sample-inspection-contract.adapter.ts";
 export type { Layer } from "./shared/domain/schemas/line-types.schema.ts";
 export type { Options } from "./shared/domain/schemas/line-types.schema.ts";

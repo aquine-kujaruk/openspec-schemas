@@ -1,4 +1,6 @@
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { expect } from "vitest";
@@ -27,6 +29,28 @@ const procedure = (slug: string, tags: string[], step = "Open the log group of t
 const standing = (slug: string, origin: string) =>
   `# Money\n\n### Decision: ${slug} · A rule about money\n\n@origin:${origin} @applies:domain @enforced:review\n\nThe system SHALL keep this rule.\n`;
 
+/** Where nothing answers: a decision model that cannot be reached. */
+const UNREACHABLE = "http://127.0.0.1:9/";
+
+/** A local decision model that answers every question as the Decisions API does, at one probability. */
+const decisionModelAt = async (probability: number) => {
+  const model = { requests: 0, endpoint: "" };
+  const server = createServer((request, response) => {
+    let body = "";
+    request.on("data", (chunk) => (body += chunk));
+    request.on("end", () => {
+      model.requests++;
+      const { questions } = JSON.parse(body) as { questions: { name: string }[] };
+      response.setHeader("Content-Type", "application/json");
+      response.end(JSON.stringify({ answers: questions.map((q) => ({ type: "predicate", name: q.name, probability })) }));
+    });
+  });
+  await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
+  server.unref();
+  model.endpoint = `http://127.0.0.1:${(server.address() as AddressInfo).port}/`;
+  return model;
+};
+
 export function createSteps() {
   const root = mkdtempSync(join(tmpdir(), "plan-validation-"));
   const files: Record<string, string> = {};
@@ -46,6 +70,22 @@ export function createSteps() {
   let name = CHANGE;
   let product: string | undefined;
   let links: string[] = [];
+  let keyConfigured = false;
+  let decisionModel: { requests: number; endpoint: string } | undefined;
+  /** Validates with the scenario's decision model only, whatever the shell exports. */
+  const validate = async () => {
+    write();
+    const saved = { key: process.env.OPENAI_API_KEY, endpoint: process.env.FACTORY_DECISIONS_ENDPOINT };
+    process.env.OPENAI_API_KEY = keyConfigured ? "a-test-key" : "";
+    process.env.FACTORY_DECISIONS_ENDPOINT = decisionModel?.endpoint ?? UNREACHABLE;
+    try {
+      return await validateChange(root, name);
+    } finally {
+      for (const [variable, value] of [["OPENAI_API_KEY", saved.key], ["FACTORY_DECISIONS_ENDPOINT", saved.endpoint]] as const)
+        if (value === undefined) delete process.env[variable];
+        else process.env[variable] = value;
+    }
+  };
   const list = (names: string) => (names === "none" ? [] : names.split(",").map((n) => n.trim()));
 
   const plan = () =>
@@ -211,11 +251,29 @@ export function createSteps() {
     async planApproved(approved: string): Promise<void> {
       approvedAt = approved === "none" ? undefined : approved;
     },
+    async architectureDecisionTagged(tags: string): Promise<void> {
+      decisions.push(decision("money-in-cents", ["@adds", ...without(DECISION_TAGS, "@by"), ...tags.split(" ")]));
+    },
+    async decisionModelKey(key: string): Promise<void> {
+      keyConfigured = key === "configured";
+    },
+    async agentDecisionJudgedAt(basis: string, confidence: string): Promise<void> {
+      const tags = ["@by:agent", ...basis.split(" ").filter((t) => t !== "@by:agent")];
+      const precedent = tags.find((t) => t.startsWith("@basis:precedent:"))?.slice("@basis:precedent:".length);
+      if (precedent) files["openspec/adr/product/money.md"] = standing(precedent, ORIGIN);
+      decisions.push(decision("money-in-cents", ["@adds", ...without(DECISION_TAGS, "@by"), ...tags]));
+      decisionModel = confidence === "unreachable" ? undefined : await decisionModelAt(Number(confidence));
+    },
+    async changeValidatedOnce(): Promise<void> {
+      await validate();
+    },
+    async decisionTextAfterJudgement(text: string): Promise<void> {
+      if (text === "changes") decisions[decisions.length - 1] = decisions.at(-1)!.replace("The system SHALL keep this rule.", "The system SHALL keep this rule in every store.");
+    },
 
     // Action
     async validateChange(): Promise<void> {
-      write();
-      verdict = await validateChange(root, name);
+      verdict = await validate();
     },
 
     // Outcome
@@ -228,6 +286,9 @@ export function createSteps() {
     },
     async findingNamesMissingTag(missing: string): Promise<void> {
       expect(verdict!.findings.map((f) => f.tag)).toContain(missing);
+    },
+    async decisionModelAsked(asked: string): Promise<void> {
+      expect(decisionModel!.requests).toBe(asked === "once" ? 1 : 2);
     },
   };
 }

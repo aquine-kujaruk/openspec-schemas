@@ -33,6 +33,10 @@ import { DrawingProjectionAdapter } from "./production/infrastructure/adapters/d
 import { WorkOrderAssessmentAdapter } from "./production/infrastructure/adapters/work-order-assessment.adapter.ts";
 import { WorkOrderAssessmentRepositoryImplementation } from "./production/infrastructure/repository-implementations/work-order-assessment.repository-implementation.ts";
 import { DrawingProjectionRepositoryImplementation } from "./production/infrastructure/repository-implementations/drawing-projection.repository-implementation.ts";
+import { DEFAULTS as REVIEW_DEFAULTS } from "./quality/domain/schemas/audit-settings.schema.ts";
+import { DecisionJudgeAdapter } from "./production/infrastructure/adapters/decision-judge.adapter.ts";
+import { loadEnv } from "./shared/infrastructure/adapters/env.adapter.ts";
+import { runtime } from "./shared/infrastructure/adapters/runtime.adapter.ts";
 import { AssessWorkOrderUseCase } from "./production/application/use-cases/assess-work-order.use-case.ts";
 import { ProjectDrawingsUseCase } from "./production/application/use-cases/project-drawings.use-case.ts";
 import { NotValidatable } from "./production/domain/exceptions/work-order.exceptions.ts";
@@ -49,6 +53,16 @@ const assessmentRepository = new WorkOrderAssessmentRepositoryImplementation(
     schemaNames: schema.schemaNames,
     loadSchema: schema.loadSchema,
     readProjectConfig: products.readProjectConfig,
+  }),
+  new DecisionJudgeAdapter({
+    reviewOf: async (project, product) => {
+      try {
+        return (await products.productOf(project, product)).config.review;
+      } catch {
+        return { ...REVIEW_DEFAULTS, ...(await products.readProjectConfig(project))?.review };
+      }
+    },
+    environment: (project) => loadEnv(project, runtime.environment()),
   }),
 );
 const assessWorkOrder = new AssessWorkOrderUseCase(assessmentRepository);

@@ -83,10 +83,10 @@ When the project configures the key of its decision model, validation SHALL ask 
   | @basis:precedent:rounding  | configured | 0.92        | ready     |
   | @basis:precedent:rounding  | configured | 0.40        | not ready |
 
-#### Scenario Outline: a decision judged once is asked again `<asked>` when its text `<text>`
+#### Scenario Outline: a decision tagged `<basis>` judged at `<confidence>` is asked `<asked>` when its text `<text>`
 
-- **GIVEN** the decision model key is `configured` <!-- decisionModelKey -->
-- **AND** an architecture decision `money-in-cents` tagged `@by:agent @basis:no-fork` whose basis the decision model holds at `0.95` <!-- agentDecisionJudgedAt -->
+- **GIVEN** the decision model key is `<key>` <!-- decisionModelKey -->
+- **AND** an architecture decision `money-in-cents` tagged `@by:agent <basis>` whose basis the decision model holds at `<confidence>` <!-- agentDecisionJudgedAt -->
 - **AND** the change validated once <!-- changeValidatedOnce -->
 - **AND** the decision's text `<text>` <!-- decisionTextAfterJudgement -->
 - **WHEN** the change is validated <!-- validateChange -->
@@ -94,7 +94,7 @@ When the project configures the key of its decision model, validation SHALL ask 
 
 ##### Examples:
 
-  | text    | asked |
-  | ------- | ----- |
-  | stays   | once  |
-  | changes | twice |
+  | key        | basis          | confidence | text    | asked |
+  | ---------- | -------------- | ---------- | ------- | ----- |
+  | configured | @basis:no-fork | 0.95       | stays   | once  |
+  | configured | @basis:no-fork | 0.95       | changes | twice |
