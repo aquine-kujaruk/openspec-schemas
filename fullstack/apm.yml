@@ -1,5 +1,5 @@
 name: fullstack
-version: 0.15.2
+version: 0.15.3
 description: The factory's phases over the clean-backend, clean-react and spec-plan schemas
 targets:
   - claude
