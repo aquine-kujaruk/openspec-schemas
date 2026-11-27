@@ -965,6 +965,18 @@ describe('Feature: flow/plan-validation Specification', () => {
     })
 
     // Line 247
+    test('a `architecture decision` tagged `@by:agent` makes the change `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given a change whose `architecture decision` `money-in-cents` is tagged `@by:agent`
+      await steps.decisionOfKindTaggedBy('architecture decision', 'money-in-cents', '@by:agent')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 247
     test('a `architecture decision` tagged `none` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -1074,7 +1086,7 @@ describe('Feature: flow/plan-validation Specification', () => {
   })
 
   describe('Rule: A change is ready only once the person approved its plan', () => {
-    // Line 276
+    // Line 277
     test('a plan approved `2026-11-17` makes the change `ready`', async () => {
       const steps = createSteps()
 
@@ -1086,7 +1098,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 276
+    // Line 277
     test('a plan approved `none` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -1098,7 +1110,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 276
+    // Line 277
     test('a plan approved `yesterday` makes the change `not ready`', async () => {
       const steps = createSteps()
 

@@ -288,7 +288,7 @@ In a change whose schema declares a spike workstream, each block under `## Scree
 
 `@by:person`
 
-Each line under the plan's Decisions, each architecture decision, procedure and screen of the plan, and each requirement a delta spec of the change adds or modifies SHALL carry exactly one of `@by:person` and `@by:agent`; a requirement carries it as the first line of its text. Validation SHALL report the change as not ready, naming the decision, while one carries neither, both, or another value.
+Each line under the plan's Decisions, each architecture decision, procedure and screen of the plan, and each requirement a delta spec of the change adds or modifies SHALL carry exactly one of `@by:person` and `@by:agent`; a requirement carries it as the first line of its text. An architecture decision binds future changes, so it SHALL carry `@by:person`: the person takes it, by answering an open question or by asking for it. Validation SHALL report the change as not ready, naming the decision, while one carries neither, both, or another value, or while an architecture decision carries `@by:agent`.
 
 #### Scenario Outline: a `<kind>` tagged `<by>` makes the change `<readiness>`
 
@@ -306,6 +306,7 @@ Each line under the plan's Decisions, each architecture decision, procedure and 
   | line under Decisions  | money-in-cents    | @by:person @by:agent  | not ready |
   | line under Decisions  | money-in-cents    | @by:someone           | not ready |
   | architecture decision | money-in-cents    | @by:person            | ready     |
+  | architecture decision | money-in-cents    | @by:agent             | not ready |
   | architecture decision | money-in-cents    | none                  | not ready |
   | procedure             | prod-logs         | @by:agent             | ready     |
   | procedure             | prod-logs         | none                  | not ready |

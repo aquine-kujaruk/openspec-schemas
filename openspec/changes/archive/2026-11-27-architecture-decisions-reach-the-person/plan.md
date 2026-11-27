@@ -45,12 +45,17 @@ An architecture decision binds future changes, and `ask-on-commitment` already s
 - The generated test of `plan-validation` runs every row of the modified scenario outline, the new row `architecture decision | @by:agent | not ready` among them.
 - The whole offline suite and `pnpm exec factory check` pass.
 
-- [ ] `decision-authored` reports an architecture decision tagged `@by:agent`, with a message that tells the agent to ask it under Open questions and tag it `@by:person` once answered.
-- [ ] The plan instruction in `schemas/spec-plan/schema.ts` says an architecture decision is always the person's.
-- [ ] Regenerate the tests of `plan-validation` from the delta spec and run them, the whole suite and the factory checks.
+- [x] `decision-authored` reports an architecture decision tagged `@by:agent`, with a message that tells the agent to ask it under Open questions and tag it `@by:person` once answered.
+- [x] The plan instruction in `schemas/spec-plan/schema.ts` says an architecture decision is always the person's.
+- [x] Regenerate the tests of `plan-validation` from the delta spec and run them, the whole suite and the factory checks.
 
 ## Feedback
 
+- The whole offline suite passed 906 of 907 tests. The one failure, `stage-start-repository.test.ts` › keeps a spec-plan stage open until the builder verifies it (`not verified: record-outage`, evidence), fails the same on `main` without this change; it is left for a change of its own.
+
+- The verify phase found the local schema copies under `openspec/schemas` stale after the plan instruction changed; `pnpm exec factory generate` refreshed them, and they are not tracked.
+- **the verify phase**: regenerated the local schema copies with factory generate
+
 ## Next step
 
-Implement phase 1.
+Verify and archive the change.

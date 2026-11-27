@@ -273,7 +273,8 @@ const AUTHORS = ["person", "agent"];
 /**
  * Every decision the change writes says who took it, with exactly one `@by:person` or `@by:agent`:
  * the lines under Decisions, the durable blocks, the screens, and each requirement a delta spec
- * adds or modifies, on the first line of its text.
+ * adds or modifies, on the first line of its text. An architecture decision binds future changes,
+ * so only the person takes it: `@by:person`.
  */
 const decisionAuthored: Rule = (c) => {
   const judge = (what: string, tags: Tag[], block?: string): Finding[] => {
@@ -295,7 +296,18 @@ const decisionAuthored: Rule = (c) => {
   );
   return [
     ...c.plan.changeDecisions.flatMap((d) => judge(`the decision "${d.text.slice(0, 60)}"`, d.tags)),
-    ...c.plan.decisions.flatMap((b) => judge(`the decision ${b.slug}`, b.tags, b.slug)),
+    ...c.plan.decisions.flatMap((b) => {
+      const found = judge(`the decision ${b.slug}`, b.tags, b.slug);
+      if (found.length || tagOf(b, "by")?.value !== "agent") return found;
+      return [
+        {
+          rule: "decision-authored",
+          block: b.slug,
+          tag: "@by",
+          message: `the architecture decision ${b.slug} carries @by:agent: it binds future changes, so it is the person's. Ask it under Open questions with the option you would pick, and tag it @by:person once they answer`,
+        },
+      ];
+    }),
     ...c.plan.procedures.flatMap((b) => judge(`the procedure ${b.slug}`, b.tags, b.slug)),
     ...c.plan.screens.flatMap((b) => judge(`the screen ${b.slug}`, b.tags, b.slug)),
     ...requirements.flatMap((r) =>
