@@ -18,9 +18,9 @@ A Factory repository SHALL return validated data, and the use case SHALL call a 
 
 ### Decision: domain-contracts-execute · A schema in the domain validates at runtime
 
-@origin:2026-11-18-reparar-revision-semantica @applies:factory @enforced:pending @by:person
+@origin:2026-11-27-domain-contracts-and-topology @applies:schemas,factory @enforced:schema-validates-at-runtime,class-name-carries-role @by:person
 
-A Factory domain contract named as a schema SHALL be an executable validation with its inferred type, reused at the boundary when the shapes match. A class SHALL carry its role in its exported name as well as in its file name.
+A domain contract named as a schema SHALL be an executable validation with its inferred type, reused at the boundary when the shapes match. A class SHALL carry its role in its exported name as well as in its file name.
 
 **Why** TypeScript-only aliases in schema files passed for validation, and 34 domain classes lacked the role their scaffold names.
 
@@ -34,7 +34,7 @@ A branch that decides a domain policy SHALL live in the domain; a branch in a us
 
 ### Decision: process-owns-topology · The Process aggregate owns ordering and cycles
 
-@origin:2026-11-18-reparar-revision-semantica @applies:factory @enforced:pending @by:person
+@origin:2026-11-27-domain-contracts-and-topology @applies:schemas,factory @enforced:value-object-holds-several-values,process-aggregate-unit-test @by:person
 
 A work center SHALL describe its direct dependencies; the Process aggregate SHALL own ordering and cycle detection across centers, and both the runtime loader and the domain SHALL use that one calculation. Value objects of a single value SHALL become validated fields of their owner's schema.
 

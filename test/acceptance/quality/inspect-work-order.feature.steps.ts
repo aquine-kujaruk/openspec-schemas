@@ -2,7 +2,7 @@
 
 import { expect } from "vitest";
 import { InspectWorkOrderUseCase, type InspectionOptions } from "../../../factory/quality/application/use-cases/inspect-work-order.use-case.ts";
-import type { QualityCertificate } from "../../../factory/quality/domain/aggregates/quality-certificate.aggregate.ts";
+import type { QualityCertificateAggregate } from "../../../factory/quality/domain/aggregates/quality-certificate.aggregate.ts";
 import type { GaugeReport, InspectionDrawings, Workstream } from "../../../factory/quality/domain/schemas/inspect-work-order.schema.ts";
 import type { E2eResult } from "../../../factory/quality/domain/schemas/quality-certificate.schema.ts";
 import { InMemoryFinalInspectionRepository } from "./repositories/in-memory-final-inspection.repository.ts";
@@ -27,7 +27,7 @@ export function createSteps() {
   let tagged: string | undefined;
   let probedAs: string | undefined;
   let givenOutcome: string | undefined;
-  let certificate: QualityCertificate;
+  let certificate: QualityCertificateAggregate;
   let suiteAssertion: string | undefined;
   let delivered: { repository: boolean; spec: string } | undefined;
   const adapterFolders = new Map<string, string>();

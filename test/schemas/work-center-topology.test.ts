@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { graph, project } from "../../factory/engineering.ts";
 const { DEFAULTS } = project;
-import type { Folders } from "../../factory/engineering/domain/services/work-center-topology.service.ts";
+import type { Folders } from "../../factory/engineering/domain/aggregates/process.aggregate.ts";
 const { loadWorkstreams, mayRunTogether, ownerOf, runOrder } = graph;
 import type {
   Layer,

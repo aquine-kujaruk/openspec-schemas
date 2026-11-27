@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ScenarioResult } from "../value-objects/scenario-result.value-object.ts";
+import { ScenarioResultValueObject } from "../value-objects/scenario-result.value-object.ts";
 
 export const InspectionVerdictSchema = z.enum(["verified", "not verified"]);
 export const E2eResultSchema = z.object({
@@ -23,7 +23,7 @@ const CheckFailureSchema = z.object({ workstream: z.string(), output: z.string()
 export const QualityCertificateSchema = z.object({
   workOrder: z.string().min(1),
   digest: z.string(),
-  scenarios: z.array(z.instanceof(ScenarioResult)),
+  scenarios: z.array(z.instanceof(ScenarioResultValueObject)),
   failing: z.array(CheckFailureSchema),
   review: AuditRecordSchema,
   procedures: z.array(ProcedureEvidenceSchema),

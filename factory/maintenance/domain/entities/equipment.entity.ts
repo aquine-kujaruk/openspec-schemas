@@ -1,8 +1,8 @@
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
-import type { ProcessName } from "../../../shared/domain/value-objects/process-name.value-object.ts";
+import type { ProcessName } from "../../../shared/domain/schemas/process-name.schema.ts";
 import { EquipmentSchema, type EquipmentProps } from "../schemas/equipment.schema.ts";
 
-export class Equipment {
+export class EquipmentEntity {
   readonly name!: string;
   readonly version!: string;
   readonly processes!: ProcessName[];

@@ -3,7 +3,7 @@
 import { expect } from "vitest";
 import { AuditUseCase, type AuditReport } from "../../../factory/quality/application/use-cases/audit.use-case.ts";
 import type { LoadedAuditRow } from "../../../factory/quality/domain/schemas/audit-material.schema.ts";
-import { DEFAULTS } from "../../../factory/quality/domain/schemas/audit-settings.schema.ts";
+import { DEFAULTS } from "../../../factory/shared/domain/schemas/review.schema.ts";
 import { AuditRecordService } from "../../../factory/quality/domain/services/audit-record.service.ts";
 import { AuditRubricService } from "../../../factory/quality/domain/services/audit-rubric.service.ts";
 import { InMemoryAuditRepository } from "./repositories/in-memory-audit.repository.ts";

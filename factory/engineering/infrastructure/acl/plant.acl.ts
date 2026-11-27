@@ -24,8 +24,8 @@ export type ProductConfiguration = typeof resolveConfig;
 export type { Architecture, FactoryConfig };
 export type {
   Folders as WorkCenterFolders,
-} from "../../domain/services/work-center-topology.service.ts";
-export type BuildWorkstreams = typeof import("../../domain/services/work-center-topology.service.ts").WorkCenterTopologyService.loadWorkstreams;
+} from "../../domain/aggregates/process.aggregate.ts";
+export type BuildWorkstreams = typeof import("../../domain/aggregates/process.aggregate.ts").ProcessAggregate.loadWorkstreams;
 export type ActiveProjectDefinitions<V> = {
   loadHolder(name: string): Promise<CatalogSchema<V>>;
   currentProduct(root: string): Promise<Product>;

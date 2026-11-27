@@ -1,6 +1,4 @@
 import { z } from "zod";
 
-export const WorkCenterIdSchema = z.object({
-  value: z.string().min(1),
-});
-export type WorkCenterIdProps = z.infer<typeof WorkCenterIdSchema>;
+export const WorkCenterIdSchema = z.string().min(1);
+export type WorkCenterId = z.infer<typeof WorkCenterIdSchema>;

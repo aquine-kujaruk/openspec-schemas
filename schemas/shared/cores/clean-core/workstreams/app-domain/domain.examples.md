@@ -776,3 +776,129 @@ class Total { add(n: number) { this.sum += n; } }
 ```expect
 no
 ```
+
+## class-name-carries-role
+
+### entity-without-role
+
+```ts src/module/domain/entities/invoice.entity.ts
+import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
+import { InvoiceSchema, type InvoiceProps } from "../schemas/invoice.schema";
+export class Invoice {
+  public readonly id!: string;
+  public readonly total!: number;
+  constructor(props: InvoiceProps) {
+    validateSchema(this, InvoiceSchema, props);
+  }
+}
+```
+
+```ts src/module/domain/schemas/invoice.schema.ts
+import { z } from "zod";
+export const InvoiceSchema = z.object({ id: z.string(), total: z.number().int() });
+export type InvoiceProps = z.infer<typeof InvoiceSchema>;
+```
+
+```expect
+- src/module/domain/entities/invoice.entity.ts (archunit)
+```
+
+### aggregate-without-role
+
+```ts src/module/domain/aggregates/invoice-book.aggregate.ts
+import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
+import { InvoiceEntity } from "../entities/invoice.entity";
+import { InvoiceBookSchema, type InvoiceBookProps } from "../schemas/invoice-book.schema";
+export class InvoiceBook {
+  public readonly year!: number;
+  public readonly invoices: InvoiceEntity[] = [];
+  constructor(props: InvoiceBookProps) {
+    validateSchema(this, InvoiceBookSchema, props);
+  }
+}
+```
+
+```ts src/module/domain/schemas/invoice-book.schema.ts
+import { z } from "zod";
+export const InvoiceBookSchema = z.object({ year: z.number().int(), invoices: z.array(z.unknown()) });
+export type InvoiceBookProps = z.infer<typeof InvoiceBookSchema>;
+```
+
+```expect
+- src/module/domain/aggregates/invoice-book.aggregate.ts (archunit)
+```
+
+### value-object-without-role
+
+```ts src/module/domain/value-objects/money.value-object.ts
+import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
+import { MoneySchema, type MoneyProps } from "../schemas/money.schema";
+export class Money {
+  public readonly amount!: number;
+  public readonly currency!: string;
+  constructor(props: MoneyProps) {
+    validateSchema(this, MoneySchema, props);
+  }
+}
+```
+
+```ts src/module/domain/schemas/money.schema.ts
+import { z } from "zod";
+export const MoneySchema = z.object({ amount: z.number().int(), currency: z.string().length(3) });
+export type MoneyProps = z.infer<typeof MoneySchema>;
+```
+
+```expect
+- src/module/domain/value-objects/money.value-object.ts (archunit)
+```
+
+## schema-validates-at-runtime
+
+### type-only-schema
+
+```ts src/module/domain/schemas/invoice.schema.ts
+export type InvoiceProps = { id: string; total: number };
+```
+
+```expect
+- src/module/domain/schemas/invoice.schema.ts (archunit)
+```
+
+### interface-schema
+
+```ts src/module/domain/schemas/invoice.schema.ts
+export interface InvoiceProps {
+  id: string;
+  total: number;
+}
+export const isInvoice = (value: unknown): value is InvoiceProps => typeof value === "object" && value !== null;
+```
+
+```expect
+- src/module/domain/schemas/invoice.schema.ts (archunit)
+```
+
+## value-object-holds-several-values
+
+### single-value-wrapper
+
+```ts src/module/domain/value-objects/invoice-id.value-object.ts
+import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
+import { InvoiceIdSchema, type InvoiceIdProps } from "../schemas/invoice-id.schema";
+export class InvoiceIdValueObject {
+  public readonly value!: string;
+  constructor(props: InvoiceIdProps) {
+    validateSchema(this, InvoiceIdSchema, props);
+  }
+}
+```
+
+```ts src/module/domain/schemas/invoice-id.schema.ts
+import { z } from "zod";
+export const InvoiceIdSchema = z.object({ value: z.string().min(1) });
+export type InvoiceIdProps = z.infer<typeof InvoiceIdSchema>;
+```
+
+```expect
+- src/module/domain/value-objects/invoice-id.value-object.ts (archunit)
+```

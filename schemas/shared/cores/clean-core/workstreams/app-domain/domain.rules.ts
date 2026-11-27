@@ -1,5 +1,5 @@
 import { sourceStem } from "../../source-path.ts";
-import { globSync, readFileSync } from "node:fs";
+import { existsSync, globSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import {
   classesOf,
@@ -22,6 +22,39 @@ const VOCABULARY = {
   schemas: "schema.ts",
   exceptions: "exceptions.ts",
   services: "service.ts",
+};
+
+/** Folder → the role its exported classes end in (class-name-carries-role). */
+const ROLE: Record<string, string> = {
+  entities: "Entity",
+  aggregates: "Aggregate",
+  "value-objects": "ValueObject",
+};
+
+/** The number of top-level keys of `export const <name> = z.object({ … })` in `text`, or none when it is not one. */
+const objectKeys = (text: string, name: string): number | undefined => {
+  const start = new RegExp(`\\b${name}\\s*=\\s*z\\.object\\(\\s*\\{`).exec(text);
+  if (!start) return undefined;
+  let depth = 1;
+  let keys = 0;
+  let expectKey = true;
+  for (let i = start.index + start[0].length; i < text.length && depth > 0; i++) {
+    const ch = text[i]!;
+    if (ch === '"' || ch === "'" || ch === "`") {
+      const end = text.indexOf(ch, i + 1);
+      if (depth === 1 && expectKey && /^\s*:/.test(text.slice(end + 1))) keys++, (expectKey = false);
+      i = end === -1 ? text.length : end;
+    } else if ("([{".includes(ch)) depth++;
+    else if (")]}".includes(ch)) depth--;
+    else if (depth === 1 && ch === ",") expectKey = true;
+    else if (depth === 1 && expectKey && /[\w$]/.test(ch)) {
+      const word = /^[\w$]+\s*:/.exec(text.slice(i));
+      if (word) keys++;
+      expectKey = false;
+      if (word) i += word[0].length - 1;
+    }
+  }
+  return keys;
 };
 
 /** Property names that hold a closed set: compared through their enum, never with a literal (no-magic-closed-set-strings). */
@@ -204,6 +237,64 @@ export const domain = (o: Options): Layer => {
                 not(/export class \w*(Helper|Utils?|Manager|Common|Rules|Filters)\w*\b/)(f),
               "[domain-service-named-by-policy] `export class XService` where X names the business policy",
             )
+            .check(ctx.opts),
+      },
+      {
+        id: "class-name-carries-role",
+        title:
+          "every class exported from entities, aggregates or value-objects ends in the role its folder names: XEntity, XAggregate, XValueObject",
+        check: () =>
+          ctx
+            .files()
+            .inFolder(`${o.modules}/domain/{entities,aggregates,value-objects}/**`)
+            .should()
+            .adhereTo((f) => {
+              const role = ROLE[/\/domain\/([\w-]+)\//.exec(f.path)?.[1] ?? ""];
+              return (
+                !role ||
+                classesOf(f.content)
+                  .filter((c) => c.exported)
+                  .every((c) => c.name.endsWith(role))
+              );
+            }, "[class-name-carries-role] end the exported class in the role its folder names: `InvoiceEntity`, `InvoiceBookAggregate`, `MoneyValueObject`")
+            .check(ctx.opts),
+      },
+      {
+        id: "schema-validates-at-runtime",
+        title:
+          "every file in domain/schemas exports a runtime schema `XSchema` (the shared validation helper, which exports validateSchema, is exempt)",
+        check: () =>
+          ctx
+            .files()
+            .inFolder(`${o.modules}/domain/schemas/**`)
+            .should()
+            .adhereTo(
+              (f) =>
+                has(/export\s+const\s+\w+Schema\b/)(f) || has(/export\s+const\s+validateSchema\b/)(f),
+              "[schema-validates-at-runtime] export the runtime schema (`export const InvoiceSchema = z.object({ … })`) and infer its type from it (`z.infer<typeof InvoiceSchema>`)",
+            )
+            .check(ctx.opts),
+      },
+      {
+        id: "value-object-holds-several-values",
+        title: "the z.object a value object validates with is not one of a single key",
+        check: () =>
+          ctx
+            .files()
+            .inFolder(`${o.modules}/domain/value-objects/**`)
+            .should()
+            .adhereTo((f) => {
+              const name = /\bvalidateSchema\(\s*this\s*,\s*(\w+Schema)\s*,/.exec(
+                constructorBody(f.content) ?? "",
+              )?.[1];
+              const from = name && importsOf(f).find((i) => i.names.includes(name));
+              if (!name || !from) return true;
+              const path = [from.resolved, `${sourceStem(from.resolved)}.ts`].find(
+                (p) => existsSync(p) && !p.endsWith("/"),
+              );
+              const keys = path ? objectKeys(readFileSync(path, "utf8"), name) : undefined;
+              return keys !== 1;
+            }, "[value-object-holds-several-values] a value of one field is a validated field of its owner's schema (`name: z.string().min(1)`), not a value object that wraps it")
             .check(ctx.opts),
       },
     ],

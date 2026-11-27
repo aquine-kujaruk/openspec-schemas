@@ -1,4 +1,10 @@
 import type { FileConditionBuilder } from "archunit";
+import { z } from "zod";
+import type { Platform } from "./platform.schema.ts";
+import type { Review } from "./review.schema.ts";
+
+export type { Platform } from "./platform.schema.ts";
+export type { Review } from "./review.schema.ts";
 
 /** One `overrides` entry of the lint configuration: the files it covers and the rules it sets on them. */
 export type LintRules = Record<string, unknown>;
@@ -19,24 +25,30 @@ export type Layer = {
 };
 
 /** Framework packages vetoed in a zone: exact names and patterns (`express/*`). */
-export type Vetoed = { packages: string[]; patterns: string[] };
+export const VetoedSchema = z.object({ packages: z.array(z.string()), patterns: z.array(z.string()) });
+export type Vetoed = z.infer<typeof VetoedSchema>;
 
-/** What the platform provides: which globals exist and which ones are persistence or network. */
-export type Platform = { name: string; all: string[]; persistence: string[] };
-
-export type Zone = { name: string; patterns: string[] };
+export const ZoneSchema = z.object({ name: z.string(), patterns: z.array(z.string()) });
+export type Zone = z.infer<typeof ZoneSchema>;
 /** `allow: "*"`: any zone. Importing itself is always allowed. `id` is the rule this boundary enforces; a boundary without one is structure nobody specifies. */
-export type Boundary = { id?: string; from: string; allow: string[] | "*" };
-export type ForbiddenCalls = {
-  id: string;
-  from: string;
-  what: "all" | "persistence";
-};
-export type Fallow = {
-  zones: Zone[];
-  boundaries: Boundary[];
-  forbiddenCalls: ForbiddenCalls[];
-};
+export const BoundarySchema = z.object({
+  id: z.string().optional(),
+  from: z.string(),
+  allow: z.union([z.array(z.string()), z.literal("*")]),
+});
+export type Boundary = z.infer<typeof BoundarySchema>;
+export const ForbiddenCallsSchema = z.object({
+  id: z.string(),
+  from: z.string(),
+  what: z.enum(["all", "persistence"]),
+});
+export type ForbiddenCalls = z.infer<typeof ForbiddenCallsSchema>;
+export const FallowSchema = z.object({
+  zones: z.array(ZoneSchema),
+  boundaries: z.array(BoundarySchema),
+  forbiddenCalls: z.array(ForbiddenCallsSchema),
+});
+export type Fallow = z.infer<typeof FallowSchema>;
 
 export type Oxlint = (platform: Platform) => OxlintOverride[];
 
@@ -52,21 +64,6 @@ export type Rule = {
 };
 export type Archunit = (ctx: RuleContext) => Rule[];
 
-/**
- * The fourth tool, `factory review`: the rows of the reviewer rubric judged by a decision
- * model. Harness configuration, the same for every developer; the key itself lives in `.env`.
- */
-export type Review = {
-  /** The `.env` variable that holds the decision model's API key. */
-  keyVariable: string;
-  model: string;
-  /** A span whose probability is at or above this line is a warning (and keeps narrowing). */
-  threshold: number;
-  /** A span at most this long is reported as it is; a longer one is split further. */
-  spanLines: number;
-  /** Stage 1 caps: files per request and total characters per request. */
-  batch: { files: number; chars: number };
-};
 
 /**
  * A rule checked over the whole product by one run of the boundary tool, not per layer: the
@@ -130,7 +127,8 @@ export type Options = {
 };
 
 /** The topology: every workstream id with the workstreams it waits for. */
-export type Topology = Record<string, { dependsOn: string[] }>;
+export const TopologySchema = z.record(z.string(), z.object({ dependsOn: z.array(z.string()) }));
+export type Topology = z.infer<typeof TopologySchema>;
 
 /** The whole configuration: the schema holds the defaults, the project's `factory.config.ts` overrides them. */
 export type FactoryConfig = Options & {
@@ -234,12 +232,13 @@ export type SchemaVariant = { name: string; extends: string } & Partial<
 >;
 
 /** A language server the agents start in the project. */
-export type LanguageServer = {
-  name: string;
-  command: string;
-  args: string[];
-  extensionToLanguage: Record<string, string>;
-};
+export const LanguageServerSchema = z.object({
+  name: z.string(),
+  command: z.string(),
+  args: z.array(z.string()),
+  extensionToLanguage: z.record(z.string(), z.string()),
+});
+export type LanguageServer = z.infer<typeof LanguageServerSchema>;
 
 /** What one installable package carries. */
 export type PackageManifest = {

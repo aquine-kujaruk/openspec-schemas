@@ -1,7 +1,7 @@
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
 import { AndonPullSchema, type AndonPullProps } from "../schemas/andon-pull.schema.ts";
 
-export class AndonPull {
+export class AndonPullValueObject {
   readonly from!: string;
   readonly names!: string;
   readonly says!: string;

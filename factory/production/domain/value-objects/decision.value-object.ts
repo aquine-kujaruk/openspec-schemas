@@ -2,7 +2,7 @@ import { validateSchema } from "../../../shared/domain/schemas/validation.schema
 import { DecisionSchema, type DecisionProps } from "../schemas/decision.schema.ts";
 import type { DecidedBy } from "../schemas/decision.schema.ts";
 
-export class Decision {
+export class DecisionValueObject {
   readonly text!: string;
   readonly by!: DecidedBy;
 

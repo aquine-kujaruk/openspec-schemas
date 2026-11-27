@@ -65,7 +65,7 @@ export class EquipmentAdapter implements EquipmentAcl {
     const at = (path: string) => join(root, path);
     const reading = {
       pinned: this.pinnedVersion(root),
-      links: equipment.processes.map(({ value: schema }) => {
+      links: equipment.processes.map((schema) => {
         const path = join(SCHEMAS, schema);
         const link = at(path);
         return {
@@ -136,7 +136,7 @@ export class EquipmentAdapter implements EquipmentAcl {
       case RepairKind.Default: {
         const path = at(CONFIG);
         const document = parseDocument(text(path) ?? "");
-        document.set("schema", equipment.processes[0]?.value);
+        document.set("schema", equipment.processes[0]);
         mkdirSync(dirname(path), { recursive: true });
         writeFileSync(path, String(document));
         break;

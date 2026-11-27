@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { WorkOrderAcl } from "../../../factory/production/infrastructure/acl/work-order.acl.ts";
 import { WorkOrderRepositoryImplementation } from "../../../factory/production/infrastructure/repository-implementations/work-order.repository-implementation.ts";
-import { WorkOrderName } from "../../../factory/production/domain/value-objects/work-order-name.value-object.ts";
+
 
 describe("work order repository", () => {
   it("maps the document without replacing it when the order is released", async () => {
@@ -19,8 +19,8 @@ describe("work order repository", () => {
       async writeRelease(_name, day) { released = day; },
     };
     const orders = new WorkOrderRepositoryImplementation(resource);
-    const order = (await orders.findWorkOrder(new WorkOrderName({value: "ship"})))!;
-    expect(order.process.value).toBe("clean-backend");
+    const order = (await orders.findWorkOrder("ship"))!;
+    expect(order.process).toBe("clean-backend");
     expect(order.revisions[0]?.requirements[0]?.name).toBe("Ship safely");
     expect(order.andonPulls[0]?.says).toBe("check the label");
     order.release("2026-11-17");

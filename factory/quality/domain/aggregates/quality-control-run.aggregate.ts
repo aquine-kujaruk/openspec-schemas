@@ -1,9 +1,9 @@
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
 import { QualityControlRunSchema, type QualityControlRunProps } from "../schemas/quality-control-run.schema.ts";
-import type { Defect } from "../value-objects/defect.value-object.ts";
+import type { DefectValueObject } from "../value-objects/defect.value-object.ts";
 
-export class QualityControlRun {
-  readonly defects!: Defect[];
+export class QualityControlRunAggregate {
+  readonly defects!: DefectValueObject[];
   readonly exitStatus!: number;
 
   constructor(props: QualityControlRunProps) {

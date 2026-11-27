@@ -26,8 +26,8 @@ describe("plant repository", () => {
     const plant = await plants.getPlant();
     expect(plant.root).toBe(record.root);
     const [line] = plant.lines;
-    expect(line?.name.value).toBe("");
-    expect(line?.process.value).toBe("clean-backend");
+    expect(line?.name).toBe("");
+    expect(line?.process).toBe("clean-backend");
     expect(await plants.prepareRoots(plant, line!)).toEqual(["/factory", "test/unit"]);
   });
 

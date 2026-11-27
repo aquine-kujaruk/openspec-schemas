@@ -16,7 +16,7 @@ import { spawnSync } from "node:child_process";
 import { createGenerated } from "./quality/infrastructure/adapters/gauge-layout.adapter.ts";
 import { graph, products, project, schema, schemaYaml } from "./engineering.ts";
 import { runtime } from "./shared/infrastructure/adapters/runtime.adapter.ts";
-import { LineName } from "./shared/domain/value-objects/line-name.value-object.ts";
+
 import { MakeGaugesUseCase } from "./quality/application/use-cases/make-gauges.use-case.ts";
 import { RunGaugesUseCase } from "./quality/application/use-cases/run-gauges.use-case.ts";
 import { RunQualityControlUseCase } from "./quality/application/use-cases/run-quality-control.use-case.ts";
@@ -221,7 +221,7 @@ export const makeGauges = async (args: string[]) => (await newGauges.execute(arg
 export const runGauges = (args: string[]) => gaugeRun.execute(args);
 export async function runQualityControl(args: string[]): Promise<number> {
   await project.initialize();
-  const run = await inspection.execute(new LineName({ value: project.product.name }), args);
+  const run = await inspection.execute(project.product.name, args);
   return run.passed() ? 0 : run.exitStatus || 1;
 }
 

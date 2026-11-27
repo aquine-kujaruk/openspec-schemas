@@ -1,5 +1,5 @@
 import type { BuildingStage } from "../../domain/schemas/stage-hold.schema.ts";
-import { StageHold } from "../../domain/value-objects/stage-hold.value-object.ts";
+import { StageHoldValueObject } from "../../domain/value-objects/stage-hold.value-object.ts";
 import type { StageHoldRepositoryInterface } from "../repository-interfaces/stage-hold.repository-interface.ts";
 
 const ATTEMPTS = 3;
@@ -11,9 +11,9 @@ export class HoldStageUseCase {
     this.records = records;
   }
 
-  async execute(helper = false): Promise<StageHold> {
+  async execute(helper = false): Promise<StageHoldValueObject> {
     const building = await this.records.listBuilding();
-    if (!building.length) return new StageHold({ held: false, reasons: [] });
+    if (!building.length) return new StageHoldValueObject({ held: false, reasons: [] });
     const altered = await this.records.listHarnessFindings();
     const refused: string[] = [];
     const handed: string[] = [];
@@ -57,7 +57,7 @@ export class HoldStageUseCase {
         );
       }
     }
-    return new StageHold({ held: refused.length > 0, reasons: refused.length ? refused : handed });
+    return new StageHoldValueObject({ held: refused.length > 0, reasons: refused.length ? refused : handed });
   }
 
   private async inspectStage(order: BuildingStage, started?: string): Promise<string[]> {

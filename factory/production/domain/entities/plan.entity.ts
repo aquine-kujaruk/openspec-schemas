@@ -1,12 +1,12 @@
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
 import { PlanSchema, type PlanProps } from "../schemas/plan.schema.ts";
 import type { Day } from "../schemas/day.schema.ts";
-import type { Decision } from "../value-objects/decision.value-object.ts";
-import type { Stage } from "./stage.entity.ts";
+import type { DecisionValueObject } from "../value-objects/decision.value-object.ts";
+import type { StageEntity } from "./stage.entity.ts";
 
-export class Plan {
-  readonly stages!: Stage[];
-  readonly decisions!: Decision[];
+export class PlanEntity {
+  readonly stages!: StageEntity[];
+  readonly decisions!: DecisionValueObject[];
   readonly openQuestions!: string[];
   readonly releasedOn?: Day;
 

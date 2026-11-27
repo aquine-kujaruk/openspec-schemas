@@ -1,7 +1,7 @@
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
 import { ScenarioResultSchema, type ScenarioResultProps } from "../schemas/scenario-result.schema.ts";
 
-export class ScenarioResult {
+export class ScenarioResultValueObject {
   readonly spec!: string;
   readonly requirement!: string;
   readonly scenario!: string;

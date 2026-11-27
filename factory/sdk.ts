@@ -19,7 +19,7 @@ export type { Validator } from "./production/domain/services/work-order-assessme
 export type { Verdict } from "./production/domain/services/work-order-assessment.service.ts";
 export type { Vetoed } from "./shared/domain/schemas/line-types.schema.ts";
 export type { WorkstreamDeclaration } from "./shared/domain/schemas/line-types.schema.ts";
-export { DEFAULTS } from "./quality/domain/schemas/audit-settings.schema.ts";
+export { DEFAULTS } from "./shared/domain/schemas/review.schema.ts";
 export { sdkArchitecture as architecture } from "./quality.ts";
 export { classesOf } from "./quality/domain/services/architecture-standards.service.ts";
 export { codeOnly } from "./quality/domain/services/architecture-standards.service.ts";

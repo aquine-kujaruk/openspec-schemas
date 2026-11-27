@@ -2,8 +2,8 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { QualityCertificate } from "../../../factory/quality/domain/aggregates/quality-certificate.aggregate.ts";
-import { ScenarioResult } from "../../../factory/quality/domain/value-objects/scenario-result.value-object.ts";
+import { QualityCertificateAggregate } from "../../../factory/quality/domain/aggregates/quality-certificate.aggregate.ts";
+import { ScenarioResultValueObject } from "../../../factory/quality/domain/value-objects/scenario-result.value-object.ts";
 import { FileGaugeReportSchema, type FinalInspectionAcl } from "../../../factory/quality/infrastructure/acl/final-inspection.acl.ts";
 import { QualityCertificateFileAdapter } from "../../../factory/quality/infrastructure/adapters/quality-certificate-file.adapter.ts";
 import { FinalInspectionRepositoryImplementation } from "../../../factory/quality/infrastructure/repository-implementations/final-inspection.repository-implementation.ts";
@@ -65,13 +65,13 @@ describe("the final inspection repository", () => {
 
       const [report] = await inspections.runGauges([GAUGE]);
       const scenarios = report!.assertions.map(({ requirement, scenario, passed }) =>
-        new ScenarioResult({ spec: "orders/list", requirement, scenario, result: passed ? "passed" : "failed" }),
+        new ScenarioResultValueObject({ spec: "orders/list", requirement, scenario, result: passed ? "passed" : "failed" }),
       );
       const digest = await inspections.readDigest(NAME);
       writeFileSync(plan, "- [x] build orders\n");
       expect(await inspections.readDigest(NAME)).toBe(digest);
 
-      await inspections.saveCertificate(new QualityCertificate({
+      await inspections.saveCertificate(new QualityCertificateAggregate({
         workOrder: NAME,
         digest,
         scenarios,

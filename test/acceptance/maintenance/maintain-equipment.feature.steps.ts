@@ -2,12 +2,12 @@
 
 import { expect } from "vitest";
 import { MaintainEquipmentUseCase } from "../../../factory/maintenance/application/use-cases/maintain-equipment.use-case.ts";
-import { Equipment } from "../../../factory/maintenance/domain/aggregates/equipment.aggregate.ts";
-import type { MaintenanceReport } from "../../../factory/maintenance/domain/aggregates/maintenance-report.aggregate.ts";
+import { EquipmentEntity } from "../../../factory/maintenance/domain/entities/equipment.entity.ts";
+import type { MaintenanceReportAggregate } from "../../../factory/maintenance/domain/aggregates/maintenance-report.aggregate.ts";
 import { MaintenanceKind } from "../../../factory/maintenance/domain/schemas/maintenance-item.schema.ts";
 import { NeedKind } from "../../../factory/maintenance/domain/schemas/procedure-reading.schema.ts";
 import { EquipmentInstallationService } from "../../../factory/maintenance/domain/services/equipment-installation.service.ts";
-import { ProcessName } from "../../../factory/shared/domain/value-objects/process-name.value-object.ts";
+
 import { InMemoryEquipmentRepository } from "./repositories/in-memory-equipment.repository.ts";
 
 const FLOW = "Every intention that changes something enters through the plan skill.";
@@ -30,14 +30,14 @@ export function createSteps() {
   let priorRepairRuns = 0;
   let productPlatform: string | undefined;
   let projectPackages: Record<string, string> = {};
-  let outcome: MaintenanceReport | null = null;
+  let outcome: MaintenanceReportAggregate | null = null;
   let instructionAgent = "codex";
 
   const project = () => {
-    repository.equipment = new Equipment({
+    repository.equipment = new EquipmentEntity({
       name: "backend",
       version,
-      processes: installedSchemas.map((value) => new ProcessName({ value })),
+      processes: installedSchemas,
       workInstructions: PHASES,
       controls: ["guards.json"],
       command: `factory-${version}.tgz`,

@@ -2,7 +2,7 @@ import { validateSchema } from "../../../shared/domain/schemas/validation.schema
 import { DrawingRevisionSchema, type DrawingRevisionProps } from "../schemas/drawing-revision.schema.ts";
 import type { DrawingPath, RequirementChange } from "../schemas/drawing-revision.schema.ts";
 
-export class DrawingRevision {
+export class DrawingRevisionValueObject {
   readonly drawing!: DrawingPath;
   readonly requirements!: RequirementChange[];
 

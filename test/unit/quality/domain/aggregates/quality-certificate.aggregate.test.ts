@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { QualityCertificate } from "../../../../../factory/quality/domain/aggregates/quality-certificate.aggregate.ts";
+import { QualityCertificateAggregate } from "../../../../../factory/quality/domain/aggregates/quality-certificate.aggregate.ts";
 import type { QualityCertificateProps } from "../../../../../factory/quality/domain/schemas/quality-certificate.schema.ts";
-import { ScenarioResult } from "../../../../../factory/quality/domain/value-objects/scenario-result.value-object.ts";
+import { ScenarioResultValueObject } from "../../../../../factory/quality/domain/value-objects/scenario-result.value-object.ts";
 
 const certificate = (overrides: Partial<QualityCertificateProps> = {}) =>
-  new QualityCertificate({
+  new QualityCertificateAggregate({
     workOrder: "add-orders",
     digest: "digest",
     scenarios: [],
@@ -22,7 +22,7 @@ describe("quality certificates", () => {
   });
 
   it("fails unproved scenarios, checks and unexercised procedures", () => {
-    const scenario = new ScenarioResult({
+    const scenario = new ScenarioResultValueObject({
       spec: "orders/list", requirement: "Orders are listed", scenario: "lists orders", result: "missing",
     });
     expect(certificate({ scenarios: [scenario] }).verdict).toBe("not verified");

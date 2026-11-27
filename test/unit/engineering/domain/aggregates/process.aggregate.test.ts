@@ -1,19 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { ProcessName } from "../../../../../factory/shared/domain/value-objects/process-name.value-object.ts";
-import { Process } from "../../../../../factory/engineering/domain/aggregates/process.aggregate.ts";
-import { WorkCenter } from "../../../../../factory/engineering/domain/entities/work-center.entity.ts";
+
+import { ProcessAggregate } from "../../../../../factory/engineering/domain/aggregates/process.aggregate.ts";
+import { WorkCenterEntity } from "../../../../../factory/engineering/domain/entities/work-center.entity.ts";
 import { EngineeringException } from "../../../../../factory/engineering/domain/exceptions/engineering.exceptions.ts";
-import { WorkCenterId } from "../../../../../factory/engineering/domain/value-objects/work-center-id.value-object.ts";
+
 
 const center = (name: string, ...dependsOn: string[]) =>
-  new WorkCenter({
-    id: new WorkCenterId({ value: name }),
+  new WorkCenterEntity({
+    id: name,
     parts: [],
-    waitsFor: dependsOn.map((value) => new WorkCenterId({ value })),
+    waitsFor: dependsOn,
   });
 
-const processOf = (...workCenters: WorkCenter[]) =>
-  new Process({ name: new ProcessName({ value: "clean-backend" }), workCenters });
+const processOf = (...workCenters: WorkCenterEntity[]) =>
+  new ProcessAggregate({ name: "clean-backend", workCenters });
 
 describe("process work centers", () => {
   it("runs dependencies first and allows independent work together", () => {
@@ -34,5 +34,29 @@ describe("process work centers", () => {
       .toThrow(EngineeringException);
     expect(() => processOf(center("proof", "build")).executionOrder())
       .toThrow("Unknown work center build");
+  });
+
+  it("names the cycle it finds", () => {
+    expect(processOf(center("design", "build"), center("build", "design")).cycle()).toEqual(["design", "build", "design"]);
+    expect(processOf(center("design"), center("build", "design")).cycle()).toBeUndefined();
+  });
+});
+
+describe("the workstreams of a schema, through the process", () => {
+  const ws = (id: string, ...dependsOn: string[]) => ({ id, layers: [{ name: id }], checks: [], dependsOn });
+  const line = [ws("modules", "adapters"), ws("adapters", "app-domain"), ws("app-domain"), ws("react")];
+
+  it("orders, finds the upstream and the parallel work with the aggregate's one calculation", () => {
+    expect(ProcessAggregate.runOrder(line)).toEqual(["app-domain", "adapters", "modules", "react"]);
+    expect(ProcessAggregate.upstream(line, "modules")).toEqual(["app-domain", "adapters"]);
+    expect(ProcessAggregate.mayRunTogether(line, "react", "modules")).toBe(true);
+    expect(ProcessAggregate.withUpstream(line, "adapters").map((w) => w.id)).toEqual(["adapters", "app-domain"]);
+  });
+
+  it("rejects a topology whose dependencies form a cycle, naming it", () => {
+    const topology = { a: { dependsOn: ["b"] }, b: { dependsOn: ["a"] } };
+    const folders = { a: { layerFiles: [] }, b: { layerFiles: [] } };
+    const declarations = { a: { layers: () => [] }, b: { layers: () => [] } };
+    expect(() => ProcessAggregate.loadWorkstreams(declarations, folders, topology, {} as never)).toThrow("workstream cycle: a → b → a");
   });
 });

@@ -1,4 +1,4 @@
-import type { Equipment } from "../aggregates/equipment.aggregate.ts";
+import type { EquipmentEntity } from "../entities/equipment.entity.ts";
 import {
   RepairKind,
   type EquipmentFinding,
@@ -18,7 +18,7 @@ const atLeast = (version: string, least: string): boolean => {
 };
 
 export class EquipmentInspectionService {
-  findings(equipment: Equipment, reading: EquipmentReading): EquipmentFinding[] {
+  findings(equipment: EquipmentEntity, reading: EquipmentReading): EquipmentFinding[] {
     const found: EquipmentFinding[] = [];
     const missing = (
       requirement: string,
@@ -98,7 +98,7 @@ export class EquipmentInspectionService {
     return found;
   }
 
-  notes(equipment: Equipment, reading: EquipmentNotes): string[] {
+  notes(equipment: EquipmentEntity, reading: EquipmentNotes): string[] {
     const found = reading.missingKeys.map(({ name, slug, file }) =>
       `the key ${name} that the procedure ${slug} (${file}) needs is in neither the environment nor .env: only the person can add it`,
     );

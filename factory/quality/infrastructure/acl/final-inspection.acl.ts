@@ -1,18 +1,7 @@
 import { z } from "zod";
+import { FinalInspectionSchema } from "../../domain/schemas/inspect-work-order.schema.ts";
 
-export const FinalInspectionRecordSchema = z.object({
-  name: z.string(),
-  repository: z.boolean(),
-  drawings: z.array(z.object({ spec: z.string(), text: z.string(), gauge: z.string().optional(), expected: z.array(z.object({ requirement: z.string(), scenario: z.string() })).optional() })),
-  workstreams: z.array(z.object({
-    id: z.string(),
-    upstream: z.array(z.string()),
-    tests: z.array(z.enum(["unit", "integration", "acceptance"])),
-  })),
-  procedures: z.array(z.object({ slug: z.string(), environments: z.array(z.string()), declined: z.boolean() })),
-  platform: z.string(),
-  review: z.object({ hasRubric: z.boolean(), keyVariable: z.string(), configured: z.boolean() }),
-});
+export const FinalInspectionRecordSchema = FinalInspectionSchema;
 
 export type FinalInspectionRecord = z.infer<typeof FinalInspectionRecordSchema>;
 export type InspectionRun = { status: number | null; output: string };

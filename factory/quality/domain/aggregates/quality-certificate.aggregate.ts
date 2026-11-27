@@ -1,11 +1,11 @@
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
 import { AuditStateSchema, QualityCertificateSchema, type InspectionVerdict, type QualityCertificateProps } from "../schemas/quality-certificate.schema.ts";
-import type { ScenarioResult } from "../value-objects/scenario-result.value-object.ts";
+import type { ScenarioResultValueObject } from "../value-objects/scenario-result.value-object.ts";
 
-export class QualityCertificate {
+export class QualityCertificateAggregate {
   readonly workOrder!: string;
   readonly digest!: string;
-  readonly scenarios!: ScenarioResult[];
+  readonly scenarios!: ScenarioResultValueObject[];
   readonly failing!: QualityCertificateProps["failing"];
   readonly review!: QualityCertificateProps["review"];
   readonly procedures!: QualityCertificateProps["procedures"];
@@ -19,7 +19,7 @@ export class QualityCertificate {
     return this.workOrder;
   }
 
-  get unproved(): ScenarioResult[] {
+  get unproved(): ScenarioResultValueObject[] {
     return this.scenarios.filter((scenario) => scenario.result !== "passed");
   }
 

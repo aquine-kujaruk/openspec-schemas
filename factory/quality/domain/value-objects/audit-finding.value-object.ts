@@ -1,7 +1,7 @@
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
 import { AuditFindingSchema, type AuditFindingProps } from "../schemas/audit-finding.schema.ts";
 
-export class AuditFinding {
+export class AuditFindingValueObject {
   readonly file!: string;
   readonly row!: string;
   readonly verdict!: "accepted" | "rejected";

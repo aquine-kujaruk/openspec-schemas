@@ -47,14 +47,15 @@ export function createSteps() {
       write("tsconfig.json", '{"compilerOptions":{"module":"nodenext"},"include":["factory"]}');
       write("factory.config.ts", 'export default { schema: "clean-backend", modules: "factory/*", entry: ["factory/main.ts"] };');
       write("factory/main.ts", 'import { isReady } from "./production/domain/schemas/work-order.schema.ts"; console.log(isReady({ status: "ready" }));');
-      write("factory/shared/domain/schemas/status.schema.ts", 'export type Status = { status: string };');
+      write("factory/shared/domain/schemas/status.schema.ts", 'export type Status = { status: string };\nexport const StatusSchema = { keys: ["status"] };');
       write("factory/production/domain/schemas/work-order.schema.ts", `
 import type { Status } from "../../../shared/domain/schemas/status.schema.ts";
+export const WorkOrderSchema = { keys: ["status"] };
 export const isReady = (value: Status) => value.status === "ready";
 `);
     },
     lineHasUnusedFile(): void {
-      write("factory/production/domain/schemas/unreached.schema.ts", 'export const legacy = "unreached";');
+      write("factory/production/domain/schemas/unreached.schema.ts", 'export const LegacySchema = { keys: ["unreached"] };');
     },
 
     // Action

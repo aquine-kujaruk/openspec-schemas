@@ -1,11 +1,11 @@
 import type { EquipmentRepositoryInterface } from "../../../../factory/maintenance/application/repository-interfaces/equipment.repository-interface.ts";
-import type { Equipment } from "../../../../factory/maintenance/domain/aggregates/equipment.aggregate.ts";
+import type { EquipmentEntity } from "../../../../factory/maintenance/domain/entities/equipment.entity.ts";
 import { RepairKind, type EquipmentNotes, type EquipmentReading, type EquipmentRepair } from "../../../../factory/maintenance/domain/schemas/equipment-reading.schema.ts";
 import type { EquipmentHoldings, EquipmentProcedure } from "../../../../factory/maintenance/domain/schemas/procedure-reading.schema.ts";
 import { EquipmentInstallationService } from "../../../../factory/maintenance/domain/services/equipment-installation.service.ts";
 
 export class InMemoryEquipmentRepository implements EquipmentRepositoryInterface {
-  equipment: Equipment | null = null;
+  equipment: EquipmentEntity | null = null;
   reading: EquipmentReading = {
     links: [],
     hasDefault: true,
@@ -24,7 +24,7 @@ export class InMemoryEquipmentRepository implements EquipmentRepositoryInterface
   readonly binaries = new Set<string>();
   readonly files = new Set<string>();
 
-  findEquipment(): Equipment | null {
+  findEquipment(): EquipmentEntity | null {
     return this.equipment;
   }
 
@@ -32,7 +32,7 @@ export class InMemoryEquipmentRepository implements EquipmentRepositoryInterface
     return this.reading;
   }
 
-  repairEquipment(_root: string, installed: Equipment, repair: EquipmentRepair): void {
+  repairEquipment(_root: string, installed: EquipmentEntity, repair: EquipmentRepair): void {
     const { reading } = this;
     this.repairs.push(repair);
     switch (repair.kind) {
@@ -45,7 +45,7 @@ export class InMemoryEquipmentRepository implements EquipmentRepositoryInterface
           link.holds = true;
         break;
       case RepairKind.Default:
-        this.defaultSchema = installed.processes[0]?.value;
+        this.defaultSchema = installed.processes[0];
         reading.hasDefault = this.defaultSchema !== undefined;
         break;
       case RepairKind.Roots:
@@ -63,7 +63,7 @@ export class InMemoryEquipmentRepository implements EquipmentRepositoryInterface
     }
   }
 
-  readNotes(_root: string, _installed: Equipment, env: Record<string, string | undefined> = {}): EquipmentNotes {
+  readNotes(_root: string, _installed: EquipmentEntity, env: Record<string, string | undefined> = {}): EquipmentNotes {
     return {
       missingKeys: [...this.procedures].flatMap(([slug, { file, keys = [] }]) =>
         keys.filter((name) => !env[name] && !this.dotenvKeys.has(name)).map((name) => ({ name, slug, file })),

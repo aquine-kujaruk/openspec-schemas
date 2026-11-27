@@ -1,5 +1,5 @@
-import { Drawing } from "../../domain/entities/drawing.entity.ts";
-import { Gauge } from "../../domain/value-objects/gauge.value-object.ts";
+import { DrawingEntity } from "../../domain/entities/drawing.entity.ts";
+import { GaugeValueObject } from "../../domain/value-objects/gauge.value-object.ts";
 import type { Scenario } from "../../domain/schemas/drawing.schema.ts";
 import type { DrawingAcl } from "../acl/drawing.acl.ts";
 import type { DrawingRepositoryInterface } from "../../application/repository-interfaces/drawing.repository-interface.ts";
@@ -15,8 +15,8 @@ export class DrawingRepositoryImplementation implements DrawingRepositoryInterfa
     const { exitStatus, drawings } = await this.tool.makeGauges(args);
     return {
       exitStatus,
-      drawings: drawings.map(({ path, gherkin }) => new Drawing({ path, scenarios: this.scenarios(gherkin) })),
-      gauges: drawings.map(({ path, file }) => new Gauge({ drawing: path, file })),
+      drawings: drawings.map(({ path, gherkin }) => new DrawingEntity({ path, scenarios: this.scenarios(gherkin) })),
+      gauges: drawings.map(({ path, file }) => new GaugeValueObject({ drawing: path, file })),
     };
   }
 

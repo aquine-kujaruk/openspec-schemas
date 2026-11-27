@@ -3,8 +3,7 @@
 import { expect } from "vitest";
 import { AuthorizeWriteUseCase } from "../../../factory/change-control/application/use-cases/authorize-write.use-case.ts";
 import type { WritableLine } from "../../../factory/change-control/domain/schemas/write-boundary.schema.ts";
-import type { Authorization } from "../../../factory/change-control/domain/value-objects/authorization.value-object.ts";
-import { WriteRequest } from "../../../factory/change-control/domain/value-objects/write-request.value-object.ts";
+import type { AuthorizationValueObject } from "../../../factory/change-control/domain/value-objects/authorization.value-object.ts";
 import { InMemoryReleasedWorkOrderRepository } from "./repositories/in-memory-released-work-order.repository.ts";
 import { InMemoryWriteBoundaryRepository } from "./repositories/in-memory-write-boundary.repository.ts";
 
@@ -19,7 +18,7 @@ export function createSteps() {
   let line: string | undefined;
   let declared: Array<WritableLine & { process: string }> = [];
   let implicitRoots = configuredRoots;
-  let authorization: Authorization;
+  let authorization: AuthorizationValueObject;
 
   const judge = async (files: string[]): Promise<void> => {
     boundary.seed({
@@ -34,7 +33,7 @@ export function createSteps() {
       builds: made !== "spec-plan",
       line,
     })));
-    authorization = await authorize.execute(new WriteRequest({ files }));
+    authorization = await authorize.execute(files);
   };
 
   return {

@@ -5,7 +5,7 @@ import {
   type MaintenanceItemProps,
 } from "../schemas/maintenance-item.schema.ts";
 
-export class MaintenanceItem {
+export class MaintenanceItemValueObject {
   readonly kind!: MaintenanceItemProps["kind"];
   readonly requirement!: string;
   readonly detail!: string;

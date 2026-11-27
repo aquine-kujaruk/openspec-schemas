@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { PlantException } from "../exceptions/plant.exceptions.ts";
 import { PLATFORMS } from "./platform.schema.ts";
 import type { FactoryConfig, Platform } from "./line-types.schema.ts";
@@ -35,7 +36,8 @@ export type ProjectConfig = Overrides & {
  * a shell command that receives the change's name in place of `{change}` and takes it wherever it
  * runs.
  */
-export type Runner = "session" | { command: string };
+export const RunnerSchema = z.union([z.literal("session"), z.object({ command: z.string() })]);
+export type Runner = z.infer<typeof RunnerSchema>;
 
 /** Types a project configuration without changing it: `export default defineFactory({ ... })`. */
 export const defineFactory = (c: ProjectConfig): ProjectConfig => c;

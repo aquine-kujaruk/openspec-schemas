@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { WorkCenterId } from "../value-objects/work-center-id.value-object.ts";
-import { Part } from "../value-objects/part.value-object.ts";
+import { WorkCenterIdSchema } from "../schemas/work-center-id.schema.ts";
+import { PartValueObject } from "../value-objects/part.value-object.ts";
 
 export const WorkCenterSchema = z.object({
-  id: z.instanceof(WorkCenterId),
-  parts: z.array(z.instanceof(Part)),
-  waitsFor: z.array(z.instanceof(WorkCenterId)),
+  id: WorkCenterIdSchema,
+  parts: z.array(z.instanceof(PartValueObject)),
+  waitsFor: z.array(WorkCenterIdSchema),
 });
 export type WorkCenterProps = z.infer<typeof WorkCenterSchema>;

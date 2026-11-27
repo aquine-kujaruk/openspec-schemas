@@ -1,7 +1,7 @@
-import type { Line } from "../../../shared/domain/entities/line.entity.ts";
-import type { Plant } from "../../../shared/domain/entities/plant.entity.ts";
+import type { LineEntity } from "../../../shared/domain/entities/line.entity.ts";
+import type { PlantEntity } from "../../../shared/domain/entities/plant.entity.ts";
 
 export interface PlantRepositoryInterface {
-  getPlant(): Promise<Plant>;
-  prepareRoots(plant: Plant, line: Line): Promise<string[]>;
+  getPlant(): Promise<PlantEntity>;
+  prepareRoots(plant: PlantEntity, line: LineEntity): Promise<string[]>;
 }
