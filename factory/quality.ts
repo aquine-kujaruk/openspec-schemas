@@ -336,7 +336,8 @@ export async function inspect(root: string, name: string, options: InspectionOpt
           return { spec, text, gauge: suite, expected: scenariosOfDelta(source) };
         return { spec, text, gauge };
       }),
-      workstreams: Object.entries(process.workstreams).map(([id, workstream]) => ({
+      // A change whose plan holds no task builds nothing: no workstream check and no end-to-end run.
+      workstreams: !plan.parsePlan(order.plan ?? "").phases.some((phase) => phase.tasks.length) ? [] : Object.entries(process.workstreams).map(([id, workstream]) => ({
         id,
         upstream: product.config.workstreams[id]?.dependsOn ?? [],
         tests: workstream.tests ?? [],

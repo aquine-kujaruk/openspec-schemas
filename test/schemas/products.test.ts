@@ -85,6 +85,11 @@ describe("a project declares its products by folder", () => {
     );
   });
 
+  it("the specification folder, spikes included, may stay outside every zone", async () => {
+    const [api] = await projectProducts(project(MONOREPO));
+    expect(api!.config.allowUnmatched).toContain("openspec/**");
+  });
+
   it("a product without a root or a schema is refused by name", async () => {
     await expect(
       projectProducts(
