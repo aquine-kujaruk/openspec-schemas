@@ -1,6 +1,6 @@
 {
   "package": "fullstack",
-  "version": "0.15.1",
+  "version": "0.15.2",
   "agents": [
     "claude",
     "codex"
@@ -57,7 +57,7 @@
     "yaml": "2.9.1",
     "zod": "4.6.7"
   },
-  "command": "factory-0.15.1.tgz",
+  "command": "factory-0.15.2.tgz",
   "resources": {
     "factory/change-control.ts": "74fdd46975d1e29b809be0ed09506d1983ea8bcff53716903393589ce50fa31a",
     "factory/change-control/application/repository-interfaces/released-work-order.repository-interface.ts": "73174201c0559a8c1b90106b51364f630cd028a351147d11e747b07da438ff34",
@@ -305,7 +305,7 @@
     "factory/shared/infrastructure/adapters/testing.adapter.ts": "190f76b4dc1a8a694039715ff556d0b513d0fafe6fedab8c77868d899c837e3a",
     "node_modules/feat2test/package.json": "b9bbf233db34625e3f2f5c576c17d2e9d3a821cde7399f9b1cf43ae7e07d247a",
     "node_modules/opsx-gherkin/package.json": "73dc6cc02b7c17782ec0e4ff5c93d9a933d5f6ff0fc78da0192ac65b7ef8890b",
-    "package.json": "cdfb1623c87eabd72da332a8a03c53b489c60b24f877355dbb9557be978d662a",
+    "package.json": "a38828f356d602f434d60c03d3128593879bfab73ded8df4422961ee00fda43e",
     "packages/fullstack.ts": "3ff0a64328e5b53fe8063b694a9b7c63639d3ef3f221073582031025afcd6c9b",
     "schemas/clean-backend/schema.ts": "3a87229d06a6e6052736136029274eb4b9793e7337d25d6797ad566c3832714e",
     "schemas/clean-react/review/RUBRIC.md": "78b08b9181ce96e4f7e390668eacac1c7141c6d43ec92622d76ca70b4013b6fd",
@@ -361,9 +361,9 @@
     "schemas/shared/phases/verify/SKILL.md": "df859a591f8a70e1c870cfd8efe0bc781463b1c8903f2b2f98c29bbf1b6f5480",
     "schemas/shared/skills/setup/SKILL.md": "920f8b9ab97d31a6bf0d8c8d70eb87033045d508805c80a6f531fd564d9f4335",
     "schemas/spec-plan/questions/ask-on-commitment.md": "6e843d16d2863760270146ab949fb768f6bb7022de93f0dfa6540c0fa7b9302a",
-    "schemas/spec-plan/schema.ts": "d11234cfa84ec58d84822bc086d8083b6584d795fb7d5f59363ef70ee598ac2d",
+    "schemas/spec-plan/schema.ts": "a3437c7f70e23a59d02fb79f97b7fb6cd39942226ef75f5e2558ff92b832792b",
     "schemas/spec-plan/templates/plan.md": "7a8e0612bbce4d48bdeb962c16d0d88b75e89227992a98c81e874a5c74230fbe",
     "schemas/spec-plan/templates/spec.md": "1555e5bdb9d0de24dd2d98a28f7c1adaa82c9124fd9027369817ffc0d295ec07",
-    "schemas/spec-plan/validators/standard/validator.ts": "c5abda8e1c3fac21316bfe411cc97123020f11bc1380f1a06a81e9f9103dd4aa"
+    "schemas/spec-plan/validators/standard/validator.ts": "08ff3403806c8799a31f47472b461b53aad6dd56e905851fc2724671fb7b4410"
   }
 }
