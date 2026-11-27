@@ -96,7 +96,7 @@ export const defaults: FactoryConfig = {
   schemaPackage: "zod",
   review,
   ignore: [],
-  allowUnmatched: ["*.config.*", "test/e2e/**", "test/*.ts", "test/**/*.md"],
+  allowUnmatched: ["*.config.*", "test/e2e/**", "test/*.ts", "test/**/*.md", "openspec/**"],
   workstreams: {},
 };
 
