@@ -2,7 +2,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { join, normalize } from "node:path";
 import { type Block, deltaRequirementsOf, operationsOf, type Tag, tagOf } from "factory/sdk";
 import type { Standing } from "factory/sdk";
-import type { Candidate, Finding, Validator } from "factory/sdk";
+import type { Candidate, Finding, JudgementRequest, Validator } from "factory/sdk";
 
 type Rule = (candidate: Candidate) => Finding[];
 type Kind = "decision" | "procedure";
@@ -273,8 +273,7 @@ const AUTHORS = ["person", "agent"];
 /**
  * Every decision the change writes says who took it, with exactly one `@by:person` or `@by:agent`:
  * the lines under Decisions, the durable blocks, the screens, and each requirement a delta spec
- * adds or modifies, on the first line of its text. An architecture decision binds future changes,
- * so only the person takes it: `@by:person`.
+ * adds or modifies, on the first line of its text.
  */
 const decisionAuthored: Rule = (c) => {
   const judge = (what: string, tags: Tag[], block?: string): Finding[] => {
@@ -296,18 +295,7 @@ const decisionAuthored: Rule = (c) => {
   );
   return [
     ...c.plan.changeDecisions.flatMap((d) => judge(`the decision "${d.text.slice(0, 60)}"`, d.tags)),
-    ...c.plan.decisions.flatMap((b) => {
-      const found = judge(`the decision ${b.slug}`, b.tags, b.slug);
-      if (found.length || tagOf(b, "by")?.value !== "agent") return found;
-      return [
-        {
-          rule: "decision-authored",
-          block: b.slug,
-          tag: "@by",
-          message: `the architecture decision ${b.slug} carries @by:agent: it binds future changes, so it is the person's. Ask it under Open questions with the option you would pick, and tag it @by:person once they answer`,
-        },
-      ];
-    }),
+    ...c.plan.decisions.flatMap((b) => judge(`the decision ${b.slug}`, b.tags, b.slug)),
     ...c.plan.procedures.flatMap((b) => judge(`the procedure ${b.slug}`, b.tags, b.slug)),
     ...c.plan.screens.flatMap((b) => judge(`the screen ${b.slug}`, b.tags, b.slug)),
     ...requirements.flatMap((r) =>
@@ -315,6 +303,85 @@ const decisionAuthored: Rule = (c) => {
     ),
   ];
 };
+
+/**
+ * An architecture decision the agent took alone says why it was the agent's: a consolidated
+ * decision already settled the same kind of choice (`@basis:precedent:<slug>`), or no option it
+ * weighs changes what the product can do or for whom (`@basis:no-fork`). One that forks on intent
+ * is the person's, asked under Open questions and tagged `@by:person`.
+ */
+/** The basis an agent's architecture decision states, when it states exactly one valid basis. */
+const basisOf = (c: Pick<Candidate, "consolidated">, b: Block): { precedent?: string } | undefined => {
+  if (tagOf(b, "by")?.value !== "agent") return undefined;
+  const bases = b.tags.filter((t) => t.name === "basis");
+  if (bases.length !== 1) return undefined;
+  const value = bases[0]!.value ?? "";
+  if (value === "no-fork") return {};
+  const precedent = /^precedent:(.+)$/.exec(value)?.[1];
+  return precedent && c.consolidated.decisions.has(precedent) ? { precedent } : undefined;
+};
+
+const ASK = "or, when an option changes what the product can do or for whom, ask the person under Open questions and tag it @by:person";
+
+const decisionBasis: Rule = (c) =>
+  c.plan.decisions.flatMap((b) => {
+    if (tagOf(b, "by")?.value !== "agent" || basisOf(c, b)) return [];
+    const bases = b.tags.filter((t) => t.name === "basis");
+    const fail = (message: string): Finding[] => [{ rule: "decision-basis", block: b.slug, tag: "@basis", message }];
+    if (bases.length !== 1)
+      return fail(
+        bases.length
+          ? `the architecture decision ${b.slug} carries ${bases.length} @basis tags: keep exactly one`
+          : `the architecture decision ${b.slug} was taken by the agent and states no basis: tag it @basis:precedent:<slug> when a consolidated decision settled the same kind of choice, @basis:no-fork when no option changes what the product can do or for whom, ${ASK}`,
+      );
+    const value = bases[0]!.value ?? "";
+    const precedent = /^precedent:(.+)$/.exec(value)?.[1];
+    return fail(
+      precedent
+        ? `the architecture decision ${b.slug} names the precedent ${precedent}, which is no consolidated decision: name one under openspec/adr, ${ASK}`
+        : `the architecture decision ${b.slug} carries @basis:${value}: its basis is precedent:<slug> or no-fork, ${ASK}`,
+    );
+  });
+
+const NO_FORK =
+  "An agent took the architecture decision below without asking the person, on the grounds that no option it weighs changes what the product can do or for whom. Does that hold: none of the options it chose or discarded changes where the person's data lives, whether the product works locally or online, on which devices or for how many people it works, which outside services it needs, or what it costs?";
+const PRECEDENT =
+  "An agent took the architecture decision below without asking the person, following the earlier decision quoted after it. Does the earlier decision settle the same kind of choice, so that this decision follows it rather than opening a new one?";
+
+const stateOf = (b: Block) => `### Decision: ${b.slug} · ${b.title}\n\n${b.body}`;
+
+/** One question to the decision model per architecture decision the agent took with a basis. */
+const judgements = (c: Omit<Candidate, "judged">): JudgementRequest[] =>
+  c.plan.decisions.flatMap((b) => {
+    const basis = basisOf(c, b);
+    if (!basis) return [];
+    if (basis.precedent === undefined) return [{ block: b.slug, state: stateOf(b), instructions: NO_FORK }];
+    const earlier = c.consolidated.decisions.get(basis.precedent)!;
+    return [
+      {
+        block: b.slug,
+        state: `${stateOf(b)}\n\nEarlier decision, ${basis.precedent}:\n\n${earlier.body}`,
+        instructions: PRECEDENT,
+      },
+    ];
+  });
+
+/** The decision model holds an agent's basis at this probability or more; below it, the person decides. */
+const SURE = 0.9;
+
+const decisionBasisHolds: Rule = (c) =>
+  c.judged.configured
+    ? judgements(c).flatMap(({ block }) => {
+        const answer = c.judged.answers.get(block);
+        const fail = (message: string): Finding[] => [{ rule: "decision-basis-holds", block, tag: "@basis", message }];
+        if (answer === undefined) return fail(`the decision model did not judge the architecture decision ${block}: validate again`);
+        if (typeof answer !== "number")
+          return fail(`the decision model could not judge the basis of the architecture decision ${block} (${answer.error}): validate again, or ask the person under Open questions and tag it @by:person`);
+        return answer >= SURE
+          ? []
+          : fail(`the decision model is ${Math.round(answer * 100)} % sure the basis of the architecture decision ${block} holds: it may fork on what the person wants, so ask them under Open questions and tag it @by:person`);
+      })
+    : [];
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -344,8 +411,10 @@ const RULES: Rule[] = [
   tasksBelong,
   deltaSpecsOrNoBehaviour,
   decisionAuthored,
+  decisionBasis,
+  decisionBasisHolds,
   planApproved,
 ];
 
 /** Spec: `flow/plan-validation`. A change is ready when no rule finds anything. */
-export default { ready: (c) => RULES.flatMap((rule) => rule(c)) } satisfies Validator;
+export default { ready: (c) => RULES.flatMap((rule) => rule(c)), judgements } satisfies Validator;

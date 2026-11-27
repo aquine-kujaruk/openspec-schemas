@@ -965,18 +965,6 @@ describe('Feature: flow/plan-validation Specification', () => {
     })
 
     // Line 247
-    test('a `architecture decision` tagged `@by:agent` makes the change `not ready`', async () => {
-      const steps = createSteps()
-
-      // Given a change whose `architecture decision` `money-in-cents` is tagged `@by:agent`
-      await steps.decisionOfKindTaggedBy('architecture decision', 'money-in-cents', '@by:agent')
-      // When the change is validated
-      await steps.validateChange()
-      // Then the change is reported `not ready`
-      await steps.changeReportedAs('not ready')
-    })
-
-    // Line 247
     test('a `architecture decision` tagged `none` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -1086,7 +1074,7 @@ describe('Feature: flow/plan-validation Specification', () => {
   })
 
   describe('Rule: A change is ready only once the person approved its plan', () => {
-    // Line 277
+    // Line 276
     test('a plan approved `2026-11-17` makes the change `ready`', async () => {
       const steps = createSteps()
 
@@ -1098,7 +1086,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 277
+    // Line 276
     test('a plan approved `none` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -1110,7 +1098,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 277
+    // Line 276
     test('a plan approved `yesterday` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -1120,6 +1108,228 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.validateChange()
       // Then the change is reported `not ready`
       await steps.changeReportedAs('not ready')
+    })
+  })
+
+  describe('Rule: An architecture decision the agent took states its basis', () => {
+    // Line 293
+    test('an architecture decision tagged `@by:person` against the consolidated decisions `none` is `ready`', async () => {
+      const steps = createSteps()
+
+      // Given the consolidated decisions `none`
+      await steps.consolidatedDecisions('none')
+      // And an architecture decision `money-in-cents` tagged `@by:person`
+      await steps.architectureDecisionTagged('@by:person')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 293
+    test('an architecture decision tagged `@by:agent` against the consolidated decisions `none` is `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given the consolidated decisions `none`
+      await steps.consolidatedDecisions('none')
+      // And an architecture decision `money-in-cents` tagged `@by:agent`
+      await steps.architectureDecisionTagged('@by:agent')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 293
+    test('an architecture decision tagged `@by:agent @basis:no-fork` against the consolidated decisions `none` is `ready`', async () => {
+      const steps = createSteps()
+
+      // Given the consolidated decisions `none`
+      await steps.consolidatedDecisions('none')
+      // And an architecture decision `money-in-cents` tagged `@by:agent @basis:no-fork`
+      await steps.architectureDecisionTagged('@by:agent @basis:no-fork')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 293
+    test('an architecture decision tagged `@by:agent @basis:precedent:rounding` against the consolidated decisions `rounding` is `ready`', async () => {
+      const steps = createSteps()
+
+      // Given the consolidated decisions `rounding`
+      await steps.consolidatedDecisions('rounding')
+      // And an architecture decision `money-in-cents` tagged `@by:agent @basis:precedent:rounding`
+      await steps.architectureDecisionTagged('@by:agent @basis:precedent:rounding')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 293
+    test('an architecture decision tagged `@by:agent @basis:precedent:rounding` against the consolidated decisions `none` is `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given the consolidated decisions `none`
+      await steps.consolidatedDecisions('none')
+      // And an architecture decision `money-in-cents` tagged `@by:agent @basis:precedent:rounding`
+      await steps.architectureDecisionTagged('@by:agent @basis:precedent:rounding')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 293
+    test('an architecture decision tagged `@by:agent @basis:hunch` against the consolidated decisions `none` is `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given the consolidated decisions `none`
+      await steps.consolidatedDecisions('none')
+      // And an architecture decision `money-in-cents` tagged `@by:agent @basis:hunch`
+      await steps.architectureDecisionTagged('@by:agent @basis:hunch')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 293
+    test('an architecture decision tagged `@by:agent @basis:no-fork @basis:precedent:rounding` against the consolidated decisions `rounding` is `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given the consolidated decisions `rounding`
+      await steps.consolidatedDecisions('rounding')
+      // And an architecture decision `money-in-cents` tagged `@by:agent @basis:no-fork @basis:precedent:rounding`
+      await steps.architectureDecisionTagged('@by:agent @basis:no-fork @basis:precedent:rounding')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+  })
+
+  describe('Rule: The decision model judges the basis of an agent\'s architecture decision', () => {
+    // Line 315
+    test('a decision tagged `@basis:no-fork` with the key `configured` and a model sure at `0.95` is `ready`', async () => {
+      const steps = createSteps()
+
+      // Given the decision model key is `configured`
+      await steps.decisionModelKey('configured')
+      // And an architecture decision `money-in-cents` tagged `@by:agent @basis:no-fork` whose basis the decision model holds at `0.95`
+      await steps.agentDecisionJudgedAt('@basis:no-fork', '0.95')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 315
+    test('a decision tagged `@basis:no-fork` with the key `configured` and a model sure at `0.60` is `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given the decision model key is `configured`
+      await steps.decisionModelKey('configured')
+      // And an architecture decision `money-in-cents` tagged `@by:agent @basis:no-fork` whose basis the decision model holds at `0.60`
+      await steps.agentDecisionJudgedAt('@basis:no-fork', '0.60')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 315
+    test('a decision tagged `@basis:no-fork` with the key `configured` and a model sure at `unreachable` is `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given the decision model key is `configured`
+      await steps.decisionModelKey('configured')
+      // And an architecture decision `money-in-cents` tagged `@by:agent @basis:no-fork` whose basis the decision model holds at `unreachable`
+      await steps.agentDecisionJudgedAt('@basis:no-fork', 'unreachable')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 315
+    test('a decision tagged `@basis:no-fork` with the key `absent` and a model sure at `unreachable` is `ready`', async () => {
+      const steps = createSteps()
+
+      // Given the decision model key is `absent`
+      await steps.decisionModelKey('absent')
+      // And an architecture decision `money-in-cents` tagged `@by:agent @basis:no-fork` whose basis the decision model holds at `unreachable`
+      await steps.agentDecisionJudgedAt('@basis:no-fork', 'unreachable')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 315
+    test('a decision tagged `@basis:precedent:rounding` with the key `configured` and a model sure at `0.92` is `ready`', async () => {
+      const steps = createSteps()
+
+      // Given the decision model key is `configured`
+      await steps.decisionModelKey('configured')
+      // And an architecture decision `money-in-cents` tagged `@by:agent @basis:precedent:rounding` whose basis the decision model holds at `0.92`
+      await steps.agentDecisionJudgedAt('@basis:precedent:rounding', '0.92')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `ready`
+      await steps.changeReportedAs('ready')
+    })
+
+    // Line 315
+    test('a decision tagged `@basis:precedent:rounding` with the key `configured` and a model sure at `0.40` is `not ready`', async () => {
+      const steps = createSteps()
+
+      // Given the decision model key is `configured`
+      await steps.decisionModelKey('configured')
+      // And an architecture decision `money-in-cents` tagged `@by:agent @basis:precedent:rounding` whose basis the decision model holds at `0.40`
+      await steps.agentDecisionJudgedAt('@basis:precedent:rounding', '0.40')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the change is reported `not ready`
+      await steps.changeReportedAs('not ready')
+    })
+
+    // Line 330
+    test('a decision tagged `@basis:no-fork` judged at `0.95` is asked `once` when its text `stays`', async () => {
+      const steps = createSteps()
+
+      // Given the decision model key is `configured`
+      await steps.decisionModelKey('configured')
+      // And an architecture decision `money-in-cents` tagged `@by:agent @basis:no-fork` whose basis the decision model holds at `0.95`
+      await steps.agentDecisionJudgedAt('@basis:no-fork', '0.95')
+      // And the change validated once
+      await steps.changeValidatedOnce()
+      // And the decision's text `stays`
+      await steps.decisionTextAfterJudgement('stays')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the decision model was asked `once`
+      await steps.decisionModelAsked('once')
+    })
+
+    // Line 330
+    test('a decision tagged `@basis:no-fork` judged at `0.95` is asked `twice` when its text `changes`', async () => {
+      const steps = createSteps()
+
+      // Given the decision model key is `configured`
+      await steps.decisionModelKey('configured')
+      // And an architecture decision `money-in-cents` tagged `@by:agent @basis:no-fork` whose basis the decision model holds at `0.95`
+      await steps.agentDecisionJudgedAt('@basis:no-fork', '0.95')
+      // And the change validated once
+      await steps.changeValidatedOnce()
+      // And the decision's text `changes`
+      await steps.decisionTextAfterJudgement('changes')
+      // When the change is validated
+      await steps.validateChange()
+      // Then the decision model was asked `twice`
+      await steps.decisionModelAsked('twice')
     })
   })
 })
