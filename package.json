@@ -1,6 +1,6 @@
 {
   "name": "openspec-schemas",
-  "version": "0.15.1",
+  "version": "0.15.2",
   "private": true,
   "description": "OpenSpec schemas, the resources they are built from and the packages built from them.",
   "type": "module",
