@@ -5,9 +5,7 @@ import type { QualityControlRunRecord } from "../../domain/schemas/quality-contr
 export { QualityControlRunRecordSchema as InspectionRecordSchema } from "../../domain/schemas/quality-control-run.schema.ts";
 export type InspectionRecord = QualityControlRunRecord;
 
-export interface InspectionAcl {
-  inspectLine(line: string, scope: readonly string[]): Promise<InspectionRecord>;
-}
+export type InspectionPort = (line: string, scope: readonly string[]) => Promise<InspectionRecord>;
 
 export type InspectionFinding = { file: string; standard: string; tool: string };
 export type QualityCheck = (args: string[], record?: (finding: InspectionFinding) => void) => Promise<number>;

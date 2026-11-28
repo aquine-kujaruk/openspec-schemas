@@ -21,9 +21,6 @@ import { runtime } from "./shared/infrastructure/adapters/runtime.adapter.ts";
 import { MakeGaugesUseCase } from "./quality/application/use-cases/make-gauges.use-case.ts";
 import { RunGaugesUseCase } from "./quality/application/use-cases/run-gauges.use-case.ts";
 import { RunQualityControlUseCase } from "./quality/application/use-cases/run-quality-control.use-case.ts";
-import { DrawingAdapter } from "./quality/infrastructure/adapters/drawing.adapter.ts";
-import { GaugeRunAdapter } from "./quality/infrastructure/adapters/gauge-run.adapter.ts";
-import { InspectionAdapter } from "./quality/infrastructure/adapters/inspection.adapter.ts";
 import type { DrawingRecord } from "./quality/infrastructure/acl/drawing.acl.ts";
 import type { InspectionRecord } from "./quality/infrastructure/acl/inspection.acl.ts";
 import { DrawingRepositoryImplementation } from "./quality/infrastructure/repository-implementations/drawing.repository-implementation.ts";
@@ -210,30 +207,30 @@ const check = createCheck({
 });
 
 const newGauges = new MakeGaugesUseCase(new DrawingRepositoryImplementation(
-  new DrawingAdapter(async (args) => {
+  async (args) => {
     await project.initialize();
     const drawings: DrawingRecord[] = [];
     const exitStatus = await generate.generate([...args], (drawing) => drawings.push(drawing));
 
     return { exitStatus, drawings };
-  }),
+  },
 ));
 
 const gaugeRun = new RunGaugesUseCase(new GaugeRunRepositoryImplementation(
-  new GaugeRunAdapter(async (args) => {
+  async (args) => {
     await project.initialize();
 
     return test.test([...args]);
-  }),
+  },
 ));
 
 const inspection = new RunQualityControlUseCase(new InspectionRepositoryImplementation(
-  new InspectionAdapter(async (_line, scope) => {
+  async (_line, scope) => {
     const defects: InspectionRecord["defects"] = [];
     const exitStatus = await check.check([...scope], (finding) => defects.push(finding));
 
     return { defects, exitStatus };
-  }),
+  },
 ));
 
 export const makeGauges = async (args: string[]) => (await newGauges.execute(args)).exitStatus;

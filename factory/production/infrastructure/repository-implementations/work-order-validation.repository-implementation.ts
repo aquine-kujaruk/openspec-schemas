@@ -1,13 +1,18 @@
 import type { WorkOrderValidationRepositoryInterface } from "../../application/repository-interfaces/work-order-validation.repository-interface.ts";
-import type { WorkOrderValidationAcl } from "../acl/work-order-validation.acl.ts";
+import { WorkOrderFindingRecordSchema, WorkOrderPlanRecordSchema, type WorkOrderValidationPort } from "../acl/work-order-validation.acl.ts";
 
 export class WorkOrderValidationRepositoryImplementation implements WorkOrderValidationRepositoryInterface {
-  private readonly documents: WorkOrderValidationAcl;
+  private readonly documents: WorkOrderValidationPort;
 
-  constructor(documents: WorkOrderValidationAcl) {
+  constructor(documents: WorkOrderValidationPort) {
     this.documents = documents;
   }
 
-  readPlan(name: string) { return this.documents.readPlan(name); }
-  listFindings(name: string) { return this.documents.listFindings(name); }
+  async readPlan(name: string): Promise<string | null> {
+    return WorkOrderPlanRecordSchema.parse(await this.documents.readPlan(name));
+  }
+
+  async listFindings(name: string): Promise<Array<{ rule: string; message: string }>> {
+    return WorkOrderFindingRecordSchema.array().parse(await this.documents.listFindings(name));
+  }
 }

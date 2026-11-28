@@ -24,7 +24,6 @@ import { StartStageUseCase } from "./production/application/use-cases/start-stag
 import { ListReleasedWorkOrdersUseCase } from "./production/application/use-cases/list-released-work-orders.use-case.ts";
 
 import { ValidateWorkOrderUseCase } from "./production/application/use-cases/validate-work-order.use-case.ts";
-import { WorkOrderValidationAdapter } from "./production/infrastructure/adapters/work-order-validation.adapter.ts";
 import { WorkOrderValidationRepositoryImplementation } from "./production/infrastructure/repository-implementations/work-order-validation.repository-implementation.ts";
 import { CHANGES, GATE, WorkOrderRecordAdapter } from "./production/infrastructure/adapters/work-order-record.adapter.ts";
 import { DECISIONS, PROCEDURES } from "./production/infrastructure/acl/standing-record.acl.ts";
@@ -360,7 +359,7 @@ export async function startStage(args: string[]): Promise<number> {
 }
 
 const assessment = new ValidateWorkOrderUseCase(new WorkOrderValidationRepositoryImplementation(
-  new WorkOrderValidationAdapter(async (name) => change.readChange(root, name)?.plan ?? null, assess),
+  { readPlan: async (name) => change.readChange(root, name)?.plan ?? null, listFindings: assess },
 ));
 
 export async function validateWorkOrder(args: string[]): Promise<number> {

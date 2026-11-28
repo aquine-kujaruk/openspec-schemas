@@ -1,16 +1,3 @@
-import type { GaugeRunAcl } from "../acl/gauge-run.acl.ts";
-
-export class GaugeRunAdapter implements GaugeRunAcl {
-  private readonly run: GaugeRunAcl["runGauges"];
-
-  constructor(run: GaugeRunAcl["runGauges"]) {
-    this.run = run;
-  }
-
-  runGauges(args: readonly string[]) {
-    return this.run(args);
-  }
-}
 
 import type { E2eTest, E2eRun, E2eRunner } from "../acl/gauge-run.acl.ts";
 import type { GaugeRunnerTools } from "../acl/gauge-run.acl.ts";

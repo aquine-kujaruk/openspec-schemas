@@ -1,15 +1,15 @@
 import { GaugeBatchRecordSchema, type GaugeBatchRecord } from "../../domain/schemas/drawing.schema.ts";
-import type { DrawingAcl } from "../acl/drawing.acl.ts";
+import type { DrawingPort } from "../acl/drawing.acl.ts";
 import type { DrawingRepositoryInterface } from "../../application/repository-interfaces/drawing.repository-interface.ts";
 
 export class DrawingRepositoryImplementation implements DrawingRepositoryInterface {
-  private readonly tool: DrawingAcl;
+  private readonly make: DrawingPort;
 
-  constructor(tool: DrawingAcl) {
-    this.tool = tool;
+  constructor(make: DrawingPort) {
+    this.make = make;
   }
 
   async makeGauges(args: readonly string[]): Promise<GaugeBatchRecord> {
-    return GaugeBatchRecordSchema.parse(await this.tool.makeGauges(args));
+    return GaugeBatchRecordSchema.parse(await this.make(args));
   }
 }

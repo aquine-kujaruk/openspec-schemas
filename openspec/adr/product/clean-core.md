@@ -42,9 +42,9 @@ A work center SHALL describe its direct dependencies; the Process aggregate SHAL
 
 ### Decision: internal-ports-composed-directly · An adapter wraps an external system; internal ports are composed
 
-@origin:2026-11-18-reparar-revision-semantica @applies:factory @enforced:pending @by:person
+@origin:2026-11-28-adapters-wrap-external-systems @applies:schemas,factory @enforced:adapter-wraps-external-system @by:person
 
-A Factory adapter SHALL wrap an external system (a package, an API, the disk). The composition root SHALL connect an internal port such as change control to the production operation, adapt its result to the validated consumer contract and keep its error semantics. The repository SHALL state the operation or query, a generic resource adapter SHALL execute it, and a contract adapter MAY compose a disk or HTTP adapter and transform the record with the contract schema.
+An adapter SHALL wrap an external system (a package, an API, the disk, the environment) or an in-memory stand-in for one. The composition root SHALL connect an internal port such as change control to the production operation through the consumer's repository implementation, which validates the result with the consumer's contract and keeps its error semantics. The repository SHALL state the operation or query, a generic resource adapter SHALL execute it, and a contract adapter MAY compose a disk or HTTP adapter and transform the record with the contract schema.
 
 **Why** Adapters that forwarded an internal callback, such as `ReleasedWorkOrderAdapter.readStarted()`, are not glue to anything external.
 

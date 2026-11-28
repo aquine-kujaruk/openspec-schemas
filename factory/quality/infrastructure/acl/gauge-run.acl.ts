@@ -1,6 +1,4 @@
-export interface GaugeRunAcl {
-  runGauges(args: readonly string[]): Promise<number>;
-}
+export type GaugeRunPort = (args: readonly string[]) => Promise<number>;
 
 export declare const E2E_TOOLS: {
   readonly e2e: "0.22.0";

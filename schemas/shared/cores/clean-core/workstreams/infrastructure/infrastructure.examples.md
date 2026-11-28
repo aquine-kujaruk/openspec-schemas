@@ -80,6 +80,30 @@ export class B2cClientRepositoryImplementation extends ClientRepositoryBase {
 }
 ```
 
+```ts src/module/application/repository-interfaces/released-invoice.repository-interface.ts
+export interface ReleasedInvoiceRepositoryInterface {
+  listReleasedInvoices(): Promise<string[]>;
+}
+```
+
+```ts src/module/infrastructure/acl/released-invoice.acl.ts
+import { z } from "zod";
+export const ReleasedInvoiceRecordSchema = z.array(z.string());
+export type ReleasedInvoicePort = () => Promise<unknown>;
+```
+
+```ts src/module/infrastructure/repository-implementations/released-invoice.repository-implementation.ts
+import type { ReleasedInvoiceRepositoryInterface } from "../../application/repository-interfaces/released-invoice.repository-interface";
+import { ReleasedInvoiceRecordSchema, type ReleasedInvoicePort } from "../acl/released-invoice.acl";
+
+export class ReleasedInvoiceRepositoryImplementation implements ReleasedInvoiceRepositoryInterface {
+  constructor(private readonly released: ReleasedInvoicePort) {}
+  async listReleasedInvoices() {
+    return ReleasedInvoiceRecordSchema.parse(await this.released());
+  }
+}
+```
+
 ## scaffolds
 
 ```ejs src/<module>/infrastructure/acl/<name>.acl.ts

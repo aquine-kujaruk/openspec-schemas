@@ -200,4 +200,18 @@ describe('Feature: Build the adapters layer', () => {
       await steps.noBrokenFiles()
     })
   })
+
+  describe('Rule: adapter-wraps-external-system · adapters wrap something outside the code', () => {
+    // Line 134
+    test('`adapter-forwards-callback` breaks adapter-wraps-external-system', async () => {
+      const steps = createSteps()
+
+      // Given the example `adapter-forwards-callback`
+      await steps.exampleFolder('adapter-forwards-callback')
+      // When rule `adapter-wraps-external-system` is checked
+      await steps.ruleChecked('adapter-wraps-external-system')
+      // Then it is broken in the files the expectation records
+      await steps.brokenAsExpected()
+    })
+  })
 })

@@ -37,6 +37,4 @@ import type { ProcessRecord } from "../../domain/schemas/process.schema.ts";
 
 export type { ProcessRecord };
 
-export interface ProcessAcl {
-  listProcesses(): Promise<ProcessRecord[]>;
-}
+export type ProcessPort = () => Promise<unknown>;

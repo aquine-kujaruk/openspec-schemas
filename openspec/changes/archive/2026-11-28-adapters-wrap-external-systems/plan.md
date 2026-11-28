@@ -24,7 +24,7 @@ Every adapter of the factory and of every clean-core product wraps something out
 ## Decisions
 
 - The rule lives in the clean core, like the 2026-11-27 rules. `adapter-wraps-external-system` refuses an adapter file that imports no package, no `node:` module and no platform global and whose constructor takes a function. An in-memory adapter (state, no function parameter) stays valid. @by:agent
-- An internal port is a repository interface of the consuming module whose implementation lives in `infrastructure/repository-implementations` and receives the other module's exported operation, validating its result with the consumer's ACL schema; no adapter and no ACL stand between them. `acl-adapter-paired` keeps applying to every ACL that remains. Discarded: keeping a forwarding adapter with an ACL; a port interface filled with a plain function in the composition root. @by:person
+- An internal port is declared as `export type <Name>Port` (a function, or an object of functions) in the consumer's `acl/<name>.acl.ts`, next to the record schema; the consumer's repository implementation receives it, typed by that Port, and validates its result with the schema; no adapter stands between them. `repository-depends-on-acl` accepts `<Name>Port` as well as `<Name>Acl`, and `acl-adapter-paired` exempts an acl file that declares a Port and no Acl interface. `acl-adapter-paired` keeps applying to every ACL that remains. Discarded: keeping a forwarding adapter with an ACL; a port interface filled with a plain function in the composition root. @by:person
 - The factory gains generic resource adapters in `shared/infrastructure/adapters` (files, process, HTTP where used) that execute what a repository states; module adapters that only wrap the disk or a process become contract adapters composing them. @by:agent
 - Runs after `use-cases-branch-only-on-io` and before `factory-cli-through-controllers`, which rewires the composition files this change slims. @by:agent
 
@@ -55,18 +55,20 @@ An adapter SHALL wrap an external system (a package, an API, the disk, the envir
 **Seams**
 
 ```ts
+// factory/change-control/infrastructure/acl/released-work-order.acl.ts
+export type ReleasedWorkOrderPort = () => Promise<unknown>;
 // factory/change-control/infrastructure/repository-implementations/released-work-order.repository-implementation.ts
-constructor(readStarted: () => Promise<unknown>); // validated with ReleasedWorkOrderRecordSchema
-// factory/shared/infrastructure/adapters/: files.adapter.ts, process.adapter.ts
+constructor(readStarted: ReleasedWorkOrderPort); // validated with ReleasedWorkOrderRecordSchema
+// likewise ProcessPort, DrawingPort, GaugeRunPort, InspectionPort, WorkOrderValidationPort
 ```
 
 **Tests**
 
 - The factory's tests keep passing; an integration test per internal port proves a malformed record from the other module is refused with the consumer's exception.
 
-- [ ] Replace each forwarding adapter (`released-work-order`, `process`, and the callback parts of `plant`, `write-boundary`, `andon`, `closing`, `stage-start`, `reading-artifact`, `quality-certificate-file`) with its repository implementation receiving the operation, or with a contract adapter over a generic resource adapter
-- [ ] Slim the composition files to wiring
-- [ ] Verify the phase: `pnpm run check`
+- [x] Replace each forwarding adapter (`released-work-order`, `process`, `drawing`, `gauge-run`, `inspection`, `work-order-validation`) with a Port its repository implementation receives
+- [x] Pass each Port from the composition files
+- [x] Verify the phase: `pnpm run check`
 
 ### Phase 2: The clean core holds the rule
 
@@ -75,16 +77,20 @@ constructor(readStarted: () => Promise<unknown>); // validated with ReleasedWork
 ```ts
 // schemas/shared/cores/clean-core/workstreams/adapters/adapters.rules.ts
 id: "adapter-wraps-external-system"
+// adapters.rules.ts: acl-adapter-paired exempts an acl file with a Port and no Acl interface
+// infrastructure.rules.ts: repository-depends-on-acl accepts <Name>Port
 ```
 
 **Tests**
 
 - The tests generated from `architecture/adapters`: the forwarding case breaks the rule, and the HTTP, disk and in-memory references break nothing.
 
-- [ ] Write the rule, its cases in `adapters.examples.md`, record them with `pnpm exec factory expect adapters` and generate the tests
-- [ ] Teach the internal port in the `adapters` and `infrastructure` skills
-- [ ] Verify the phase: `pnpm run check`
+- [x] Write the rule and relax the two rules for Ports, with their cases in `adapters.examples.md` and `infrastructure.examples.md` (a Port in the reference), record them with `pnpm exec factory expect` and generate the tests
+- [x] Teach the internal port in the `adapters` and `infrastructure` skills
+- [x] Verify the phase: `pnpm run check`
 
 ## Feedback
+
+- **the implement phase**: the consumer's repository implementation must still type its constructor by an ACL contract, and every ACL interface needs an adapter: an internal port is declared as `export type <Name>Port` (a function, or an object of functions) in acl/<name>.acl.ts next to its record schema, `repository-depends-on-acl` accepts <Name>Port as well as <Name>Acl, and `acl-adapter-paired` exempts an acl file that declares a Port and no Acl interface. The forwarding adapters are process, released-work-order, drawing, gauge-run, inspection and work-order-validation; the adapters that also wrap the disk or a process keep their callbacks for now
 
 ## Next step

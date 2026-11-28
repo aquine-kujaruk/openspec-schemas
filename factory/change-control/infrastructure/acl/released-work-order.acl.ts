@@ -9,6 +9,4 @@ export const ReleasedWorkOrderRecordSchema = z.object({
 
 export type ReleasedWorkOrderRecord = z.infer<typeof ReleasedWorkOrderRecordSchema>;
 
-export interface ReleasedWorkOrderAcl {
-  readStarted(): Promise<ReleasedWorkOrderRecord[]>;
-}
+export type ReleasedWorkOrderPort = () => Promise<unknown>;
