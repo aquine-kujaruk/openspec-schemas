@@ -24,6 +24,22 @@ const resources = new EquipmentAdapter({
   run: (command, args, cwd) => capture(command, args, { cwd }),
   withSection: (own, instructions) => installation.withSection(own, instructions),
   pinnedVersion: (command, manifest, lock) => installation.pinnedVersion(command, manifest, lock),
+  readRules: async (root) => {
+    const named = (await products.projectProducts(root)).map((product) => product.name).filter(Boolean);
+
+    return (named.length ? named : [""]).flatMap((product) => {
+      const result = capture("pnpm", ["exec", "factory", "rules", "--json", ...(product ? ["--product", product] : [])], { cwd: root });
+      const last = result.stdout.trim().split("\n").at(-1) ?? "";
+
+      try {
+        const records = result.status === 0 ? JSON.parse(last) as unknown : [];
+
+        return Array.isArray(records) ? records.map((record: object) => (product ? { ...record, product } : record)) : [];
+      } catch {
+        return [];
+      }
+    });
+  },
 });
 
 const maintain = new MaintainEquipmentUseCase(new EquipmentRepositoryImplementation(resources));
@@ -38,6 +54,7 @@ export type DoctorReport = {
   }>;
   notes: string[];
   suspects: string[];
+  outdated: Array<{ requirement: string; detail: string }>;
   status: 0 | 1;
 };
 
@@ -53,6 +70,7 @@ const maintainAt = async (root: string, options?: MaintenanceOptions): Promise<D
     ),
     notes: report.items.filter((item) => item.kind === MaintenanceKind.Note).map((item) => item.detail),
     suspects: report.items.filter((item) => item.kind === MaintenanceKind.Suspect).map((item) => item.detail),
+    outdated: report.items.filter((item) => item.kind === MaintenanceKind.Outdated).map(({ requirement, detail }) => ({ requirement, detail })),
     status: report.status,
   };
 };
@@ -72,9 +90,10 @@ export async function maintainEquipment(args: string[]): Promise<number> {
     console.log(`${item.report}: ${item.requirement}${item.agent ? ` for ${item.agent}` : ""} — ${item.detail}`);
   }
 
-  if (!report.items.length) console.log("nothing is lacking");
+  if (!report.items.length && !report.outdated.length) console.log("nothing is lacking");
   for (const note of report.notes) console.log(`note: ${note}`);
   for (const suspect of report.suspects) console.log(`suspect: ${suspect}`);
+  for (const rule of report.outdated) console.log(`outdated: ${rule.requirement} — ${rule.detail}`);
 
   return report.status;
 }

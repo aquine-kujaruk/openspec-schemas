@@ -1,6 +1,7 @@
 import type { EquipmentEntity } from "../../domain/entities/equipment.entity.ts";
 import type { EquipmentNotes, EquipmentReading, EquipmentRepair } from "../../domain/schemas/equipment-reading.schema.ts";
 import type { EquipmentHoldings, EquipmentProcedure } from "../../domain/schemas/procedure-reading.schema.ts";
+import type { RuleConformance } from "../../domain/schemas/rule-conformance.schema.ts";
 
 export type MaintenanceOptions = {
   fix?: boolean;
@@ -15,4 +16,5 @@ export interface EquipmentRepositoryInterface {
   readNotes(root: string, equipment: EquipmentEntity, env?: MaintenanceOptions["env"]): EquipmentNotes;
   listProcedures(root: string): Map<string, EquipmentProcedure>;
   readHoldings(root: string): Promise<EquipmentHoldings>;
+  inferRuleConformance(root: string): Promise<RuleConformance[]>;
 }

@@ -20,6 +20,14 @@ export declare const ruleIds: (
   workstream: string,
 ) => Set<string>;
 
+export declare const deterministicIds: (a: Architecture) => Set<string>;
+
+export declare const ledger: (
+  a: Architecture,
+  exampleFiles: string[],
+  rubricFiles: string[],
+) => Record<string, string>;
+
 export type RulesPorts = {
   workingDirectory: () => string;
   existsSync: (typeof import("node:fs"))["existsSync"];
@@ -32,4 +40,6 @@ export type RulesPorts = {
   withUpstream: (workstreams: Workstream[], id: string) => Workstream[];
   cacheDir: (typeof import("../../../shared/infrastructure/adapters/paths-contract.adapter.ts"))["cacheDir"];
   product: { root: string };
+  readFileSync: (typeof import("node:fs"))["readFileSync"];
+  digest: (text: string) => string;
 };

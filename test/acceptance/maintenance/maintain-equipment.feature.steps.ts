@@ -7,6 +7,7 @@ import type { MaintenanceReportAggregate } from "../../../factory/maintenance/do
 import { MaintenanceKind } from "../../../factory/maintenance/domain/schemas/maintenance-item.schema.ts";
 import { NeedKind } from "../../../factory/maintenance/domain/schemas/procedure-reading.schema.ts";
 import { EquipmentInstallationService } from "../../../factory/maintenance/domain/services/equipment-installation.service.ts";
+import { RuleChange, type RuleConformance } from "../../../factory/maintenance/domain/schemas/rule-conformance.schema.ts";
 
 import { InMemoryEquipmentRepository } from "./repositories/in-memory-equipment.repository.ts";
 
@@ -158,6 +159,19 @@ export function createSteps() {
       else if (kind === NeedKind.Binary) repository.binaries.add(name!);
       else if (kind === NeedKind.File) repository.files.add(name!);
       else expect(holding).toBe("nothing");
+    },
+    recordedLedger(rule: string, before: string): void {
+      expect(["absent", "present"]).toContain(before);
+      repository.ruleConformance = [{ rule, change: RuleChange.Unchanged, files: [] }];
+    },
+    installedLedger(rule: string, change: string): void {
+      repository.ruleConformance = [{ rule, change: change as RuleConformance["change"], files: [] }];
+    },
+    codeAgainstRule(state: string, rule: string): void {
+      const files = state === "breaks" ? [`src/orders/${rule}.ts`] : [];
+
+      repository.ruleConformance = repository.ruleConformance.map((conformance) =>
+        conformance.rule === rule && conformance.change !== RuleChange.Removed ? { ...conformance, files } : conformance);
     },
 
     // Action

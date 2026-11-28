@@ -61,6 +61,10 @@ const commands = {
     usage: "validate <change>: says whether the change is ready and, when not, every reason",
     run: async (args: string[]) => (await import("./production.ts")).validateWorkOrder(args),
   },
+  rules: {
+    usage: "rules [--json] [--product <name>]: the rules changed since the project last passed its check, and the files that break them",
+    run: async (args: string[]) => (await import("./quality.ts")).ruleConformance(args),
+  },
   check: {
     usage: "check [--workstream <id>] [--product <name>]: checks the product's rules",
     run: async (args: string[]) => (await import("./quality.ts")).runQualityControl(args),

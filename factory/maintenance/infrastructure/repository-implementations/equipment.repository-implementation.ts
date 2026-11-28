@@ -3,6 +3,7 @@ import type { EquipmentRepositoryInterface, MaintenanceOptions } from "../../app
 import { EquipmentEntity } from "../../domain/entities/equipment.entity.ts";
 import { MaintenanceException } from "../../domain/exceptions/maintenance.exceptions.ts";
 import type { EquipmentRepair } from "../../domain/schemas/equipment-reading.schema.ts";
+import { RuleConformanceSchema, type RuleConformance } from "../../domain/schemas/rule-conformance.schema.ts";
 import type { EquipmentAcl } from "../acl/equipment.acl.ts";
 
 export class EquipmentRepositoryImplementation implements EquipmentRepositoryInterface {
@@ -52,6 +53,12 @@ export class EquipmentRepositoryImplementation implements EquipmentRepositoryInt
 
   readHoldings(root: string) {
     return this.resources.readHoldings(root);
+  }
+
+  async inferRuleConformance(root: string): Promise<RuleConformance[]> {
+    const records = await this.resources.readRuleConformance(root);
+
+    return this.read(() => records.map((record) => RuleConformanceSchema.parse(record)));
   }
 
   private read<T>(action: () => T): T {

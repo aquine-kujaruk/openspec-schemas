@@ -47,6 +47,7 @@ export class MaintainEquipmentUseCase {
     const still = new Set(remaining.map(id));
     const notes = this.inspection.notes(installed, this.equipment.readNotes(root, installed, env));
     const suspects = await this.suspectProcedures.execute(root);
+    const rules = await this.equipment.inferRuleConformance(root);
 
     return new MaintenanceReportAggregate({ items: [
       ...[...tried].filter(([key]) => !still.has(key))
@@ -54,6 +55,7 @@ export class MaintainEquipmentUseCase {
       ...remaining.map((item) => new MaintenanceItemValueObject({ ...item, detail: failures.get(id(item)) ?? item.detail })),
       ...notes.map((detail) => new MaintenanceItemValueObject({ kind: MaintenanceKind.Note, requirement: "maintenance", detail })),
       ...suspects.map((detail) => new MaintenanceItemValueObject({ kind: MaintenanceKind.Suspect, requirement: "a suspect runbook", detail })),
+      ...rules.flatMap((conformance) => MaintenanceItemValueObject.ofRule(conformance) ?? []),
     ] });
   }
 }

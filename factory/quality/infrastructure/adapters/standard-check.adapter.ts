@@ -13,6 +13,8 @@ export const createRules = ({
   withUpstream,
   cacheDir,
   product,
+  readFileSync,
+  digest,
 }: RulesPorts): typeof import("./standard-check-contract.adapter.ts") => {
   const projectTsconfig = (): string => {
     const own = join(product.root, "tsconfig.json");
@@ -95,5 +97,73 @@ export const createRules = ({
   const ruleIds = (a: Architecture, workstream: string): Set<string> =>
     idsOf(a, new Set(withUpstream(a.workstreams, workstream).map((w) => w.id)));
 
-  return { archunitRules, idsInMessages, ownRuleIds, ruleIds };
+  const deterministicIds = (a: Architecture): Set<string> =>
+    new Set([
+      ...idsOf(a, new Set(a.workstreams.map((w) => w.id))),
+      ...(a.checks ?? []).map((c) => c.id),
+    ]);
+
+  const sections = (text: string): Array<{ heading: string; body: string }> =>
+    text.split(/^## /m).slice(1).map((part) => ({
+      heading: part.slice(0, part.indexOf("\n")).trim(),
+      body: part,
+    }));
+
+  const messagesWith = (value: unknown, id: string): string[] => {
+    if (typeof value === "string") return value.includes(`[${id}]`) ? [value] : [];
+    if (Array.isArray(value)) return value.flatMap((item) => messagesWith(item, id));
+
+    return value && typeof value === "object"
+      ? Object.values(value).flatMap((item) => messagesWith(item, id))
+      : [];
+  };
+
+  const ledger = (
+    a: Architecture,
+    exampleFiles: string[],
+    rubricFiles: string[],
+  ): Record<string, string> => {
+    const examples = exampleFiles.flatMap((file) => sections(readFileSync(file, "utf8")));
+
+    const casesOf = (id: string) =>
+      examples.filter(({ heading }) => heading === id || heading.startsWith(`${id} ·`)).map(({ body }) => body);
+
+    const titles = new Map(
+      archunitRules(a).flatMap((l) => l.rules.map((r) => [r.id, r.title] as const)),
+    );
+
+    const overrides = oxlintOverrides(a);
+
+    const fallow = new Map(
+      layersOf(a).flatMap((l) =>
+        [...(l.fallow?.boundaries ?? []), ...(l.fallow?.forbiddenCalls ?? [])]
+          .flatMap((r) => (r.id ? [[r.id, JSON.stringify(r)] as const] : [])),
+      ),
+    );
+
+    const checks = new Map(
+      [...a.workstreams.flatMap((w) => w.checks), ...(a.checks ?? [])].map((c) => [c.id, c.args.join(" ")] as const),
+    );
+
+    const rules = [...deterministicIds(a)].map((id) => [
+      id,
+      [titles.get(id), fallow.get(id), checks.get(id), ...messagesWith(overrides, id)].filter(Boolean).join("\n"),
+    ] as const);
+
+    const rows = rubricFiles.flatMap((file) =>
+      readFileSync(file, "utf8").split("\n").flatMap((line) => {
+        const id = /^\|\s*(S\d+)\s*\|/.exec(line)?.[1];
+
+        return id ? [[id, line] as const] : [];
+      }),
+    );
+
+    return Object.fromEntries(
+      [...rules, ...rows]
+        .map(([id, definition]) => [id, digest([id, definition, ...casesOf(id)].join("\n"))] as const)
+        .sort(([left], [right]) => left.localeCompare(right)),
+    );
+  };
+
+  return { archunitRules, idsInMessages, ownRuleIds, ruleIds, deterministicIds, ledger };
 };

@@ -17,5 +17,6 @@ export default defineFactory({
     "docs/**",
     "dist/**",
     "test/schemas/**",
+    ".github/**",
   ],
 });

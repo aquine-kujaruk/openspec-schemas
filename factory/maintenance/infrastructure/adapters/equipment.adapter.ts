@@ -216,6 +216,10 @@ export class EquipmentAdapter implements EquipmentAcl {
     return this.holdingsOf(root, folders);
   }
 
+  readRuleConformance(root: string): Promise<unknown[]> {
+    return this.authority.readRules(root);
+  }
+
   holdingsOf(root: string, roots: string[]): Awaited<ReturnType<EquipmentAcl["readHoldings"]>> {
     const folders = [...new Set([".", ...roots])].map((path) => join(root, path));
 
