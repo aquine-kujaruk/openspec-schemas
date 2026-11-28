@@ -19,6 +19,7 @@ export class ProcessRepositoryImplementation implements ProcessRepositoryInterfa
   async listProcesses(): Promise<ProcessAggregate[]> {
     try {
       const records = ProcessRecordSchema.array().parse(await this.records.listProcesses());
+
       return records.map((record) => new ProcessAggregate({
         name: record.name,
         base: record.base ? record.base : undefined,

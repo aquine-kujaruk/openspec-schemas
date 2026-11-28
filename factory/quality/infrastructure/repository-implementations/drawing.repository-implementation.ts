@@ -13,6 +13,7 @@ export class DrawingRepositoryImplementation implements DrawingRepositoryInterfa
 
   async makeGauges(args: readonly string[]) {
     const { exitStatus, drawings } = await this.tool.makeGauges(args);
+
     return {
       exitStatus,
       drawings: drawings.map(({ path, gherkin }) => new DrawingEntity({ path, scenarios: this.scenarios(gherkin) })),
@@ -23,12 +24,14 @@ export class DrawingRepositoryImplementation implements DrawingRepositoryInterfa
   private scenarios(gherkin: string): Scenario[] {
     const scenarios: Scenario[] = [];
     let requirement = "Feature";
+
     for (const line of gherkin.split("\n")) {
       const rule = /^\s*Rule:\s+(.+)\s*$/.exec(line);
       if (rule) requirement = rule[1]!.trim();
       const scenario = /^\s*Scenario(?: Outline)?:\s+(.+)\s*$/.exec(line);
       if (scenario) scenarios.push({ title: scenario[1]!.trim(), requirement });
     }
+
     return scenarios;
   }
 }

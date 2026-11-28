@@ -4,7 +4,7 @@ import type { ProductEntry, ProjectConfig, resolveConfig } from "../../../shared
 import type { CatalogSchema } from "./process.acl.ts";
 
 export type { ProductEntry, ProjectConfig };
-/** A named product and its resolved configuration, or the implicit product at the project root. */
+
 export type Product = {
   name: string;
   root: string;
@@ -22,10 +22,13 @@ export type ProductDefinitions = {
 export type ProductConfiguration = typeof resolveConfig;
 
 export type { Architecture, FactoryConfig };
+
 export type {
   Folders as WorkCenterFolders,
 } from "../../domain/aggregates/process.aggregate.ts";
+
 export type BuildWorkstreams = typeof import("../../domain/aggregates/process.aggregate.ts").ProcessAggregate.loadWorkstreams;
+
 export type ActiveProjectDefinitions<V> = {
   loadHolder(name: string): Promise<CatalogSchema<V>>;
   currentProduct(root: string): Promise<Product>;

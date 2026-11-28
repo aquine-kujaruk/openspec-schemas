@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const FingerprintSchema = z.string().regex(/^[a-f0-9]{64}$/);
+
 const RubricObservationSchema = z.object({
   score: z.number().min(0).max(1),
   model: z.string().min(1),

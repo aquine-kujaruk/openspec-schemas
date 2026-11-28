@@ -14,4 +14,5 @@ export const MaintenanceItemSchema = z.object({
   agent: z.string().optional(),
   repaired: z.boolean().default(false),
 });
+
 export type MaintenanceItemProps = z.input<typeof MaintenanceItemSchema>;

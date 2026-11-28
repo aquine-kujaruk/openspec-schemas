@@ -28,12 +28,15 @@ export class StageStartAdapter implements StageStartAcl {
   async prepareStage(name: string, phase: string): Promise<{ success: boolean; output: string }> {
     const { code, line } = await this.builds(name);
     const prep = line ? ["prepare", "--product", line] : ["prepare"];
+
     for (const step of code ? [prep, ["generate"]] : [["generate"]]) {
       const { status, output } = this.run(step);
       if (status !== 0) return { success: false, output };
     }
+
     writeFileSync(join(this.directory, name, this.gate),
       `${JSON.stringify({ phase, failures: 0, waitingFor: "the agent", findings: [] }, null, 2)}\n`);
+
     return { success: true, output: "" };
   }
 }

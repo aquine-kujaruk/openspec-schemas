@@ -31,9 +31,11 @@ export class AuditRecordService {
     rubric: string,
   ): AuditPass {
     const files = { ...record.files };
+
     for (const file of judged) {
       files[file.path] = { hash: this.hash(file.content), commit };
     }
+
     return {
       rubric,
       files: Object.fromEntries(Object.entries(files).sort(([a], [b]) => a.localeCompare(b))),

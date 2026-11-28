@@ -19,10 +19,13 @@ export class WorkOrderAdapter implements WorkOrderAcl {
   async writeRelease(name: string, day: string | undefined): Promise<void> {
     const file = join(this.directory, name, "plan.md");
     const text = readFileSync(file, "utf8");
+
     const updated = text.replace(/^---\r?\n([\s\S]*?)^---\s*$/m, (_, front: string) => {
       const body = front.replace(/^approved_at:[^\r\n]*(?:\r?\n)?/m, "");
+
       return `---\n${body}${day ? `approved_at: ${day}\n` : ""}---`;
     });
+
     if (text !== updated) writeFileSync(file, updated, "utf8");
   }
 }

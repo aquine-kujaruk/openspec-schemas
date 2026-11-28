@@ -3,27 +3,20 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
-/** What the step adapters share to set a project up. Nothing the command runs imports this. */
 export const write = (root: string, path: string, text: string): void => {
   mkdirSync(dirname(join(root, path)), { recursive: true });
   writeFileSync(join(root, path), text);
 };
 
-/**
- * What a scratch project's `factory.config.ts` says: this repository defines more than one schema
- * that builds product code, so a project names the one its tools are composed from. The scratch
- * projects of the tests build a backend.
- */
 export const ONE_SCHEMA = 'export default { schema: "clean-backend" };\n';
 
-/** A scratch project in a fresh temporary folder, its tools composed from `clean-backend`. */
 export const scratchProject = (prefix: string): string => {
   const root = mkdtempSync(join(tmpdir(), prefix));
   write(root, "factory.config.ts", ONE_SCHEMA);
+
   return root;
 };
 
-/** A delta spec the specification tool accepts: one new use case, `useCase`, with one scenario. */
 export const delta = (useCase = "get-order") => `## Purpose
 
 Getting one order by its identifier, so that whoever serves a customer sees what it holds (${useCase}).
@@ -49,7 +42,6 @@ The system SHALL return the order that carries the given identifier.
   | A1 | A1    |
 `;
 
-/** A durable block of a plan: its heading, its tags (`@by:agent` unless they say who took it) and a body of the given paragraphs. */
 export const block = (
   kind: "Decision" | "Procedure",
   slug: string,
@@ -58,16 +50,13 @@ export const block = (
 ) =>
   `### ${kind}: ${slug} · A standing rule\n\n${[...tags, ...(tags.some((t) => t.startsWith("@by:") || t.startsWith("@origin:")) ? [] : ["@by:agent"])].join(" ")}\n\n${body}`;
 
-/** What a plan is made of, beyond its headings. A phase is `true` when its tasks are done. */
 export type PlanParts = {
   decisions?: string[];
   procedures?: string[];
   phases?: boolean[];
   feedback?: string[];
   questions?: string[];
-  /** The tasks name no workstream: the plan of a schema that has none. */
   bare?: boolean;
-  /** The day the person approved the plan; `null` when it is not approved. */
   approved?: string | null;
 };
 
@@ -96,10 +85,6 @@ export const planText = (name: string, parts: PlanParts = {}): string =>
     "## Next step",
   ].join("\n\n");
 
-/**
- * Writes a change of `schema` that validation reports ready unless `parts` say otherwise. Without
- * `deltas` it is marked as changing no behaviour.
- */
 export const change = (
   root: string,
   name: string,
@@ -114,20 +99,22 @@ export const change = (
     deltas?: Record<string, string>;
     created?: string;
     schema?: string;
-    /** The product it builds, in a project that declares products. */
     product?: string;
   } = {},
 ): void => {
   const folder = `openspec/changes/${name}`;
   const marked = Object.keys(deltas).length ? "" : "skip_specs: true\n";
   const builds = product ? `x-product: ${product}\n` : "";
+
   write(
     root,
     `${folder}/.openspec.yaml`,
     `schema: ${schema}\ncreated: ${created}\n${marked}${builds}`,
   );
+
   for (const [spec, text] of Object.entries(deltas))
     write(root, `${folder}/specs/${spec}/spec.md`, text);
+
   write(
     root,
     `${folder}/plan.md`,
@@ -135,7 +122,6 @@ export const change = (
   );
 };
 
-/** A ready change with one phase, started by the implement phase unless its tasks are `done`: it is in implementation. */
 export const readyChange = (
   root: string,
   name: string,
@@ -146,6 +132,7 @@ export const readyChange = (
   }: { done?: boolean; schema?: string; product?: string } = {},
 ): void => {
   change(root, name, { parts: { phases: [done] }, schema, product });
+
   if (!done)
     write(
       root,
@@ -159,11 +146,6 @@ export const readyChange = (
     );
 };
 
-/**
- * The products a scenario names, as `factory.config.ts` declares them: each item is
- * `<name>[ at <root>][ with[ the schema] <schema>]`, its folder `apps/<name>` and its schema
- * `clean-backend` when it says nothing else.
- */
 export const productsOf = (
   text: string,
 ): Record<string, { root: string; schema: string }> =>
@@ -172,7 +154,9 @@ export const productsOf = (
       const m = /^(\S+)(?: at (\S+))?(?: with (?:the schema )?(\S+))?$/.exec(
         item.trim(),
       );
+
       if (!m) throw new PlantException(`not a product: ${item}`, { cause: `not a product: ${item}` });
+
       return [
         m[1]!,
         { root: m[2] ?? `apps/${m[1]}`, schema: m[3] ?? "clean-backend" },
@@ -180,7 +164,6 @@ export const productsOf = (
     }),
   );
 
-/** Declares the products `text` names in the project at `root` (see `productsOf`). */
 export const declareProducts = (root: string, text: string): void =>
   write(
     root,

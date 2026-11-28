@@ -15,8 +15,10 @@ export class FileRubricHistoryAdapter implements RubricHistoryAcl {
 
   private load(): Record<string, RubricObservation[]> {
     if (!existsSync(this.path)) return {};
+
     try {
       const input: unknown = JSON.parse(readFileSync(this.path, "utf8"));
+
       return RubricHistorySchema.parse(input);
     } catch (cause) {
       throw new QualityException(`Invalid rubric score history in ${this.path}`, { cause });
@@ -31,6 +33,7 @@ export class FileRubricHistoryAdapter implements RubricHistoryAcl {
     const path = this.path;
     const lock = path + ".lock";
     const deadline = Date.now() + 10_000;
+
     while (true) {
       try {
         closeSync(openSync(lock, "wx"));
@@ -40,13 +43,16 @@ export class FileRubricHistoryAdapter implements RubricHistoryAcl {
         await delay(20);
       }
     }
+
     const tmp = path + "." + randomUUID();
+
     try {
       const all = this.load();
       const previous = all[id] ?? [];
       all[id] = [...previous, observation];
       writeFileSync(tmp, JSON.stringify(all, null, 2) + "\n");
       renameSync(tmp, path);
+
       return previous;
     } finally {
       if (existsSync(tmp)) unlinkSync(tmp);

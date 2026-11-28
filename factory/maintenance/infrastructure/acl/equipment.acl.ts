@@ -1,17 +1,20 @@
 import type { Installed } from "../../../shared/domain/schemas/line-types.schema.ts";
 import type { MaintenanceOptions } from "../../application/repository-interfaces/equipment.repository-interface.ts";
 import type { EquipmentEntity } from "../../domain/entities/equipment.entity.ts";
+
 import type {
   EquipmentNotes,
   EquipmentPlace,
   EquipmentReading,
   EquipmentRepair,
 } from "../../domain/schemas/equipment-reading.schema.ts";
+
 import type { EquipmentHoldings, EquipmentProcedure } from "../../domain/schemas/procedure-reading.schema.ts";
 
 export { RepairKind } from "../../domain/schemas/equipment-reading.schema.ts";
 export { SECTION } from "../../domain/services/equipment-installation.service.ts";
 export type EquipmentInstallation = { installed: Installed; assets: string };
+
 export type EquipmentAuthority = {
   readProcedures(root: string): Map<string, EquipmentProcedure>;
   listProductRoots(root: string): Promise<string[]>;

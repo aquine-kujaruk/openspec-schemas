@@ -23,6 +23,7 @@ export class QualityCertificateFileAdapter implements QualityCertificateFileAcl 
 
   async digestOf(name: string): Promise<string> {
     const { root, orders } = this;
+
     const files = [
       join(orders, name, "plan.md"),
       ...globSync("specs/**/*.md", { cwd: join(root, orders, name) }).map((file) => join(orders, name, file)),
@@ -34,11 +35,14 @@ export class QualityCertificateFileAdapter implements QualityCertificateFileAcl 
           : [],
       ),
     ].sort();
+
     const digest = createHash("sha256");
+
     for (const file of files) {
       const contents = readFileSync(join(root, file), "utf8");
       digest.update(`${file}\n${file.endsWith("plan.md") ? contents.replace(/\[[xX ]\]/g, "[]") : contents}\n`);
     }
+
     return digest.digest("hex");
   }
 
@@ -50,11 +54,13 @@ export class QualityCertificateFileAdapter implements QualityCertificateFileAcl 
     const path = this.path(name);
     if (!existsSync(path)) return undefined;
     const metadata = /^---\n([\s\S]*?)\n---/.exec(readFileSync(path, "utf8"))?.[1];
+
     return metadata ? parse(metadata) as Pick<InspectionCertificateRecord, "verdict" | "digest"> : undefined;
   }
 
   writeEvidence(record: InspectionCertificateRecord): void {
     const { change, verdict, digest, scenarios, failing, review, procedures, e2e = [] } = record;
+
     const body = [
       `# Evidence of ${change}`,
       `## Scenarios\n\n${table(
@@ -83,6 +89,7 @@ export class QualityCertificateFileAdapter implements QualityCertificateFileAcl 
         procedures.map(({ slug, env, treatment, outcome }) => [slug, env, treatment, outcome ?? ""]),
       )}`,
     ].join("\n\n");
+
     writeFileSync(this.path(change), `---\n${stringify({ change, verdict, digest })}---\n\n${body}\n`);
   }
 }

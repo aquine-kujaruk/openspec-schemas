@@ -9,4 +9,5 @@ export const PlanSchema = z.object({
   openQuestions: z.array(z.string()).default([]),
   releasedOn: DaySchema.optional(),
 });
+
 export type PlanProps = z.input<typeof PlanSchema>;

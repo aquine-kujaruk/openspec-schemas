@@ -6,6 +6,7 @@ export const WritableLineSchema = z.object({
   roots: z.array(z.string()),
   acceptance: z.string(),
 });
+
 export type WritableLine = z.infer<typeof WritableLineSchema>;
 
 export const WriteBoundarySchema = z.object({
@@ -14,6 +15,7 @@ export const WriteBoundarySchema = z.object({
   decisions: z.string(),
   procedures: z.string(),
 });
+
 export type WriteBoundary = z.infer<typeof WriteBoundarySchema>;
 
 export const ReleasedWorkOrderSchema = z.object({
@@ -22,4 +24,5 @@ export const ReleasedWorkOrderSchema = z.object({
   builds: z.boolean(),
   line: z.string().optional(),
 });
+
 export type ReleasedWorkOrder = z.infer<typeof ReleasedWorkOrderSchema>;

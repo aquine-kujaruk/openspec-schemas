@@ -7,17 +7,20 @@ export type BuildingRecord = {
   pendingFeedback?: boolean;
   phases: { title: string; tasks: { done: boolean; text?: string; workstream?: string }[] }[];
 };
+
 export type WorkstreamRecord = {
   id: string;
   upstream: string[];
   tests: ("unit" | "integration" | "acceptance")[];
 };
+
 export const GateRecordSchema = z.object({
   phase: z.string().optional(),
   failures: z.number(),
   waitingFor: z.enum(["the agent", "the person"]),
   findings: z.array(z.string()),
 });
+
 export type GateRecord = z.infer<typeof GateRecordSchema>;
 
 export interface StageHoldAcl {

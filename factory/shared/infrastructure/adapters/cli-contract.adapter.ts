@@ -1,9 +1,10 @@
-/** A command exposed by a module's delivery layer. */
 export type Command = {
   usage: string;
   run: (args: string[]) => Promise<number>;
 };
+
 export type Commands = Record<string, Command>;
+
 export type CliHost = {
   version: () => string;
   extraCommands: () => Promise<Commands>;

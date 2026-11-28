@@ -8,6 +8,7 @@ export const InspectionDrawingsSchema = z.array(
     expected: z.array(z.object({ requirement: z.string(), scenario: z.string() })).optional(),
   }),
 );
+
 export type InspectionDrawings = z.infer<typeof InspectionDrawingsSchema>;
 
 export const FindingSchema = z.object({ source: z.string(), names: z.string(), findings: z.array(z.string()) });
@@ -21,6 +22,7 @@ export const WorkstreamSchema = z.object({
   upstream: z.array(z.string()),
   tests: z.array(z.enum(["unit", "integration", "acceptance"])),
 });
+
 export type Workstream = z.infer<typeof WorkstreamSchema>;
 
 export const ResourceRunSchema = z.object({ status: z.number().nullable(), output: z.string() });
@@ -32,6 +34,7 @@ export const GaugeReportSchema = z.array(
     assertions: z.array(z.object({ requirement: z.string(), scenario: z.string(), passed: z.boolean() })),
   }),
 );
+
 export type GaugeReport = z.infer<typeof GaugeReportSchema>;
 
 export const FinalInspectionSchema = z.object({
@@ -43,4 +46,5 @@ export const FinalInspectionSchema = z.object({
   platform: z.string(),
   review: z.object({ hasRubric: z.boolean(), keyVariable: z.string(), configured: z.boolean() }),
 });
+
 export type FinalInspection = z.infer<typeof FinalInspectionSchema>;

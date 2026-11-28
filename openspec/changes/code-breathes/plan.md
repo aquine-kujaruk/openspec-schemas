@@ -71,10 +71,10 @@ id: "code-breathes" // no file under the source root holds a glued statement
 - The maintained suite for `architecture/modules`: each new case of `modules.examples.md` breaks `code-breathes` in the files its `expect` block records, and the reference breaks nothing.
 - A unit test of `glued` over statements, imports, a `return`, a `case` and a nested block.
 
-- [ ] Write `glued` over the TypeScript syntax tree and export it from `factory/sdk`, with its unit test
-- [ ] Write the rule `code-breathes` in `modules.rules.ts`
-- [ ] Add one case per way of breaking it to `modules.examples.md`, record each `expect` block with `pnpm exec factory expect modules` and generate the tests with `pnpm exec factory generate`
-- [ ] Verify the phase: `pnpm run check` apart from the repository's own files, which phase 2 fixes
+- [x] Write `glued` over the TypeScript syntax tree and export it from `factory/sdk`, with its unit test
+- [x] Write the rule `code-breathes` in `modules.rules.ts`
+- [x] Add one case per way of breaking it to `modules.examples.md`, record each `expect` block with `pnpm exec factory expect modules` and generate the tests with `pnpm exec factory generate`
+- [x] Verify the phase: `pnpm run check` apart from the repository's own files, which phase 2 fixes
 
 ### Phase 2: The factory breathes and the rubric asks for fewer comments
 
@@ -90,11 +90,11 @@ S24 · code-blocks: asks whether unrelated steps share a block of statements
 - The rubric cases of `domain.examples.md` for S20 keep `yes` for the restating comment and `no` for the reference; S24 has one case of each.
 - `pnpm run check` passes in this repository.
 
-- [ ] Insert the missing blank lines in `factory/` with a one-off script that applies `glued`, and run the repository's tests
-- [ ] Sweep existing factory source comments under the S20 criterion
-- [ ] Rewrite S20 and add S24 to `RUBRIC.md`, with their cases and scores
-- [ ] Name the rule and the two rows in the `modules` and `app-domain` skills, and raise `package.json` to 0.17.0
-- [ ] Verify the phase: `pnpm run check`
+- [x] Insert the missing blank lines in `factory/` with a one-off script that applies `glued`, and run the repository's tests
+- [x] Sweep existing factory source comments under the S20 criterion
+- [x] Rewrite S20 and add S24 to `RUBRIC.md`, with their cases and scores
+- [x] Name the rule and the two rows in the `modules` and `app-domain` skills, and raise `package.json` to 0.17.0
+- [x] Verify the phase: `pnpm run check`
 
 ## Feedback
 

@@ -19,11 +19,13 @@ export class ReadingArtifactAdapter implements ReadingArtifactAcl {
 
   async getLanguage() {
     const person = loadEnv(this.root, runtime.environment()).FACTORY_LANGUAGE;
+
     return { person, project: person?.trim() ? undefined : await this.language() };
   }
 
   async readArtifact(path: string) {
     const file = join(this.root, path);
+
     return existsSync(file) && statSync(file).isFile()
       ? { fingerprint: fingerprint(readFileSync(file)) }
       : null;
@@ -36,6 +38,7 @@ export class ReadingArtifactAdapter implements ReadingArtifactAcl {
   async readCopy(path: string) {
     if (!existsSync(path)) return null;
     const sidecar = `${path}.source`;
+
     return { fingerprint: existsSync(sidecar) ? readFileSync(sidecar, "utf8").trim() : undefined };
   }
 

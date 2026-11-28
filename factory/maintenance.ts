@@ -13,6 +13,7 @@ import { EquipmentAdapter } from "./maintenance/infrastructure/adapters/equipmen
 import { EquipmentRepositoryImplementation } from "./maintenance/infrastructure/repository-implementations/equipment.repository-implementation.ts";
 
 const installation = new EquipmentInstallationService();
+
 const resources = new EquipmentAdapter({
   readProcedures: (root) => consolidated.readConsolidated(root).procedures,
   listProductRoots: async (root) => Object.values((await products.readProjectConfig(root))?.products ?? {}).map((product) => product.root),
@@ -24,6 +25,7 @@ const resources = new EquipmentAdapter({
   withSection: (own, instructions) => installation.withSection(own, instructions),
   pinnedVersion: (command, manifest, lock) => installation.pinnedVersion(command, manifest, lock),
 });
+
 const maintain = new MaintainEquipmentUseCase(new EquipmentRepositoryImplementation(resources));
 const procedures = new SuspectProcedureService();
 
@@ -42,6 +44,7 @@ export type DoctorReport = {
 const maintainAt = async (root: string, options?: MaintenanceOptions): Promise<DoctorReport | undefined> => {
   const report = await maintain.execute(root, options);
   if (!report) return undefined;
+
   return {
     items: report.items.flatMap(({ kind, requirement, agent, detail, repaired }) =>
       kind === MaintenanceKind.Missing || kind === MaintenanceKind.Drift
@@ -56,18 +59,23 @@ const maintainAt = async (root: string, options?: MaintenanceOptions): Promise<D
 
 export async function maintainEquipment(args: string[]): Promise<number> {
   const report = await maintainAt(PROJECT_ROOT, { fix: args.includes("--fix") });
+
   if (!report) {
     console.error(
       `no installed package found: install one with the agent package manager, so that an agent's skills hold ${SETUP_ASSETS}/${INSTALLED}`,
     );
+
     return 2;
   }
+
   for (const item of report.items) {
     console.log(`${item.report}: ${item.requirement}${item.agent ? ` for ${item.agent}` : ""} — ${item.detail}`);
   }
+
   if (!report.items.length) console.log("nothing is lacking");
   for (const note of report.notes) console.log(`note: ${note}`);
   for (const suspect of report.suspects) console.log(`suspect: ${suspect}`);
+
   return report.status;
 }
 

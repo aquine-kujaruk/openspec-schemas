@@ -7,6 +7,7 @@ import type { z } from "zod";
 import { InvoiceSchema } from "../../domain/schemas/invoice.schema";
 export const InvoiceRecordSchema = InvoiceSchema;
 export type InvoiceRecord = z.infer<typeof InvoiceRecordSchema>;
+
 export interface InvoiceAcl {
   listInvoices(): Promise<InvoiceRecord[]>;
   findInvoice(invoiceId: string): Promise<InvoiceRecord | null>;
@@ -19,6 +20,7 @@ import type { InvoiceRepositoryInterface } from "../../application/repository-in
 import type { InvoiceProps } from "../../domain/schemas/invoice.schema";
 import type { InvoiceAcl } from "../acl/invoice.acl";
 import { InvoiceUnavailableException } from "../../domain/exceptions/invoice.exceptions.ts";
+
 export class InvoiceRepositoryImplementation implements InvoiceRepositoryInterface {
   constructor(private readonly invoices: InvoiceAcl) {}
   async listInvoices(): Promise<InvoiceProps[]> {
@@ -52,6 +54,7 @@ export interface ClientAcl {
 ```ts src/module/infrastructure/repository-implementations/client.repository-implementation.ts
 import type { ClientRepositoryInterface } from "../../application/repository-interfaces/client.repository-interface";
 import type { ClientAcl } from "../acl/client.acl";
+
 export abstract class ClientRepositoryBase implements ClientRepositoryInterface {
   constructor(private readonly clients: ClientAcl) {}
   protected abstract readonly segment: string;
@@ -63,6 +66,7 @@ export abstract class ClientRepositoryBase implements ClientRepositoryInterface 
 
 ```ts src/module/infrastructure/repository-implementations/b2b-client.repository-implementation.ts
 import { ClientRepositoryBase } from "./client.repository-implementation";
+
 export class B2bClientRepositoryImplementation extends ClientRepositoryBase {
   protected readonly segment = "b2b";
 }
@@ -70,6 +74,7 @@ export class B2bClientRepositoryImplementation extends ClientRepositoryBase {
 
 ```ts src/module/infrastructure/repository-implementations/b2c-client.repository-implementation.ts
 import { ClientRepositoryBase } from "./client.repository-implementation";
+
 export class B2cClientRepositoryImplementation extends ClientRepositoryBase {
   protected readonly segment = "b2c";
 }

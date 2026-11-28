@@ -22,27 +22,32 @@ export class MaintainEquipmentUseCase {
   async execute(root: string, { fix, env, node }: MaintenanceOptions = {}): Promise<MaintenanceReportAggregate | null> {
     const installed = this.equipment.findEquipment(root);
     if (!installed) return null;
+
     const findings = async () => this.inspection.findings(
       installed,
       await this.equipment.inspectEquipment(root, installed, node),
     );
+
     const tried = new Map<string, EquipmentFinding>();
     const failures = new Map<string, string>();
-    // Each repair changes what the next repair stands on.
+
     for (; fix; ) {
       const next = (await findings()).find((lack) => lack.repair && !tried.has(id(lack)));
       if (!next?.repair) break;
       tried.set(id(next), next);
+
       try {
         this.equipment.repairEquipment(root, installed, next.repair);
       } catch (cause) {
         failures.set(id(next), cause instanceof Error ? cause.message : String(cause));
       }
     }
+
     const remaining = await findings();
     const still = new Set(remaining.map(id));
     const notes = this.inspection.notes(installed, this.equipment.readNotes(root, installed, env));
     const suspects = await this.suspectProcedures.execute(root);
+
     return new MaintenanceReportAggregate({ items: [
       ...[...tried].filter(([key]) => !still.has(key))
         .map(([, item]) => new MaintenanceItemValueObject({ ...item, repaired: true })),

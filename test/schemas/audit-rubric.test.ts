@@ -16,8 +16,10 @@ it("loads the actual clean-react rubric after the core's rubric", async () => {
       repository.listPackageNames(PACKAGE_ROOT),
     );
     const rows = read(rubrics);
-    expect(rows.slice(0, 16)).toEqual(read(rubrics.slice(0, 1)));
-    expect(rows.slice(16).map((row) => row.id)).toEqual(["S01", "S02", "S03", "S04", "S21", "S22", "S23"]);
+    const coreRows = read(rubrics.slice(0, 1));
+    expect(rows.slice(0, coreRows.length)).toEqual(coreRows);
+    expect(coreRows.map((row) => row.id)).toContain("S24");
+    expect(rows.slice(coreRows.length).map((row) => row.id)).toEqual(["S01", "S02", "S03", "S04", "S21", "S22", "S23"]);
     const casesByRow = Object.values(workstreamDirs)
       .flatMap(dir => globSync(join(dir, "*.examples.md")))
       .flatMap(file => [...exampleFile.parseExampleFile(file).rubric]);

@@ -8,12 +8,6 @@ export function createActiveProject<V>(
   { loadHolder, currentProduct }: ActiveProjectDefinitions<V>,
   loadWorkstreams: BuildWorkstreams,
 ) {
-  /**
-   * The product a run works on (the only one, or the one `--product` names) and its schema: the
-   * schema's defaults under the project's `factory.config.ts`, and the workstreams it declares joined
-   * with the configured topology. Every tool (fallow, oxlint, archunit, the tests, the checks) is
-   * composed from here.
-   */
   const product = {} as Awaited<ReturnType<typeof currentProduct>>;
 
   const schema = {} as Awaited<ReturnType<typeof loadHolder>>;
@@ -36,11 +30,9 @@ export function createActiveProject<V>(
     Object.assign(product, await currentProduct(PROJECT_ROOT));
     Object.assign(schema, await loadHolder(product.schema));
 
-    /** The folder of each workstream of the schema, and its rubrics: its core's, then its own. */
     Object.assign(WORKSTREAM_DIRS, schema.workstreamDirs);
     RUBRICS.splice(0, RUBRICS.length, ...schema.rubrics);
 
-    /** The example files of every layer, each in the folder of the workstream that owns it. */
     EXAMPLE_FILES.splice(
       0,
       EXAMPLE_FILES.length,
@@ -54,6 +46,7 @@ export function createActiveProject<V>(
     Object.assign(config, product.config);
 
     const RULES = `.rules${SOURCE_EXT}`;
+
     const folders: WorkCenterFolders = Object.fromEntries(
       Object.keys(schema.workstreams).map((id) => [
         id,
@@ -80,10 +73,6 @@ export function createActiveProject<V>(
       checks: schema.definition.checks ?? [],
     });
 
-    /**
-     * The same workstreams over the default paths: the example files are written at `src/*`,
-     * `test/acceptance` and `openspec/specs/<module>/<use-case>`, whatever this project configures.
-     */
     Object.assign(exampleArchitecture, {
       ...architecture,
       workstreams: loadWorkstreams(
@@ -102,6 +91,7 @@ export function createActiveProject<V>(
       ),
     });
   };
+
   return {
     product,
     schema,

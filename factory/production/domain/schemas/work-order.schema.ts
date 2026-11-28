@@ -14,4 +14,5 @@ export const WorkOrderSchema = z.object({
   revisions: z.array(z.instanceof(DrawingRevisionValueObject)).default([]),
   andonPulls: z.array(z.instanceof(AndonPullValueObject)).default([]),
 }).transform(({ plan, ...order }) => ({ ...order, currentPlan: plan }));
+
 export type WorkOrderProps = z.input<typeof WorkOrderSchema>;

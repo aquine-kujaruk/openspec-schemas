@@ -24,8 +24,10 @@ export class AndonAdapter implements AndonAcl {
   async closeSignal(name: string, source: string) {
     const left = this.signals(name).filter((report) => report.source !== source);
     const file = join(this.directory, name, "feedback.json");
+
     if (left.length) writeFileSync(file, `${JSON.stringify(left, null, 2)}\n`);
     else rmSync(file, { force: true });
+
     rmSync(join(this.directory, name, this.gate), { force: true });
   }
 }

@@ -7,12 +7,14 @@ export const AuditRowSchema = z.object({
   folders: z.array(z.string()),
   crossFile: z.boolean(),
 });
+
 export type AuditRow = z.infer<typeof AuditRowSchema>;
 
 export const LoadedAuditRowSchema = AuditRowSchema.extend({
   verdict: z.enum(["accepted", "rejected"]),
   reason: z.string().optional(),
 });
+
 export type LoadedAuditRow = z.infer<typeof LoadedAuditRowSchema>;
 
 export const AuditSourceSchema = z.object({ path: z.string(), content: z.string() });
@@ -26,6 +28,7 @@ export const AuditQuestionSchema = z.object({
   instructions: z.string(),
   excerpt: z.string(),
 });
+
 export type AuditQuestion = z.infer<typeof AuditQuestionSchema>;
 
 export type AuditAnswers = Map<string, number>;
@@ -37,4 +40,5 @@ export const AuditPassSchema = z.object({
   rubric: z.string().optional(),
   files: z.record(z.string(), z.object({ hash: z.string(), commit: z.string().nullable() })),
 });
+
 export type AuditPass = z.infer<typeof AuditPassSchema>;

@@ -12,4 +12,5 @@ export const LineRootsSchema = z.object({
   base: z.array(z.string()).optional(),
   allowUnmatched: z.array(z.string()).optional(),
 });
+
 export type LineRootsProps = z.infer<typeof LineRootsSchema>;

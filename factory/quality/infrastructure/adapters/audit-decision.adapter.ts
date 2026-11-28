@@ -1,4 +1,5 @@
 import { QualityException } from "../../domain/exceptions/quality.exceptions.ts";
+
 import {
   DecisionModelUnavailable,
   decisionModelClient,
@@ -9,9 +10,9 @@ import {
 export { DECISIONS_ENDPOINT, inspect, type DecisionClient, type Inspection } from "../../../shared/infrastructure/adapters/decision-model.adapter.ts";
 export type OpenAiClientOptions = DecisionModelOptions;
 
-/** The decision model of the audit: a failure to ask it is a quality failure. */
 export const openAiClient = (o: OpenAiClientOptions): DecisionClient & { requests: number } => {
   const client = decisionModelClient(o);
+
   return {
     get requests() {
       return client.requests;
@@ -21,6 +22,7 @@ export const openAiClient = (o: OpenAiClientOptions): DecisionClient & { request
         return await client.ask(state, questions);
       } catch (e) {
         if (e instanceof DecisionModelUnavailable) throw new QualityException(e.message, { cause: e.cause });
+
         throw e;
       }
     },

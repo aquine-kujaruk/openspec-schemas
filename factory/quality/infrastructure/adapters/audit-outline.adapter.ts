@@ -2,7 +2,6 @@ import ts from "typescript";
 import type { AuditAcl } from "../acl/audit.acl.ts";
 type AuditSpan = ReturnType<AuditAcl["outlineSource"]>[number];
 
-/** A span of a file, 1-based inclusive lines, with what it is for the question. */
 type Span = { from: number; to: number; label: string };
 
 type Parsed = { sf: ts.SourceFile; lines: number };
@@ -29,6 +28,7 @@ const spanOf = (sf: ts.SourceFile, node: ts.Node, label: string): Span => ({
 
 const nameOf = (node: ts.Node): string => {
   const n = (node as { name?: ts.Node }).name;
+
   return n &&
     (ts.isIdentifier(n) || ts.isStringLiteral(n) || ts.isPrivateIdentifier(n))
     ? n.text
@@ -46,29 +46,35 @@ const kindOf = (node: ts.Node): string => {
   if (ts.isConstructorDeclaration(node)) return "constructor";
   if (ts.isGetAccessor(node) || ts.isSetAccessor(node)) return "accessor";
   if (ts.isPropertyDeclaration(node)) return "property";
+
   if (ts.isPropertySignature(node) || ts.isMethodSignature(node))
     return "member";
+
   if (ts.isImportDeclaration(node)) return "import";
+
   if (ts.isExportDeclaration(node) || ts.isExportAssignment(node))
     return "export";
+
   return "statement";
 };
 
 const labelOf = (node: ts.Node, owner?: string): string => {
   const kind = kindOf(node);
+
   const name = ts.isVariableStatement(node)
     ? node.declarationList.declarations.map(nameOf).filter(Boolean).join(", ")
     : nameOf(node);
+
   const qualified =
     kind === "constructor"
       ? (owner ?? "")
       : owner && name
         ? `${owner}.${name}`
         : name;
+
   return qualified ? `${kind} ${qualified}` : kind;
 };
 
-/** Stage 2: the top-level units of a file (classes, interfaces, functions, constants, types…). */
 const unitsOf = ({ sf }: Parsed): Array<Span & { node: ts.Node }> =>
   sf.statements
     .filter((s) => !ts.isImportDeclaration(s))
@@ -76,26 +82,31 @@ const unitsOf = ({ sf }: Parsed): Array<Span & { node: ts.Node }> =>
 
 const bodyOf = (node: ts.Node): ts.Block | undefined => {
   const body = (node as { body?: ts.Node }).body;
+
   return body && ts.isBlock(body) ? body : undefined;
 };
 
 const functionBody = (node: ts.Node): ts.Block | undefined => {
   if (ts.isFunctionLike(node)) return bodyOf(node);
+
   if (ts.isVariableStatement(node)) {
     const inits = node.declarationList.declarations.flatMap((d) =>
       d.initializer ? [d.initializer] : [],
     );
+
     const fn = inits.find(
       (i) => ts.isArrowFunction(i) || ts.isFunctionExpression(i),
     );
+
     return fn && bodyOf(fn);
   }
+
   return undefined;
 };
 
-/** Every statement held by the blocks directly inside a node (then/else, loop bodies, try/catch, switch cases). */
 const statementsWithin = (node: ts.Node): ts.Node[] => {
   const out: ts.Node[] = [];
+
   const visit = (n: ts.Node) => {
     if (ts.isBlock(n) || ts.isModuleBlock(n)) out.push(...n.statements);
     else if (ts.isCaseBlock(n))
@@ -111,36 +122,37 @@ const statementsWithin = (node: ts.Node): ts.Node[] => {
       n.forEachChild(visit);
     else if (ts.isStatement(n)) out.push(n);
   };
+
   node.forEachChild(visit);
+
   return out;
 };
 
-/**
- * Stage 3: what a span splits into. A class: its header (declaration up to the first member) and
- * each member; an interface or enum: its members; a function or method: the statements of its
- * body; a compound statement: the statements of its blocks. A leaf yields nothing and is reported
- * as it is.
- */
 const partsOf = (
   { sf }: Parsed,
   unit: { node: ts.Node; label: string },
 ): Array<Span & { node: ts.Node }> => {
   const { node } = unit;
   const owner = nameOf(node);
+
   if (ts.isClassDeclaration(node) || ts.isClassExpression(node)) {
     const members = node.members.map((m) => ({
       ...spanOf(sf, m, labelOf(m, owner)),
       node: m,
     }));
+
     if (!members.length) return [];
+
     const header: Span & { node: ts.Node } = {
       from: line(sf, node.getStart(sf)),
       to: Math.max(line(sf, node.getStart(sf)), members[0].from - 1),
       label: `header of class ${owner}`,
       node,
     };
+
     return [header, ...members];
   }
+
   if (
     ts.isInterfaceDeclaration(node) ||
     ts.isEnumDeclaration(node) ||
@@ -150,13 +162,16 @@ const partsOf = (
       ...spanOf(sf, m, labelOf(m, owner)),
       node: m,
     }));
+
   const body = functionBody(node);
   const statements = body ? [...body.statements] : statementsWithin(node);
+
   return statements.map((s) => ({ ...spanOf(sf, s, labelOf(s)), node: s }));
 };
 
 export const outlineSource: AuditAcl["outlineSource"] = ({ path, content }) => {
   const source = parse(path, content);
+
   const outline = (span: Span & { node: ts.Node }): AuditSpan => ({
     from: span.from,
     to: span.to,
@@ -167,5 +182,6 @@ export const outlineSource: AuditAcl["outlineSource"] = ({ path, content }) => {
         (part.from !== span.from || part.to !== span.to))
       .map(outline),
   });
+
   return unitsOf(source).map(outline);
 };

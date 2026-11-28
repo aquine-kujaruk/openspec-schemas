@@ -1,3 +1,4 @@
+import ts from "typescript";
 type FileInfo = { path: string; name: string; content: string };
 import { dirname, posix } from "node:path";
 import type { Rule, RuleContext } from "../../../shared/domain/schemas/line-types.schema.ts";
@@ -5,21 +6,20 @@ import type { Rule, RuleContext } from "../../../shared/domain/schemas/line-type
 export const has = (re: RegExp) => (file: FileInfo) => re.test(file.content);
 export const not = (re: RegExp) => (file: FileInfo) => !re.test(file.content);
 
-/** `invoice-book` → `InvoiceBook`. */
 export const pascal = (kebab: string): string =>
   kebab.replace(/(^|-)([a-z0-9])/g, (_, __, c: string) => c.toUpperCase());
 
-/** The index just past the string literal that opens at `i` (its closing quote), escapes skipped. */
 const skipString = (text: string, i: number): number => {
   const quote = text[i]!;
+
   for (i++; i < text.length && text[i] !== quote; i++)
     if (text[i] === "\\") i++;
+
   return i;
 };
 
 const isQuote = (c: string) => c === '"' || c === "'" || c === "`";
 
-/** The index of the bracket that closes the one at `open` (`(`, `{`, `[` or `<`), or -1. Strings and comments are skipped. */
 const closing = (text: string, open: number): number => {
   const pairs: Record<string, string> = {
     "(": ")",
@@ -27,9 +27,12 @@ const closing = (text: string, open: number): number => {
     "[": "]",
     "<": ">",
   };
+
   const stack: string[] = [pairs[text[open]!]!];
+
   for (let i = open + 1; i < text.length; i++) {
     const c = text[i]!;
+
     if (isQuote(c)) i = skipString(text, i);
     else if (c === "/" && text[i + 1] === "/") i = text.indexOf("\n", i);
     else if (c === "/" && text[i + 1] === "*") i = text.indexOf("*/", i) + 1;
@@ -38,18 +41,21 @@ const closing = (text: string, open: number): number => {
       stack.pop();
       if (!stack.length) return i;
     }
+
     if (i < 0) return -1;
   }
+
   return -1;
 };
 
-/** Splits `text` at the commas outside brackets and strings. */
 const topLevelSplit = (text: string): string[] => {
   const parts: string[] = [];
   let depth = 0;
   let start = 0;
+
   for (let i = 0; i < text.length; i++) {
     const c = text[i]!;
+
     if (isQuote(c)) i = skipString(text, i);
     else if ("({[<".includes(c)) depth++;
     else if (")}]>".includes(c)) depth--;
@@ -58,66 +64,70 @@ const topLevelSplit = (text: string): string[] => {
       start = i + 1;
     }
   }
+
   parts.push(text.slice(start));
+
   return parts.map((p) => p.trim()).filter(Boolean);
 };
 
-/** A constructor parameter: its name and declared type (`undefined` when it declares none). */
 export type Param = { name: string; type?: string };
 
-/** The parameters of every `constructor(` in `content`, in order, modifiers and defaults dropped. */
 export const constructorParams = (content: string): Param[][] => {
   const all: Param[][] = [];
+
   for (const m of content.matchAll(/\bconstructor\s*\(/g)) {
     const open = m.index + m[0].length - 1;
     const close = closing(content, open);
     if (close < 0) continue;
+
     all.push(
       topLevelSplit(content.slice(open + 1, close)).map((p) => {
         const bare = p.replace(
           /^(?:(?:public|private|protected|readonly|override)\s+)*/,
           "",
         );
+
         const name = /^(\w+)/.exec(bare)?.[1] ?? "";
         const typed = /^\w+\s*\??\s*:\s*([\s\S]+)$/.exec(bare)?.[1];
+
         const type =
           typed && topLevelSplit(typed.replace(/\s*=[\s\S]*$/, ""))[0]?.trim();
+
         return { name, type };
       }),
     );
   }
+
   return all;
 };
 
-/** The body of the first `constructor` in `content` (without its braces), or `undefined`. */
 export const constructorBody = (content: string): string | undefined => {
   const m = /\bconstructor\s*\(/.exec(content);
   if (!m) return undefined;
   const params = closing(content, m.index + m[0].length - 1);
   const open = content.indexOf("{", params);
   const close = closing(content, open);
+
   return params < 0 || open < 0 || close < 0
     ? undefined
     : content.slice(open + 1, close);
 };
 
-/** Every `throw new X(` in `content`: the class and the text of its arguments. */
 export const throws = (
   content: string,
 ): Array<{ name: string; args: string }> =>
   [...content.matchAll(/\bthrow\s+new\s+(\w+)\s*\(/g)].map((m) => {
     const open = m.index + m[0].length - 1;
     const close = closing(content, open);
+
     return {
       name: m[1]!,
       args: close < 0 ? "" : content.slice(open + 1, close),
     };
   });
 
-/** A named import: the names it binds and where it resolves to (relative specifiers resolved from `path`, bare ones kept). */
 export type Import = { names: string[]; specifier: string; resolved: string };
 
-/** The `import { … } from "…"` statements of a file, each with its specifier resolved from the file's folder. */
 export const importsOf = (file: Pick<FileInfo, "path" | "content">): Import[] =>
   [
     ...file.content.matchAll(
@@ -141,7 +151,6 @@ export const importsOf = (file: Pick<FileInfo, "path" | "content">): Import[] =>
       : specifier!,
   }));
 
-/** `content` without its comments and string literals, so a word search finds code only. */
 export const codeOnly = (content: string): string =>
   content
     .replace(/\/\*[\s\S]*?\*\//g, " ")
@@ -150,7 +159,6 @@ export const codeOnly = (content: string): string =>
     .replace(/"(?:\\.|[^"\\\n])*"/g, '""')
     .replace(/'(?:\\.|[^'\\\n])*'/g, '""');
 
-/** A class declaration read from its header: `[export] [abstract] class Name [extends Base] [implements I, J] {`. */
 export type ClassDecl = {
   name: string;
   exported: boolean;
@@ -159,7 +167,6 @@ export type ClassDecl = {
   implements: string[];
 };
 
-/** Class declarations of a file. Generic arguments are dropped; a header the regex cannot read reaches nothing. */
 export const classesOf = (content: string): ClassDecl[] =>
   [
     ...content.matchAll(
@@ -168,6 +175,7 @@ export const classesOf = (content: string): ClassDecl[] =>
   ].map(([, exported, abstract, name, rest]) => {
     let header = rest!;
     while (/<[^<>]*>/.test(header)) header = header.replace(/<[^<>]*>/g, "");
+
     return {
       name: name!,
       exported: !!exported,
@@ -180,7 +188,6 @@ export const classesOf = (content: string): ClassDecl[] =>
     };
   });
 
-/** Closed vocabulary of a layer: only those folders, each with its file suffix (empty suffix: no rule). */
 const vocabularyRules =
   (
     id: string,
@@ -190,6 +197,7 @@ const vocabularyRules =
   ) =>
   (ctx: RuleContext): Rule[] => {
     const folders = Object.keys(vocabulary);
+
     return [
       {
         id,
@@ -218,18 +226,16 @@ const vocabularyRules =
     ];
   };
 
-/** A check that passes for every file under the folder `skip` (relative to the module), so a layer can stop where another begins. */
 const outside =
   (skip: string | undefined, check: (file: FileInfo) => boolean) =>
   (file: FileInfo): boolean =>
     (skip !== undefined && file.path.includes(`/${skip}/`)) || check(file);
 
-/** Names that say nothing about a role (infrastructure-names-the-role). */
 const ROLELESS_CLASS = /(Service|Helper|Utils?|Manager|Common)(?=[A-Z]|$)/;
+
 const ROLELESS_FILE =
   /(^|[-.])(service|helper|utils?|manager|common)(?=[-.]|$)/;
 
-/** infrastructure-names-the-role over `${modules}/${folder}`, leaving out `skip`. */
 const namesTheRoleRule =
   (folder: string, modules: string, skip?: string) =>
   (ctx: RuleContext): Rule => ({
@@ -254,7 +260,6 @@ const namesTheRoleRule =
         .check(ctx.opts),
   });
 
-/** infrastructure-throws-domain-exceptions over `${modules}/${folder}`, leaving out `skip`. */
 const throwsDomainExceptionsRule =
   (folder: string, modules: string, skip?: string) =>
   (ctx: RuleContext): Rule => ({
@@ -269,12 +274,15 @@ const throwsDomainExceptionsRule =
           outside(skip, (f) => {
             const root = modules.replace(/\/\*$/, "");
             const module = f.path.slice(root.length + 1).split("/")[0];
+
             const own = new RegExp(
               `^${root}/${module}/domain/exceptions/[\\w-]+\\.exceptions(?:\\.[jt]s)?$`,
             );
+
             const shared = new RegExp(
               `^${root}/shared/domain/exceptions/[\\w-]+\\.exceptions(?:\\.[jt]s)?$`,
             );
+
             const domainExceptions = new Set(
               importsOf(f).flatMap((i) =>
                 own.test(i.resolved)
@@ -284,6 +292,7 @@ const throwsDomainExceptionsRule =
                     : [],
               ),
             );
+
             return throws(f.content).every(
               (t) => domainExceptions.has(t.name) && /\bcause\b/.test(t.args),
             );
@@ -301,4 +310,38 @@ export class ArchitectureStandardsService {
 
 const { vocabularyRules: vocabulary, namesTheRoleRule: role, throwsDomainExceptionsRule: exceptions } =
   new ArchitectureStandardsService();
+
 export { vocabulary as vocabularyRules, role as namesTheRoleRule, exceptions as throwsDomainExceptionsRule };
+
+export const glued = (content: string, path = "source.ts"): number[] => {
+  const source = ts.createSourceFile(path, content, ts.ScriptTarget.Latest, true);
+  const lines = new Set<number>();
+  const blankLine = /(?:\r\n|\n|\r(?!\n))[^\S\r\n]*(?:\r\n|\n|\r)/;
+  const lineAt = (position: number) => source.getLineAndCharacterOfPosition(position).line;
+
+  const visit = (node: ts.Node): void => {
+    if (ts.isSourceFile(node) || ts.isBlock(node) || ts.isModuleBlock(node) ||
+        ts.isCaseClause(node) || ts.isDefaultClause(node)) {
+      for (let i = 1; i < node.statements.length; i++) {
+        const previous = node.statements[i - 1]!;
+        const statement = node.statements[i]!;
+        const start = statement.getStart(source);
+        const line = lineAt(start);
+
+        const needsSpace = lineAt(previous.getStart(source)) !== lineAt(previous.end - 1)
+          || line !== lineAt(statement.end - 1)
+          || ts.isReturnStatement(statement) || ts.isThrowStatement(statement);
+
+        if (needsSpace && !blankLine.test(content.slice(previous.end, start))) {
+          lines.add(line + 1);
+        }
+      }
+    }
+
+    ts.forEachChild(node, visit);
+  };
+
+  visit(source);
+
+  return [...lines].sort((a, b) => a - b);
+};

@@ -13,6 +13,7 @@ export class DomainException extends Error {
 
 ```ts src/shared/domain/exceptions/validation.exceptions.ts
 import { DomainException } from "./domain.exceptions";
+
 export class ValidationException extends DomainException {
   constructor(
     public readonly source: string,
@@ -26,6 +27,7 @@ export class ValidationException extends DomainException {
 ```ts src/shared/domain/schemas/validation.schema.ts
 import type { z } from "zod";
 import { ValidationException } from "../exceptions/validation.exceptions";
+
 export const validateSchema = <S extends z.ZodType>(
   target: object,
   schema: S,
@@ -34,6 +36,7 @@ export const validateSchema = <S extends z.ZodType>(
   const result = schema.safeParse(props);
   if (!result.success) throw new ValidationException(target.constructor.name, result.error);
   Object.assign(target, result.data);
+
   return result.data;
 };
 ```
@@ -42,6 +45,7 @@ export const validateSchema = <S extends z.ZodType>(
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
 import { InvoiceAlreadyPaidException } from "../exceptions/invoice.exceptions";
 import { InvoiceSchema, InvoiceStatus, type InvoiceProps } from "../schemas/invoice.schema";
+
 export class InvoiceEntity {
   public readonly id!: string;
   public readonly total!: number;
@@ -54,6 +58,7 @@ export class InvoiceEntity {
   }
   pay() {
     if (this.isPaid) throw new InvoiceAlreadyPaidException(this.id);
+
     return new InvoiceEntity({ id: this.id, total: this.total, status: InvoiceStatus.PAID });
   }
 }
@@ -61,21 +66,25 @@ export class InvoiceEntity {
 
 ```ts src/module/domain/schemas/invoice.schema.ts
 import { z } from "zod";
+
 export enum InvoiceStatus {
   PAID = "paid",
   PENDING = "pending",
 }
+
 export const InvoiceSchema = z.object({
   id: z.string().min(1),
   total: z.number().int(),
   status: z.enum(InvoiceStatus),
 });
+
 export type InvoiceProps = z.infer<typeof InvoiceSchema>;
 ```
 
 ```ts src/module/framework/view-models/invoice-row.view-model.ts
 import type { InvoiceEntity } from "../../domain/entities/invoice.entity";
 import { invoiceStatusLabel } from "./invoice-status.view-model";
+
 export const invoiceRowViewModel = (invoice: InvoiceEntity) => ({
   id: invoice.id,
   label: `#${invoice.id}`,
@@ -90,12 +99,15 @@ import { useInvoicesStore } from "../stores/invoices.store";
 import { invoiceRowViewModel } from "../view-models/invoice-row.view-model";
 import { invoiceStatusOptions } from "../view-models/invoice-status.view-model";
 const ALL = "all";
+
 export const useInvoicesController = () => {
   const { status, setStatus } = useInvoicesStore();
   const query = useListInvoicesQuery();
+
   const rows = (query.data ?? [])
     .filter((invoice) => !status || invoice.status === status)
     .map(invoiceRowViewModel);
+
   return {
     rows,
     isEmpty: query.isSuccess && rows.length === 0,
@@ -110,8 +122,10 @@ export const useInvoicesController = () => {
 ```tsx src/module/framework/ui/invoices/invoices.page.tsx
 import type { ComponentProps } from "react";
 import { useInvoicesController } from "../../controllers/invoices.controller";
+
 export const InvoicesPage = (props: { invoiceLink: (invoiceId: string) => ComponentProps<"a"> }) => {
   const { rows, isEmpty, filter, filterOptions, onFilter } = useInvoicesController();
+
   return (
     <main>
       <h1>Invoices</h1>
@@ -144,6 +158,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { InvoicesRouteBridge } from "./module/framework/bridges/invoices-route.bridge";
 const queryClient = new QueryClient();
+
 createRoot(document.getElementById("app")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -155,11 +170,14 @@ createRoot(document.getElementById("app")!).render(
 
 ```ts src/module/framework/view-models/invoice-status.view-model.ts
 import { InvoiceStatus } from "../../domain/schemas/invoice.schema";
+
 const LABEL: Record<InvoiceStatus, string> = {
   [InvoiceStatus.PAID]: "Paid",
   [InvoiceStatus.PENDING]: "Pending",
 };
+
 export const invoiceStatusLabel = (status: InvoiceStatus) => LABEL[status];
+
 export const invoiceStatusOptions = () =>
   Object.values(InvoiceStatus).map((value) => ({ value, label: LABEL[value] }));
 ```
@@ -167,6 +185,7 @@ export const invoiceStatusOptions = () =>
 ```ts src/module/framework/view-models/invoice-detail.view-model.ts
 import type { InvoiceEntity } from "../../domain/entities/invoice.entity";
 import { invoiceStatusLabel } from "./invoice-status.view-model";
+
 export const invoiceDetailViewModel = (invoice: InvoiceEntity) => ({
   title: `Invoice #${invoice.id}`,
   total: String(invoice.total),
@@ -179,10 +198,12 @@ import { ModuleException } from "../../domain/exceptions/invoice.exceptions";
 import { usePayInvoiceMutation } from "../mutations/pay-invoice.mutation";
 import { useGetInvoiceQuery } from "../queries/get-invoice.query";
 import { invoiceDetailViewModel } from "../view-models/invoice-detail.view-model";
+
 export const useInvoiceDetailController = (invoiceId: string) => {
   const query = useGetInvoiceQuery(invoiceId);
   const payment = usePayInvoiceMutation();
   const failure = query.error ?? payment.error;
+
   return {
     invoice: query.data ? invoiceDetailViewModel(query.data) : null,
     notice: failure instanceof ModuleException ? failure.message : null,
@@ -196,8 +217,10 @@ export const useInvoiceDetailController = (invoiceId: string) => {
 ```tsx src/module/framework/ui/invoice-detail/invoice-detail.page.tsx
 import type { ComponentProps } from "react";
 import { useInvoiceDetailController } from "../../controllers/invoice-detail.controller";
+
 export const InvoiceDetailPage = (props: { invoiceId: string; listLink: ComponentProps<"a"> }) => {
   const { invoice, notice, canPay, isPaying, onPay } = useInvoiceDetailController(props.invoiceId);
+
   return (
     <main>
       <a {...props.listLink}>Back to the invoices</a>
@@ -225,17 +248,23 @@ import { type MouseEvent, useEffect, useState } from "react";
 import { InvoiceDetailPage } from "../ui/invoice-detail/invoice-detail.page";
 import { InvoicesPage } from "../ui/invoices/invoices.page";
 const LIST = "/invoices";
+
 const invoiceIdOf = (path: string) =>
   path.startsWith(`${LIST}/`) ? decodeURIComponent(path.slice(LIST.length + 1)) : null;
+
 const opensElsewhere = (event: MouseEvent) =>
   event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+
 export const InvoicesRouteBridge = () => {
   const [path, setPath] = useState(() => window.location.pathname);
+
   useEffect(() => {
     const onPop = () => setPath(window.location.pathname);
     window.addEventListener("popstate", onPop);
+
     return () => window.removeEventListener("popstate", onPop);
   }, []);
+
   const link = (to: string) => ({
     href: to,
     onClick: (event: MouseEvent<HTMLAnchorElement>) => {
@@ -245,7 +274,9 @@ export const InvoicesRouteBridge = () => {
       setPath(to);
     },
   });
+
   const invoiceId = invoiceIdOf(path);
+
   return invoiceId ? (
     <InvoiceDetailPage invoiceId={invoiceId} listLink={link(LIST)} />
   ) : (
@@ -263,8 +294,10 @@ export const use<%= Name %>Controller = () => ({ title: "<%= Name %>" });
 
 ```ejs src/<module>/framework/ui/<name>/<name>.page.tsx
 import { use<%= Name %>Controller } from "../../controllers/<%= name %>.controller";
+
 export const <%= Name %>Page = () => {
   const view = use<%= Name %>Controller();
+
   return <main>{view.title}</main>;
 };
 ```

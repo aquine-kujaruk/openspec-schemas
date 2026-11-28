@@ -6,8 +6,10 @@ import type { CliHost, Commands } from "./cli-contract.adapter.ts";
 export const cleanTestEnvironment = (): void => {
   delete process.env.VITEST;
 };
+
 export const argumentsOf = (): string[] => process.argv.slice(2);
 export const exit = (status: number): never => process.exit(status);
+
 export const createHost = (
   root: string,
   project: string,
@@ -27,6 +29,7 @@ export const createHost = (
     ).version,
   extraCommands: async () => {
     const file = join(root, `tools/commands${extension}`);
+
     return existsSync(file)
       ? ((await import(pathToFileURL(file).href)) as { commands: Commands })
           .commands

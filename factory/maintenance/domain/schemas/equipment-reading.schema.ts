@@ -16,6 +16,7 @@ export const EquipmentRepairSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal(RepairKind.Roots), paths: z.array(z.string()) }),
   z.object({ kind: z.literal(RepairKind.Instruction), file: z.string(), before: z.string().optional() }),
 ]);
+
 export type EquipmentRepair = z.infer<typeof EquipmentRepairSchema>;
 
 export type EquipmentFinding = MaintenanceItemProps & { repair?: EquipmentRepair };
@@ -31,6 +32,7 @@ export const AgentReadingSchema = z.object({
   unwiredGuards: z.array(z.string()).optional(),
   hooks: z.string().optional(),
 });
+
 export type AgentReading = z.infer<typeof AgentReadingSchema>;
 
 export const EquipmentReadingSchema = z.object({
@@ -43,6 +45,7 @@ export const EquipmentReadingSchema = z.object({
   node: z.string(),
   agents: z.array(AgentReadingSchema),
 });
+
 export type EquipmentReading = z.infer<typeof EquipmentReadingSchema>;
 
 export const EquipmentNotesSchema = z.object({
@@ -51,6 +54,7 @@ export const EquipmentNotesSchema = z.object({
   pendingApprovals: z.boolean(),
   typeCheckerVersion: z.string().optional(),
 });
+
 export type EquipmentNotes = z.infer<typeof EquipmentNotesSchema>;
 
 export const EquipmentPlaceSchema = z.object({
@@ -58,4 +62,5 @@ export const EquipmentPlaceSchema = z.object({
   instruction: z.union([z.object({ rules: z.string() }), z.object({ file: z.string() })]),
   hooks: z.string(),
 });
+
 export type EquipmentPlace = z.infer<typeof EquipmentPlaceSchema>;

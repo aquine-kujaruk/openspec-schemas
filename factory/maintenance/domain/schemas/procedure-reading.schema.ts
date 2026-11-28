@@ -7,6 +7,7 @@ export const ProcedureNeedSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal(NeedKind.Binary), name: z.string() }),
   z.object({ kind: z.literal(NeedKind.File), path: z.string() }),
 ]);
+
 export type ProcedureNeed = z.infer<typeof ProcedureNeedSchema>;
 
 export const ProcedureRunSchema = z.object({ command: z.string(), need: ProcedureNeedSchema });
@@ -17,6 +18,7 @@ export const EquipmentProcedureSchema = z.object({
   body: z.string(),
   keys: z.array(z.string()).optional(),
 });
+
 export type EquipmentProcedure = z.infer<typeof EquipmentProcedureSchema>;
 
 export type EquipmentHoldings = {

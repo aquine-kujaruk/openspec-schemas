@@ -9,4 +9,5 @@ export const AuditFindingSchema = z.object({
   to: z.number().int().min(1),
   title: z.string(),
 });
+
 export type AuditFindingProps = z.input<typeof AuditFindingSchema>;

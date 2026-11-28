@@ -13,6 +13,7 @@ export class InspectionRepositoryImplementation implements InspectionRepositoryI
 
   async inspectLine(line: LineName, scope: readonly string[]) {
     const result = InspectionRecordSchema.parse(await this.tool.inspectLine(line, scope));
+
     return new QualityControlRunAggregate({ exitStatus: result.exitStatus, defects: result.defects.map((defect) => new DefectValueObject(defect)) });
   }
 }
