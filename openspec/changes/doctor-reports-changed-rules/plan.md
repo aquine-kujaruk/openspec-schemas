@@ -3,6 +3,7 @@ name: doctor-reports-changed-rules
 description: After a factory update, factory doctor names the rules that changed since the project last passed its check and which of them the project's code now breaks, so the agent opens a change to adapt the code.
 created_at: 2026-11-28
 created_by: Edgar
+approved_at: 2026-11-28
 schema: spec-plan
 ---
 
@@ -29,12 +30,10 @@ A project that updates its package learns from `factory doctor` which rules of i
 - A project with no record (installed before this change) is judged against every rule once: doctor runs the check and reports what breaks, and the first passing check writes the record. @by:agent
 - Rubric rows are reported as changed but not run by doctor: a model call belongs to `factory review`. @by:agent
 - The `plan` skill turns an `outdated` report into a change of the product's schema named `adapt-to-rules-<version>`, offered to the person before their own intention. @by:person
+- An `outdated` report is offered to the person first and does not block a new plan; it repeats every time doctor runs. @by:person
 - Work order: this change, then `use-cases-hydrate-through-the-domain`, `use-cases-branch-only-on-io`, `adapters-wrap-external-systems` and `factory-cli-through-controllers`. @by:agent
 
 ## Open questions
-
-- Should `outdated` block a new plan until the code is adapted, or only be offered first? Pick: offered first; the person may postpone it, and the report repeats every time doctor runs.
-- Do you approve this plan? Read [plan.md](plan.md) and [the delta spec](specs/factory/maintenance/maintain-equipment/spec.md).
 
 ## Architecture decisions
 
