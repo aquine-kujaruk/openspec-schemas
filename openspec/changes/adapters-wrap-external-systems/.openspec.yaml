@@ -1,0 +1,3 @@
+schema: spec-plan
+created: 2026-11-28
+x-linked: [doctor-reports-changed-rules, use-cases-hydrate-through-the-domain, use-cases-branch-only-on-io, factory-cli-through-controllers]
