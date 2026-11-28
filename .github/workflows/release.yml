@@ -1,20 +1,45 @@
 name: release
 
-# Publishes every package under packages-v<version> when a tag v<version> is pushed.
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      source_tag:
+        description: Existing source tag whose packages need publishing
+        required: true
+        type: string
 
 permissions:
   contents: write
 
+concurrency:
+  group: package-release
+  queue: max
+
 jobs:
   release:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
+
+      - name: Check out the source tag for recovery
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          SOURCE_TAG: ${{ inputs.source_tag }}
+        run: |
+          if [[ ! "$SOURCE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "Expected a source release tag in the form vX.Y.Z" >&2
+            exit 1
+          fi
+          git merge-base --is-ancestor "refs/tags/$SOURCE_TAG" HEAD
+          cp .github/scripts/publish-release.sh "$RUNNER_TEMP/publish-release.sh"
+          git switch --detach "refs/tags/$SOURCE_TAG"
+
       - uses: pnpm/action-setup@v4
         with:
           version: 11.22.0
@@ -23,12 +48,22 @@ jobs:
           node-version: 22.22.3
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: The tag is the version of package.json
-        run: test "${GITHUB_REF_NAME}" = "v$(node -p 'require("./package.json").version')"
       - run: pnpm exec factory generate
       - run: pnpm run check
-      - name: Release
+
+      - name: Configure Git identity
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          pnpm exec factory release --push origin
+
+      - name: Release from Conventional Commits
+        if: github.event_name == 'push'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: .github/release/node_modules/.bin/semantic-release
+
+      - name: Recover package publication
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          SOURCE_TAG: ${{ inputs.source_tag }}
+        run: bash "$RUNNER_TEMP/publish-release.sh" "$SOURCE_TAG"

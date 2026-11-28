@@ -1,4 +1,6 @@
-Before exploring a change in this repository, follow the sequential change runbook in `openspec/runbooks/operate/cambios.md`. Resume any unfinished change at its first pending step.
+Before exploring a change in this repository, follow the sequential change runbook in `openspec/runbooks/operate/change-delivery.md`. Resume any unfinished change at its first pending step.
+
+Use Conventional Commits for changes that merge to `main`. CI sets the version and publishes release tags. Follow [the release runbook](openspec/runbooks/operate/release.md) to verify publication or recover a failed release.
 
 <!-- apm:start -->
 This project changes through five skills:

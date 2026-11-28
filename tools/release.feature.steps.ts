@@ -1,9 +1,10 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { expect } from "vitest";
+import { expect, onTestFinished } from "vitest";
 import { parse } from "yaml";
 import { repository } from "./build.feature.steps.ts";
+import { PACKAGE_ROOT } from "../factory/shared/infrastructure/adapters/paths.adapter.ts";
 import { release } from "./release.ts";
 
 /**
@@ -28,6 +29,31 @@ export function createSteps() {
   let packages: string[] = [];
   const before = new Map<string, string>();
   let exited: number | undefined;
+  let previousVersion: string;
+  const run = (cwd: string, command: string, args: string[]) =>
+    spawnSync(command, args, {
+      cwd,
+      encoding: "utf8",
+      env: { ...process.env, GH_TOKEN: "", GITHUB_TOKEN: "" },
+    });
+  const checked = (cwd: string, command: string, args: string[]): string => {
+    const result = run(cwd, command, args);
+    expect(result.status, result.stdout + result.stderr).toBe(0);
+    return result.stdout.trim();
+  };
+  const publisher = ".github/scripts/publish-release.sh";
+  const releaseTools = ".github/release";
+  const remote = join(root, ".git", "release-origin.git");
+  const recover = (tag: string) => {
+    const checkout = join(root, ".git", "recovery");
+    checked(root, "git", ["clone", "--branch", "main", remote, checkout]);
+    symlinkSync(join(PACKAGE_ROOT, "node_modules"), join(checkout, "node_modules"));
+    checked(checkout, "git", ["config", "user.name", "Release fixture"]);
+    checked(checkout, "git", ["config", "user.email", "release@fixture.invalid"]);
+    checked(checkout, "git", ["switch", "--detach", `refs/tags/${tag}`]);
+    checked(checkout, "bash", [publisher, tag]);
+    expect(checked(checkout, "bash", [publisher, tag])).toContain("is already published");
+  };
 
   return {
     // Context
@@ -99,6 +125,26 @@ export function createSteps() {
         before.set(ref, tip(ref));
       }
     },
+    async latestSourceRelease(previous: string): Promise<void> {
+      onTestFinished(() => rmSync(root, { recursive: true, force: true }));
+      previousVersion = previous;
+      await this.repositoryAtVersion(previous, "backend");
+      await this.releasesPublished(`packages-v${previous}`);
+      mkdirSync(join(root, ".github", "scripts"), { recursive: true });
+      mkdirSync(join(root, releaseTools), { recursive: true });
+      const config = join(releaseTools, "config.mjs");
+      for (const file of [".releaserc.json", config, publisher]) {
+        cpSync(join(PACKAGE_ROOT, file), join(root, file));
+      }
+      git("add", ".releaserc.json", config, publisher);
+      git("commit", "-m", "chore: configure releases");
+      symlinkSync(join(PACKAGE_ROOT, "node_modules"), join(root, "node_modules"));
+      symlinkSync(join(PACKAGE_ROOT, releaseTools, "node_modules"), join(root, releaseTools, "node_modules"));
+      git("tag", `v${previous}`);
+      git("init", "--quiet", "--bare", remote);
+      git("remote", "add", "origin", remote);
+      git("push", "origin", "main", "packages", `v${previous}`, `packages-v${previous}`);
+    },
 
     // Action
     async releasePackages(): Promise<void> {
@@ -108,6 +154,40 @@ export function createSteps() {
       } catch {
         exited = 1;
       }
+    },
+    classifiedChangeMerged(change: string): void {
+      const messages = {
+        fix: "fix(factory): handle an empty input",
+        feature: "feat(factory): inspect packages",
+        breaking: "feat(factory)!: change the package contract",
+        documentation: "docs: explain the package layout",
+      };
+      git("switch", "-c", "change");
+      git("commit", "--allow-empty", "-m", messages[change as keyof typeof messages]);
+      git("switch", "main");
+      git("merge", "--no-ff", "change");
+      git("push", "origin", "main");
+
+      const hook = join(remote, "hooks", "pre-receive");
+      if (change === "fix") {
+        writeFileSync(hook, "#!/bin/sh\nwhile read -r old new ref; do\n  test \"$ref\" != refs/heads/packages || exit 1\ndone\n", { mode: 0o755 });
+      }
+      const result = run(root, join(root, releaseTools, "node_modules", ".bin", "semantic-release"), ["--no-ci"]);
+      const output = result.stdout + result.stderr;
+      if (change === "fix") {
+        expect(result.status, output).toBe(1);
+        expect(output).toContain("pre-receive hook declined");
+        git("fetch", "--tags", "origin");
+        const tag = git("tag", "--list", "v*", "--sort=-version:refname").split("\n")[0]!;
+        expect(tag).not.toBe(`v${previousVersion}`);
+        expect(git("ls-remote", "--tags", "origin", `refs/tags/packages-${tag}`)).toBe("");
+        rmSync(hook);
+        git("tag", "-d", `packages-${tag}`);
+        recover(tag);
+      } else {
+        expect(result.status, output).toBe(0);
+      }
+      git("fetch", "--tags", "origin");
     },
 
     // Outcome
@@ -152,6 +232,26 @@ export function createSteps() {
             `${ref}:${name}/.apm/skills/setup/assets`,
           ),
         ).toContain(`factory-${command}.tgz`);
+    },
+    automaticReleaseOutcome(result: string): void {
+      const sourceTags = git("tag", "--list", "v*").split("\n");
+      const packageTags = git("tag", "--list", "packages-v*").split("\n");
+      expect(tip(`packages-v${previousVersion}`)).toBe(before.get(`packages-v${previousVersion}`));
+      if (result === `the released version stays at ${previousVersion}`) {
+        expect(sourceTags).toEqual([`v${previousVersion}`]);
+        expect(packageTags).toEqual([`packages-v${previousVersion}`]);
+        return;
+      }
+
+      const [sourceTag, packageTag] = result.split(" and ") as [string, string];
+      const version = sourceTag.slice(1);
+      expect(sourceTags).toHaveLength(2);
+      expect(packageTags).toHaveLength(2);
+      expect(tip(sourceTag)).toBe(tip("origin/main"));
+      expect(JSON.parse(git("show", `${sourceTag}:package.json`)).version).toBe(version);
+      expect(parse(git("show", `${packageTag}:backend/apm.yml`)).version).toBe(version);
+      expect(git("ls-tree", "--name-only", `${packageTag}:backend/.apm/skills/setup/assets`))
+        .toContain(`factory-${version}.tgz`);
     },
   };
 }
