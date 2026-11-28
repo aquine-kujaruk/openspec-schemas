@@ -3,6 +3,7 @@ name: factory-cli-through-controllers
 description: Each factory module gets a controller that composes its use cases and translates arguments, hook payloads, standard input, output and exit status; the entry files only wire dependencies and keep the SDK and the CLI commands.
 created_at: 2026-11-28
 created_by: Edgar
+approved_at: 2026-11-28
 schema: spec-plan
 ---
 
@@ -21,15 +22,12 @@ Every factory module has one controller that composes its use cases and translat
 
 ## Decisions
 
-- The controllers live in `factory/<module>/framework/controllers/<module>.controller.ts`; `framework` becomes an optional layer of clean-backend, with no rule binding a backend that does not have it, so the factory stays a clean-backend line and other backends are not forced to adopt it (the 2026-11-18 limit). Discarded: controllers in the entry files, which leaves the glue where it is. @by:agent
+- The controllers live in `factory/<module>/framework/controllers/<module>.controller.ts`; `framework` becomes an optional layer of clean-backend, with no rule binding a backend that does not have it, so the factory stays a clean-backend line and other backends are not forced to adopt it (the 2026-11-18 limit). Discarded: controllers in the entry files, which leaves the glue where it is; a folder only the factory's configuration allows. @by:person
 - A controller depends on use cases and on a small `Io` port (arguments, standard input, write, exit status) that `main.ts` fills from the process; a test fills it in memory. @by:agent
 - Held by a unit test that fails when an entry file under `factory/*.ts` writes output, reads `process.argv` or standard input, or calls a use case directly, and by acceptance: the same operation through the CLI and through an in-memory `Io` keeps its decision. No delta spec: nothing a user of the factory notices changes. @by:agent
 - Runs last, after `adapters-wrap-external-systems` slims the composition files. @by:agent
 
 ## Open questions
-
-- Is `framework` an optional layer of clean-backend (any backend may have controllers; the factory does), or a folder only the factory's configuration allows? Pick: an optional layer of clean-backend.
-- Do you approve this plan? Read [plan.md](plan.md).
 
 ## Architecture decisions
 
