@@ -232,6 +232,30 @@ export class HttpInvoiceAdapter extends InvoiceAcl {}
 - src/module/infrastructure/acl/invoice.acl.ts (archunit)
 ```
 
+## adapter-wraps-external-system
+
+### adapter-forwards-callback
+
+```ts src/module/infrastructure/acl/released-invoice.acl.ts
+export interface ReleasedInvoiceAcl {
+  listReleased(): Promise<string[]>;
+}
+```
+
+```ts src/module/infrastructure/adapters/released-invoice.adapter.ts
+import type { ReleasedInvoiceAcl } from "../acl/released-invoice.acl";
+export class ReleasedInvoiceAdapter implements ReleasedInvoiceAcl {
+  constructor(private readonly released: () => Promise<string[]>) {}
+  listReleased() {
+    return this.released();
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/adapters/released-invoice.adapter.ts (archunit)
+```
+
 ## adapter-implements-acl
 
 ### adapter-without-acl

@@ -6,7 +6,6 @@ import type { Product } from "./engineering/infrastructure/acl/plant.acl.ts";
 import type { CatalogSchema } from "./engineering/infrastructure/acl/process.acl.ts";
 import { createActiveProject } from "./engineering/infrastructure/adapters/active-project.adapter.ts";
 import { PlantAdapter } from "./engineering/infrastructure/adapters/plant.adapter.ts";
-import { ProcessAdapter } from "./engineering/infrastructure/adapters/process.adapter.ts";
 import { createProcessCatalog } from "./engineering/infrastructure/adapters/process-catalog.adapter.ts";
 import * as schemaYaml from "./engineering/infrastructure/adapters/process-drawing.adapter.ts";
 import { createProductCatalog } from "./engineering/infrastructure/adapters/product-catalog.adapter.ts";
@@ -47,7 +46,7 @@ const plant = (root: string, readProducts: (root: string) => Promise<Product[]>)
 async function listSchemas(root: string) {
   const { installed } = await import("./maintenance.ts");
 
-  const processes = new ProcessRepositoryImplementation(new ProcessAdapter(async () => {
+  const processes = new ProcessRepositoryImplementation(async () => {
     const available = schema.schemaNames();
     const active = installed.readInstalled(root)?.installed.schemas ?? available;
 
@@ -66,7 +65,7 @@ async function listSchemas(root: string) {
         })),
       };
     }));
-  }));
+  });
 
   return (await new ListProcessesUseCase(processes).execute()).map((process) => ({
     name: process.name,

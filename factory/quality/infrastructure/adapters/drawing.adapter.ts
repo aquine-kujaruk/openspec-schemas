@@ -1,16 +1,3 @@
-import type { DrawingAcl } from "../acl/drawing.acl.ts";
-
-export class DrawingAdapter implements DrawingAcl {
-  private readonly run: DrawingAcl["makeGauges"];
-
-  constructor(run: DrawingAcl["makeGauges"]) {
-    this.run = run;
-  }
-
-  makeGauges(args: readonly string[]) {
-    return this.run(args);
-  }
-}
 
 import type { DrawingTools, DrawingRecord } from "../acl/drawing.acl.ts";
 

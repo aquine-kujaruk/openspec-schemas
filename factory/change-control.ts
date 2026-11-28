@@ -2,7 +2,6 @@ import { change, consolidated, validate } from "./production.ts";
 import { products } from "./engineering.ts";
 import { AuthorizeWriteUseCase } from "./change-control/application/use-cases/authorize-write.use-case.ts";
 import { writeRequestOfHook } from "./change-control/domain/schemas/write-request.schema.ts";
-import { ReleasedWorkOrderAdapter } from "./change-control/infrastructure/adapters/released-work-order.adapter.ts";
 import { WriteBoundaryAdapter } from "./change-control/infrastructure/adapters/write-boundary.adapter.ts";
 import { ReleasedWorkOrderRepositoryImplementation } from "./change-control/infrastructure/repository-implementations/released-work-order.repository-implementation.ts";
 import { WriteBoundaryRepositoryImplementation } from "./change-control/infrastructure/repository-implementations/write-boundary.repository-implementation.ts";
@@ -25,11 +24,11 @@ export async function guard(root: string, paths: string[], cwd = root) {
     procedures: consolidated.PROCEDURES,
   })));
 
-  const orders = new ReleasedWorkOrderRepositoryImplementation(new ReleasedWorkOrderAdapter(async () =>
+  const orders = new ReleasedWorkOrderRepositoryImplementation(async () =>
     (await validate.changesInImplementation(root)).map(({ name, schema, product, builds }) => ({
       name, process: schema, line: product, builds,
     })),
-  ));
+  );
 
   const check = await new AuthorizeWriteUseCase(boundary, orders).execute(paths);
 

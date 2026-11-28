@@ -1,6 +1,8 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import {
   classesOf,
+  codeOnly,
+  constructorParams,
   namesTheRoleRule,
   pascal,
   throwsDomainExceptionsRule,
@@ -8,6 +10,15 @@ import {
 import { restrictedImports } from "factory/sdk";
 import type { Layer } from "factory/sdk";
 import type { Options } from "factory/sdk";
+
+const EXTERNAL_IMPORT = /^import\s+(?!type\b)[^;]*?from\s+["'](?!\.)[^"']+["']/m;
+const PLATFORM_GLOBAL = /\b(?:fetch|process|globalThis|window|document|localStorage|sessionStorage|indexedDB|navigator|location|console|setTimeout|setInterval|crypto|WebSocket|XMLHttpRequest)\b/;
+const FUNCTION_TYPE = /^\(|=>|\["\w+"\]$/;
+
+const forwardsAFunction = (content: string): boolean =>
+  !EXTERNAL_IMPORT.test(content) &&
+  !PLATFORM_GLOBAL.test(codeOnly(content)) &&
+  constructorParams(content).flat().some((p) => FUNCTION_TYPE.test(p.type ?? ""));
 
 /** The folder this layer owns, inside each module's infrastructure. */
 const FOLDER = "infrastructure/adapters";
@@ -77,7 +88,9 @@ export const adapters = (o: Options): Layer => {
             .adhereTo((f) => {
               const name = f.name.replace(/\.acl$/, "");
               const acl = `${pascal(name)}Acl`;
-              if (!new RegExp(`export interface ${acl}\\b`).test(f.content)) return false;
+              const declaresAcl = new RegExp(`export interface ${acl}\\b`).test(f.content);
+              if (!declaresAcl && new RegExp(`export type ${pascal(name)}Port\\b`).test(f.content)) return true;
+              if (!declaresAcl) return false;
               const dir = `${f.path.replace(/\/infrastructure\/acl\/.*$/, "")}/${FOLDER}`;
               return (
                 existsSync(dir) &&
@@ -90,6 +103,20 @@ export const adapters = (o: Options): Layer => {
                   )
               );
             }, "[acl-adapter-paired] `export interface <Name>Acl` in acl/<name>.acl.ts, implemented by an adapter of the module named *<name>.adapter.ts")
+            .check(ctx.opts),
+      },
+      {
+        id: "adapter-wraps-external-system",
+        title: "every adapter wraps a package, a platform module or global, or holds an in-memory stand-in; none only forwards a function it received",
+        check: () =>
+          ctx
+            .files()
+            .inFolder(at)
+            .should()
+            .adhereTo(
+              (f) => !forwardsAFunction(f.content),
+              "[adapter-wraps-external-system] an adapter wraps something outside the code (a package, `node:fs`, `fetch`) or holds an in-memory stand-in; another module's operation reaches the consumer as a `<Name>Port` its repository implementation receives",
+            )
             .check(ctx.opts),
       },
       {

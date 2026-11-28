@@ -1,16 +1,4 @@
-import type { InspectionAcl, InspectionTools, QualityCheck, InspectionFinding, Check, Layer } from "../acl/inspection.acl.ts";
-
-export class InspectionAdapter implements InspectionAcl {
-  private readonly run: InspectionAcl["inspectLine"];
-
-  constructor(run: InspectionAcl["inspectLine"]) {
-    this.run = run;
-  }
-
-  inspectLine(line: string, scope: readonly string[]) {
-    return this.run(line, scope);
-  }
-}
+import type { InspectionTools, QualityCheck, InspectionFinding, Check, Layer } from "../acl/inspection.acl.ts";
 
 export const createCheck = ({
   globSync,

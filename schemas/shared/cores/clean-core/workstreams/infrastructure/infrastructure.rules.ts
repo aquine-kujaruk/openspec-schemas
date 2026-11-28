@@ -135,7 +135,7 @@ export const infrastructure = (o: Options): Layer => {
       {
         id: "repository-depends-on-acl",
         title:
-          "repository implementation constructor parameters are typed by <Name>Acl and the file imports nothing from adapters",
+          "repository implementation constructor parameters are typed by <Name>Acl or <Name>Port and the file imports nothing from adapters",
         check: () =>
           ctx
             .files()
@@ -145,9 +145,9 @@ export const infrastructure = (o: Options): Layer => {
               (f) =>
                 importsOf(f).every((i) => !/\/adapters\/[\w-]+\.adapter$/.test(sourceStem(i.resolved))) &&
                 constructorParams(f.content).every((params) =>
-                  params.every((p) => /^\w+Acl$/.test(p.type ?? "")),
+                  params.every((p) => /^\w+(?:Acl|Port)$/.test(p.type ?? "")),
                 ),
-              "[repository-depends-on-acl] type every constructor parameter as <Name>Acl and import no adapter: the composition root injects the adapter",
+              "[repository-depends-on-acl] type every constructor parameter as <Name>Acl, or <Name>Port for another module's operation, and import no adapter: the composition root injects them",
             )
             .check(ctx.opts),
       },

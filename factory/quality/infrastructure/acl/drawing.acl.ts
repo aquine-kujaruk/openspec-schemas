@@ -3,9 +3,7 @@ import type { RunInspectionTool } from "./inspection.acl.ts";
 export type DrawingRecord = { path: string; file: string; gherkin: string };
 export type GaugeRunRecord = { exitStatus: number; drawings: DrawingRecord[] };
 
-export interface DrawingAcl {
-  makeGauges(args: readonly string[]): Promise<GaugeRunRecord>;
-}
+export type DrawingPort = (args: readonly string[]) => Promise<GaugeRunRecord>;
 
 export declare const generate: (args: string[]) => Promise<number>;
 
