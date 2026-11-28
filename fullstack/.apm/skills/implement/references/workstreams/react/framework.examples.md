@@ -13,6 +13,7 @@ export class DomainException extends Error {
 
 ```ts src/shared/domain/exceptions/validation.exceptions.ts
 import { DomainException } from "./domain.exceptions";
+
 export class ValidationException extends DomainException {
   constructor(
     public readonly source: string,
@@ -26,6 +27,7 @@ export class ValidationException extends DomainException {
 ```ts src/shared/domain/schemas/validation.schema.ts
 import type { z } from "zod";
 import { ValidationException } from "../exceptions/validation.exceptions";
+
 export const validateSchema = <S extends z.ZodType>(
   target: object,
   schema: S,
@@ -34,12 +36,14 @@ export const validateSchema = <S extends z.ZodType>(
   const result = schema.safeParse(props);
   if (!result.success) throw new ValidationException(target.constructor.name, result.error);
   Object.assign(target, result.data);
+
   return result.data;
 };
 ```
 
 ```ts src/module/application/repository-interfaces/invoice.repository-interface.ts
 import type { InvoiceProps } from "../../domain/schemas/invoice.schema";
+
 export interface InvoiceRepositoryInterface {
   listInvoices(): Promise<InvoiceProps[]>;
   findInvoice(invoiceId: string): Promise<InvoiceProps | null>;
@@ -50,6 +54,7 @@ export interface InvoiceRepositoryInterface {
 ```ts src/module/application/use-cases/list-invoices.use-case.ts
 import { InvoiceEntity } from "../../domain/entities/invoice.entity";
 import type { InvoiceRepositoryInterface } from "../repository-interfaces/invoice.repository-interface";
+
 export class ListInvoicesUseCase {
   constructor(private readonly invoices: InvoiceRepositoryInterface) {}
   async execute() {
@@ -62,6 +67,7 @@ export class ListInvoicesUseCase {
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
 import { InvoiceAlreadyPaidException } from "../exceptions/invoice.exceptions";
 import { InvoiceSchema, InvoiceStatus, type InvoiceProps } from "../schemas/invoice.schema";
+
 export class InvoiceEntity {
   public readonly id!: string;
   public readonly total!: number;
@@ -74,6 +80,7 @@ export class InvoiceEntity {
   }
   pay() {
     if (this.isPaid) throw new InvoiceAlreadyPaidException(this.id);
+
     return new InvoiceEntity({ id: this.id, total: this.total, status: InvoiceStatus.PAID });
   }
 }
@@ -81,15 +88,18 @@ export class InvoiceEntity {
 
 ```ts src/module/domain/schemas/invoice.schema.ts
 import { z } from "zod";
+
 export enum InvoiceStatus {
   PAID = "paid",
   PENDING = "pending",
 }
+
 export const InvoiceSchema = z.object({
   id: z.string().min(1),
   total: z.number().int(),
   status: z.enum(InvoiceStatus),
 });
+
 export type InvoiceProps = z.infer<typeof InvoiceSchema>;
 ```
 
@@ -100,6 +110,7 @@ import { invoiceAdapter } from "../../infrastructure/adapters/invoice.adapter";
 import { InvoiceRepositoryImplementation } from "../../infrastructure/repository-implementations/invoice.repository-implementation";
 const listInvoices = new ListInvoicesUseCase(new InvoiceRepositoryImplementation(invoiceAdapter));
 export const listInvoicesQueryKey = () => ["invoices"] as const;
+
 export const useListInvoicesQuery = () =>
   useQuery({ queryKey: listInvoicesQueryKey(), queryFn: () => listInvoices.execute() });
 ```
@@ -111,6 +122,7 @@ import { invoiceAdapter } from "../../infrastructure/adapters/invoice.adapter";
 import { InvoiceRepositoryImplementation } from "../../infrastructure/repository-implementations/invoice.repository-implementation";
 const getInvoice = new GetInvoiceUseCase(new InvoiceRepositoryImplementation(invoiceAdapter));
 export const getInvoiceQueryKey = (invoiceId: string) => ["invoices", invoiceId] as const;
+
 export const useGetInvoiceQuery = (invoiceId: string) =>
   useQuery({ queryKey: getInvoiceQueryKey(invoiceId), queryFn: () => getInvoice.execute(invoiceId) });
 ```
@@ -122,12 +134,15 @@ import { useInvoicesStore } from "../stores/invoices.store";
 import { invoiceRowViewModel } from "../view-models/invoice-row.view-model";
 import { invoiceStatusOptions } from "../view-models/invoice-status.view-model";
 const ALL = "all";
+
 export const useInvoicesController = () => {
   const { status, setStatus } = useInvoicesStore();
   const query = useListInvoicesQuery();
+
   const rows = (query.data ?? [])
     .filter((invoice) => !status || invoice.status === status)
     .map(invoiceRowViewModel);
+
   return {
     rows,
     isEmpty: query.isSuccess && rows.length === 0,
@@ -142,6 +157,7 @@ export const useInvoicesController = () => {
 ```ts src/module/framework/view-models/invoice-row.view-model.ts
 import type { InvoiceEntity } from "../../domain/entities/invoice.entity";
 import { invoiceStatusLabel } from "./invoice-status.view-model";
+
 export const invoiceRowViewModel = (invoice: InvoiceEntity) => ({
   id: invoice.id,
   label: `#${invoice.id}`,
@@ -154,6 +170,7 @@ import type { z } from "zod";
 import { InvoiceSchema } from "../../domain/schemas/invoice.schema";
 export const InvoiceRecordSchema = InvoiceSchema;
 export type InvoiceRecord = z.infer<typeof InvoiceRecordSchema>;
+
 export interface InvoiceAcl {
   listInvoices(): Promise<InvoiceRecord[]>;
   findInvoice(invoiceId: string): Promise<InvoiceRecord | null>;
@@ -166,6 +183,7 @@ import { InvoiceUnavailableException } from "../../domain/exceptions/invoice.exc
 import { HttpApiAdapter } from "../../../shared/infrastructure/adapters/http-api.adapter";
 import { InvoiceRecordSchema, type InvoiceAcl, type InvoiceRecord } from "../acl/invoice.acl";
 const unavailable = (response: Response) => new InvoiceUnavailableException({ cause: response });
+
 export class HttpInvoiceAdapter implements InvoiceAcl {
   constructor(private readonly api = new HttpApiAdapter("/api")) {}
   listInvoices(): Promise<InvoiceRecord[]> {
@@ -182,10 +200,12 @@ export class HttpInvoiceAdapter implements InvoiceAcl {
 
 ```ts src/module/infrastructure/adapters/in-memory-invoice.adapter.ts
 import { InvoiceRecordSchema, type InvoiceAcl, type InvoiceRecord } from "../acl/invoice.acl";
+
 const SEED: InvoiceRecord[] = InvoiceRecordSchema.array().parse([
   { id: "1", total: 10, status: "paid" },
   { id: "2", total: 25, status: "pending" },
 ]);
+
 export class InMemoryInvoiceAdapter implements InvoiceAcl {
   private readonly rows = SEED.map((row) => ({ ...row }));
   async listInvoices(): Promise<InvoiceRecord[]> {
@@ -196,6 +216,7 @@ export class InMemoryInvoiceAdapter implements InvoiceAcl {
   }
   async saveInvoice(invoice: InvoiceRecord): Promise<void> {
     const at = this.rows.findIndex((row) => row.id === invoice.id);
+
     if (at < 0) this.rows.push({ ...invoice });
     else this.rows[at] = { ...invoice };
   }
@@ -206,6 +227,7 @@ export class InMemoryInvoiceAdapter implements InvoiceAcl {
 import type { InvoiceAcl } from "../acl/invoice.acl";
 import { HttpInvoiceAdapter } from "./http-invoice.adapter";
 import { InMemoryInvoiceAdapter } from "./in-memory-invoice.adapter";
+
 export const invoiceAdapter: InvoiceAcl = import.meta.env.DEV
   ? new InMemoryInvoiceAdapter()
   : new HttpInvoiceAdapter();
@@ -215,6 +237,7 @@ export const invoiceAdapter: InvoiceAcl = import.meta.env.DEV
 import type { InvoiceRepositoryInterface } from "../../application/repository-interfaces/invoice.repository-interface";
 import type { InvoiceProps } from "../../domain/schemas/invoice.schema";
 import type { InvoiceAcl } from "../acl/invoice.acl";
+
 export class InvoiceRepositoryImplementation implements InvoiceRepositoryInterface {
   constructor(private readonly invoices: InvoiceAcl) {}
   listInvoices(): Promise<InvoiceProps[]> {
@@ -237,8 +260,10 @@ import { InvoiceRepositoryImplementation } from "../../infrastructure/repository
 import { getInvoiceQueryKey } from "../queries/get-invoice.query";
 import { listInvoicesQueryKey } from "../queries/list-invoices.query";
 const payInvoice = new PayInvoiceUseCase(new InvoiceRepositoryImplementation(invoiceAdapter));
+
 export const usePayInvoiceMutation = () => {
   const client = useQueryClient();
+
   return useMutation({
     mutationFn: (invoiceId: string) => payInvoice.execute(invoiceId),
     onSuccess: (_paid, invoiceId) =>
@@ -253,10 +278,12 @@ export const usePayInvoiceMutation = () => {
 ```ts src/module/framework/stores/invoices.store.ts
 import { create } from "zustand";
 import type { InvoiceStatus } from "../../domain/schemas/invoice.schema";
+
 type InvoicesState = {
   status: InvoiceStatus | null;
   setStatus: (status: InvoiceStatus | null) => void;
 };
+
 export const useInvoicesStore = create<InvoicesState>((set) => ({
   status: null,
   setStatus: (status) => set({ status }),
@@ -268,10 +295,12 @@ import { ModuleException } from "../../domain/exceptions/invoice.exceptions";
 import { usePayInvoiceMutation } from "../mutations/pay-invoice.mutation";
 import { useGetInvoiceQuery } from "../queries/get-invoice.query";
 import { invoiceDetailViewModel } from "../view-models/invoice-detail.view-model";
+
 export const useInvoiceDetailController = (invoiceId: string) => {
   const query = useGetInvoiceQuery(invoiceId);
   const payment = usePayInvoiceMutation();
   const failure = query.error ?? payment.error;
+
   return {
     invoice: query.data ? invoiceDetailViewModel(query.data) : null,
     notice: failure instanceof ModuleException ? failure.message : null,
@@ -284,11 +313,14 @@ export const useInvoiceDetailController = (invoiceId: string) => {
 
 ```ts src/module/framework/view-models/invoice-status.view-model.ts
 import { InvoiceStatus } from "../../domain/schemas/invoice.schema";
+
 const LABEL: Record<InvoiceStatus, string> = {
   [InvoiceStatus.PAID]: "Paid",
   [InvoiceStatus.PENDING]: "Pending",
 };
+
 export const invoiceStatusLabel = (status: InvoiceStatus) => LABEL[status];
+
 export const invoiceStatusOptions = () =>
   Object.values(InvoiceStatus).map((value) => ({ value, label: LABEL[value] }));
 ```
@@ -296,6 +328,7 @@ export const invoiceStatusOptions = () =>
 ```ts src/module/framework/view-models/invoice-detail.view-model.ts
 import type { InvoiceEntity } from "../../domain/entities/invoice.entity";
 import { invoiceStatusLabel } from "./invoice-status.view-model";
+
 export const invoiceDetailViewModel = (invoice: InvoiceEntity) => ({
   title: `Invoice #${invoice.id}`,
   total: String(invoice.total),
@@ -313,6 +346,7 @@ import { <%= resourceCamel %>Adapter } from "../../infrastructure/adapters/<%= r
 import { <%= Resource %>RepositoryImplementation } from "../../infrastructure/repository-implementations/<%= resource %>.repository-implementation";
 const <%= camel %> = new <%= Name %>UseCase(new <%= Resource %>RepositoryImplementation(<%= resourceCamel %>Adapter));
 export const <%= camel %>QueryKey = () => ["<%= name %>"] as const;
+
 export const use<%= Name %>Query = () =>
   useQuery({ queryKey: <%= camel %>QueryKey(), queryFn: () => <%= camel %>.execute() });
 ```
@@ -324,8 +358,10 @@ import { <%= resourceCamel %>Adapter } from "../../infrastructure/adapters/<%= r
 import { <%= Resource %>RepositoryImplementation } from "../../infrastructure/repository-implementations/<%= resource %>.repository-implementation";
 import { <%= queryCamel %>QueryKey } from "../queries/<%= query %>.query";
 const <%= camel %> = new <%= Name %>UseCase(new <%= Resource %>RepositoryImplementation(<%= resourceCamel %>Adapter));
+
 export const use<%= Name %>Mutation = () => {
   const client = useQueryClient();
+
   return useMutation({
     mutationFn: (id: string) => <%= camel %>.execute(id),
     onSuccess: () => client.invalidateQueries({ queryKey: <%= queryCamel %>QueryKey() }),

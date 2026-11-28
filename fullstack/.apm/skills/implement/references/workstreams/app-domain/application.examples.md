@@ -4,6 +4,7 @@
 
 ```ts src/module/application/repository-interfaces/invoice.repository-interface.ts
 import type { InvoiceProps } from "../../domain/schemas/invoice.schema";
+
 export interface InvoiceRepositoryInterface {
   listInvoices(): Promise<InvoiceProps[]>;
   findInvoice(invoiceId: string): Promise<InvoiceProps | null>;
@@ -14,6 +15,7 @@ export interface InvoiceRepositoryInterface {
 ```ts src/module/application/use-cases/list-invoices.use-case.ts
 import { InvoiceEntity } from "../../domain/entities/invoice.entity";
 import type { InvoiceRepositoryInterface } from "../repository-interfaces/invoice.repository-interface";
+
 export class ListInvoicesUseCase {
   constructor(private readonly invoices: InvoiceRepositoryInterface) {}
   async execute() {
@@ -26,11 +28,13 @@ export class ListInvoicesUseCase {
 import { InvoiceEntity } from "../../domain/entities/invoice.entity";
 import { InvoiceNotFoundException } from "../../domain/exceptions/invoice.exceptions";
 import type { InvoiceRepositoryInterface } from "../repository-interfaces/invoice.repository-interface";
+
 export class GetInvoiceUseCase {
   constructor(private readonly invoices: InvoiceRepositoryInterface) {}
   async execute(invoiceId: string) {
     const props = await this.invoices.findInvoice(invoiceId);
     if (!props) throw new InvoiceNotFoundException(invoiceId);
+
     return new InvoiceEntity(props);
   }
 }
@@ -40,6 +44,7 @@ export class GetInvoiceUseCase {
 import { InvoiceEntity } from "../../domain/entities/invoice.entity";
 import { InvoiceNotFoundException } from "../../domain/exceptions/invoice.exceptions";
 import type { InvoiceRepositoryInterface } from "../repository-interfaces/invoice.repository-interface";
+
 export class PayInvoiceUseCase {
   constructor(private readonly invoices: InvoiceRepositoryInterface) {}
   async execute(invoiceId: string) {
@@ -47,6 +52,7 @@ export class PayInvoiceUseCase {
     if (!props) throw new InvoiceNotFoundException(invoiceId);
     const paid = new InvoiceEntity(props).pay();
     await this.invoices.saveInvoice(paid);
+
     return paid;
   }
 }

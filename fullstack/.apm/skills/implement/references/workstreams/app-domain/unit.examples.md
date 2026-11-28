@@ -5,6 +5,7 @@
 ```ts src/module/domain/value-objects/invoice.value-object.ts
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
 import { InvoiceSchema, type InvoiceProps } from "../schemas/invoice.schema";
+
 export class InvoiceValueObject {
   public readonly total!: number;
   constructor(props: InvoiceProps) {

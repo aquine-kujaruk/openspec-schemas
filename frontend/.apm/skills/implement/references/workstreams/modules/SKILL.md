@@ -17,6 +17,8 @@ description: Run the modules reduce workstream of the implementer: merge app-dom
 2. Run the check. This is where it shows whether each map workstream built what its spec, its skill and its seams asked for. A failure names the workstream: go back to it and fix it there, keeping the seams and the artifacts as they are, then run this check again. A decision the artifacts do not settle and you cannot take goes to the person, as the implement skill says.
 3. Fix what crosses modules: move what two modules share into `shared`, break cycles.
 
+Leave a blank line between consecutive statements when either spans multiple lines, and before a `return` or `throw` that follows another statement (`code-breathes`). Separate distinct logical steps even when each uses a single line (S24). Keep a comment only when it gives the next agent context they cannot infer from code and artifacts (S20).
+
 **Check:** `pnpm exec factory check --workstream modules [--module <module>]`, which includes every upstream workstream's check.
 
 No file left unused and duplication under 4 % are checked over the whole product by `pnpm exec factory check` and by the verify phase, not here: halfway through a change some code is not wired yet. When verify sends one back naming a file of this workstream, fix it here.
