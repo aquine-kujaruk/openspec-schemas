@@ -24,7 +24,7 @@ Every factory module has one controller that composes its use cases and translat
 
 - The controllers live in `factory/<module>/framework/controllers/<module>.controller.ts`; `framework` becomes an optional layer of clean-backend, with no rule binding a backend that does not have it, so the factory stays a clean-backend line and other backends are not forced to adopt it (the 2026-11-18 limit). Discarded: controllers in the entry files, which leaves the glue where it is; a folder only the factory's configuration allows. @by:person
 - A controller depends on use cases and on a small `Io` port (arguments, standard input, write, exit status) that `main.ts` fills from the process; a test fills it in memory. @by:agent
-- Held by a unit test that fails when an entry file under `factory/*.ts` writes output, reads `process.argv` or standard input, or calls a use case directly, and by acceptance: the same operation through the CLI and through an in-memory `Io` keeps its decision. No delta spec: nothing a user of the factory notices changes. @by:agent
+- Held by a repository test that fails when an entry file under `factory/*.ts` writes output, reads `process.argv` or standard input, or calls a use case directly, and by acceptance: the same operation through the CLI and through an in-memory `Io` keeps its decision. The `controllers` workstream of clean-backend carries the delta spec `architecture/controllers`. @by:agent
 - Runs last, after `adapters-wrap-external-systems` slims the composition files. @by:agent
 
 ## Open questions
@@ -66,15 +66,17 @@ The command's code SHALL be a line of this plant manufactured with the clean-bac
 **Seams**
 
 ```ts
-// schemas/clean-backend: `framework/controllers/<name>.controller.ts` accepted in a module's vocabulary
+// schemas/clean-backend/workstreams/controllers/: workstream.ts, controllers.rules.ts, controllers.examples.md, SKILL.md
+id: "controllers-vocabulary"                    // framework/** holds only framework/controllers/<name>.controller.ts
+id: "controller-reaches-core-through-use-cases" // a controller imports application and domain only
 ```
 
 **Tests**
 
-- The clean-backend examples: a module with a controller breaks no rule; a controller that imports an adapter directly breaks `infrastructure-imports-only-core`'s framework counterpart.
+- The tests generated from `architecture/controllers`: each case breaks its rule in the files its `expect` block records, and the reference (a module with a controller) breaks nothing.
 
-- [ ] Allow `framework/controllers` in clean-backend's module vocabulary, with its cases
-- [ ] Verify the phase: `pnpm run check`
+- [x] Add the `controllers` workstream to clean-backend with its two rules, its cases, its skill and the generated tests
+- [x] Verify the phase: `pnpm run check`
 
 ### Phase 2: The factory's modules have controllers
 
@@ -88,14 +90,18 @@ export class ProductionController { constructor(useCases, io: Io); startStage():
 
 **Tests**
 
-- `test/unit/layout/entry-files-only-wire.test.ts`: no entry file writes output, reads `process.argv` or standard input, or calls `.execute(`.
-- The factory's acceptance tests keep passing through the CLI; one runs an operation through an in-memory `Io` and gets the same decision.
+- `test/schemas/entry-files-only-wire.test.ts`: no entry file writes output, reads `process.argv` or standard input, or calls `.execute(`.
+- The factory's acceptance tests keep passing through the CLI; `test/schemas/change-control-controller.test.ts` runs the write guard through an in-memory `Io` and gets the use case's decision.
 
-- [ ] Write the `Io` port and fill it in `main.ts`
-- [ ] Move the translation code of `production`, `quality`, `engineering`, `maintenance` and `change-control` into their controllers
-- [ ] Write `entry-files-only-wire.test.ts`
-- [ ] Verify the phase: `pnpm run check`
+- [x] Write the `Io` port and fill it in `main.ts`
+- [x] Move the translation code of `production`, `quality`, `engineering`, `maintenance` and `change-control` into their controllers
+- [x] Write `entry-files-only-wire.test.ts`
+- [x] Verify the phase: `pnpm run check`
 
 ## Feedback
+
+- **the implement phase**: an optional layer of clean-backend is a workstream of the schema, `controllers` under schemas/clean-backend/workstreams, whose rules a backend notices; the change therefore carries a delta spec, architecture/controllers, and no longer skips specs
+- **the implement phase**: the Io port lives in factory/shared/domain/schemas/io.schema.ts and its console implementation, consoleIo, in the shared CLI adapter; each composition file hands consoleIo to its controller, so main.ts only registers commands and does not build the port
+- **the implement phase**: the line's unit tests target domain and application files only, so the entry-files test and the controller test live in test/schemas, which the line ignores; the console Io in the shared CLI adapter is typed structurally, since an adapter imports no domain schema
 
 ## Next step

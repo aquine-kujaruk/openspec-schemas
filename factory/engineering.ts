@@ -1,4 +1,6 @@
 import type { Validator } from "./production/domain/services/work-order-assessment.service.ts";
+import { EngineeringController } from "./engineering/framework/controllers/engineering.controller.ts";
+import { consoleIo } from "./shared/infrastructure/adapters/cli.adapter.ts";
 import { ListProcessesUseCase } from "./engineering/application/use-cases/list-processes.use-case.ts";
 import { PrepareLineUseCase } from "./engineering/application/use-cases/prepare-line.use-case.ts";
 import { ProcessAggregate } from "./engineering/domain/aggregates/process.aggregate.ts";
@@ -43,11 +45,10 @@ export const sdkLoadSchema = schema.loadSchema;
 const plant = (root: string, readProducts: (root: string) => Promise<Product[]>) =>
   new PlantRepositoryImplementation(new PlantAdapter(root, readProducts));
 
-async function listSchemas(root: string) {
-  const { installed } = await import("./maintenance.ts");
-
+const listProcessesAt = (root: string) => {
   const processes = new ProcessRepositoryImplementation(async () => {
     const available = schema.schemaNames();
+    const { installed } = await import("./maintenance.ts");
     const active = installed.readInstalled(root)?.installed.schemas ?? available;
 
     return Promise.all(active.filter((name) => available.includes(name)).map(async (name) => {
@@ -67,13 +68,8 @@ async function listSchemas(root: string) {
     }));
   });
 
-  return (await new ListProcessesUseCase(processes).execute()).map((process) => ({
-    name: process.name,
-    description: process.description,
-    workstreams: process.workCenters.map(({ id }) => id),
-    ...(process.pilot ? { spike: process.pilot } : {}),
-  }));
-}
+  return new ListProcessesUseCase(processes);
+};
 
 export async function listProducts(root: string) {
   if (!await products.declaresProducts(root)) return [];
@@ -85,36 +81,15 @@ export async function listProducts(root: string) {
   }));
 }
 
-export async function listProcessesCommand(args: string[]): Promise<number> {
-  const listed = await listSchemas(PROJECT_ROOT);
-  const lines = await listProducts(PROJECT_ROOT);
+const controller = new EngineeringController({
+  listProcesses: () => listProcessesAt(PROJECT_ROOT),
+  listProducts: () => listProducts(PROJECT_ROOT),
+  prepareLine: async () => {
+    await project.initialize();
 
-  if (args.includes("--json")) {
-    console.log(JSON.stringify(lines.length ? { schemas: listed, products: lines } : listed, null, 2));
+    return { useCase: new PrepareLineUseCase(plant(PROJECT_ROOT, async () => [project.product])), line: project.product.name };
+  },
+}, consoleIo);
 
-    return 0;
-  }
-
-  for (const { name, description, workstreams, spike } of listed)
-    console.log(
-      `${name}\n  ${description}\n  ${workstreams.length ? `workstreams: ${workstreams.join(", ")}` : "no workstreams: its tasks name none"}${spike ? `\n  spike: ${spike} builds the approved spikes first` : ""}`,
-    );
-
-  if (lines.length) {
-    console.log("\nproducts (a change builds one, made with its schema)");
-
-    for (const { name, root, schema } of lines)
-      console.log(`${name}\n  folder: ${root}\n  schema: ${schema}`);
-  }
-
-  return 0;
-}
-
-export async function prepareLineCommand(): Promise<number> {
-  await project.initialize();
-  const prepareLine = new PrepareLineUseCase(plant(PROJECT_ROOT, async () => [project.product]));
-  const folders = await prepareLine.execute(project.product.name);
-  console.log(folders.length ? folders.map((folder) => `created ${folder}`).join("\n") : "nothing to prepare");
-
-  return 0;
-}
+export const listProcessesCommand = controller.schemas.bind(controller);
+export const prepareLineCommand = controller.prepare.bind(controller);

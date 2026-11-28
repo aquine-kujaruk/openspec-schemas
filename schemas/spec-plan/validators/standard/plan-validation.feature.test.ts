@@ -382,12 +382,12 @@ describe('Feature: flow/plan-validation Specification', () => {
   })
 
   describe('Rule: Every task belongs to one workstream of the schema', () => {
-    // Line 133
+    // Line 135
     test('a task naming `app-domain` placed `inside a phase` makes the change `ready`', async () => {
       const steps = createSteps()
 
-      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules`
-      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules')
+      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules, controllers`
+      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules, controllers')
       // And its plan has a task naming the workstream `app-domain` placed `inside a phase`
       await steps.taskNamingWorkstreamPlaced('app-domain', 'inside a phase')
       // When the change is validated
@@ -396,12 +396,12 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 133
+    // Line 135
     test('a task naming `react-ui` placed `inside a phase` makes the change `not ready`', async () => {
       const steps = createSteps()
 
-      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules`
-      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules')
+      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules, controllers`
+      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules, controllers')
       // And its plan has a task naming the workstream `react-ui` placed `inside a phase`
       await steps.taskNamingWorkstreamPlaced('react-ui', 'inside a phase')
       // When the change is validated
@@ -410,12 +410,12 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 133
+    // Line 135
     test('a task naming `app-domain` placed `outside a phase` makes the change `not ready`', async () => {
       const steps = createSteps()
 
-      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules`
-      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules')
+      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules, controllers`
+      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules, controllers')
       // And its plan has a task naming the workstream `app-domain` placed `outside a phase`
       await steps.taskNamingWorkstreamPlaced('app-domain', 'outside a phase')
       // When the change is validated
@@ -424,12 +424,12 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 133
+    // Line 135
     test('a task naming `none` placed `inside a phase` makes the change `not ready`', async () => {
       const steps = createSteps()
 
-      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules`
-      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules')
+      // Given a change whose schema has the workstreams `app-domain, infrastructure, adapters, modules, controllers`
+      await steps.schemaWorkstreams('app-domain, infrastructure, adapters, modules, controllers')
       // And its plan has a task naming the workstream `none` placed `inside a phase`
       await steps.taskNamingWorkstreamPlaced('none', 'inside a phase')
       // When the change is validated
@@ -438,7 +438,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 133
+    // Line 135
     test('a task naming `none` placed `inside a phase` makes the change `ready`', async () => {
       const steps = createSteps()
 
@@ -452,7 +452,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 133
+    // Line 135
     test('a task naming `app-domain` placed `inside a phase` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -466,7 +466,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 133
+    // Line 135
     test('a task naming `none` placed `outside a phase` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -482,7 +482,7 @@ describe('Feature: flow/plan-validation Specification', () => {
   })
 
   describe('Rule: A change without delta specs says so', () => {
-    // Line 153
+    // Line 155
     test('`1` delta spec(s) with the no-behaviour mark `absent` is `ready`', async () => {
       const steps = createSteps()
 
@@ -494,7 +494,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 153
+    // Line 155
     test('`0` delta spec(s) with the no-behaviour mark `set` is `ready`', async () => {
       const steps = createSteps()
 
@@ -506,7 +506,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 153
+    // Line 155
     test('`0` delta spec(s) with the no-behaviour mark `absent` is `not ready`', async () => {
       const steps = createSteps()
 
@@ -518,7 +518,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 153
+    // Line 155
     test('`1` delta spec(s) with the no-behaviour mark `set` is `not ready`', async () => {
       const steps = createSteps()
 
@@ -532,7 +532,7 @@ describe('Feature: flow/plan-validation Specification', () => {
   })
 
   describe('Rule: A change names one declared product of its schema', () => {
-    // Line 169
+    // Line 171
     test('a `clean-backend` change naming `api` is `ready`', async () => {
       const steps = createSteps()
 
@@ -546,7 +546,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 169
+    // Line 171
     test('a `spec-plan` change naming `contracts` is `ready`', async () => {
       const steps = createSteps()
 
@@ -560,7 +560,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 169
+    // Line 171
     test('a `spec-plan` change naming `api` is `not ready`', async () => {
       const steps = createSteps()
 
@@ -574,7 +574,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 169
+    // Line 171
     test('a `clean-backend` change naming `web` is `not ready`', async () => {
       const steps = createSteps()
 
@@ -588,7 +588,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 169
+    // Line 171
     test('a `clean-backend` change naming `none` is `not ready`', async () => {
       const steps = createSteps()
 
@@ -604,7 +604,7 @@ describe('Feature: flow/plan-validation Specification', () => {
   })
 
   describe('Rule: Linked changes name each other', () => {
-    // Line 187
+    // Line 189
     test('`add-orders-api` linking `add-orders-web`, which links `add-orders-api`, is `ready`', async () => {
       const steps = createSteps()
 
@@ -618,7 +618,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 187
+    // Line 189
     test('`add-orders-api` linking `add-orders-web`, which links `none`, is `not ready`', async () => {
       const steps = createSteps()
 
@@ -632,7 +632,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 187
+    // Line 189
     test('`add-orders-api` linking `missing-change`, which links `none`, is `not ready`', async () => {
       const steps = createSteps()
 
@@ -648,7 +648,7 @@ describe('Feature: flow/plan-validation Specification', () => {
   })
 
   describe('Rule: An access procedure records that it was probed', () => {
-    // Line 203
+    // Line 205
     test('a procedure of purpose `access` probed `2026-11-16` makes the change `ready`', async () => {
       const steps = createSteps()
 
@@ -660,7 +660,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 203
+    // Line 205
     test('a procedure of purpose `access` probed `declined` makes the change `ready`', async () => {
       const steps = createSteps()
 
@@ -672,7 +672,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 203
+    // Line 205
     test('a procedure of purpose `access` probed `none` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -684,7 +684,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 203
+    // Line 205
     test('a procedure of purpose `access` probed `yesterday` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -696,7 +696,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 203
+    // Line 205
     test('a procedure of purpose `diagnose` probed `none` makes the change `ready`', async () => {
       const steps = createSteps()
 
@@ -710,7 +710,7 @@ describe('Feature: flow/plan-validation Specification', () => {
   })
 
   describe('Rule: Every screen a web change lists is approved', () => {
-    // Line 220
+    // Line 222
     test('a `clean-react` change with a screen approved `2026-11-16` and `1` spike task(s) is `ready`', async () => {
       const steps = createSteps()
 
@@ -728,7 +728,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 220
+    // Line 222
     test('a `clean-react` change with a screen approved `declined` and `1` spike task(s) is `ready`', async () => {
       const steps = createSteps()
 
@@ -746,7 +746,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 220
+    // Line 222
     test('a `clean-react` change with a screen approved `none` and `1` spike task(s) is `not ready`', async () => {
       const steps = createSteps()
 
@@ -764,7 +764,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 220
+    // Line 222
     test('a `clean-react` change with a screen approved `yesterday` and `1` spike task(s) is `not ready`', async () => {
       const steps = createSteps()
 
@@ -782,7 +782,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 220
+    // Line 222
     test('a `clean-react` change with a screen approved `2026-11-16` and `1` spike task(s) is `not ready`', async () => {
       const steps = createSteps()
 
@@ -800,7 +800,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 220
+    // Line 222
     test('a `clean-react` change with a screen approved `2026-11-16` and `1` spike task(s) is `not ready` #2', async () => {
       const steps = createSteps()
 
@@ -818,7 +818,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 220
+    // Line 222
     test('a `clean-react` change with a screen approved `2026-11-16` and `1` spike task(s) is `not ready` #3', async () => {
       const steps = createSteps()
 
@@ -836,7 +836,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 220
+    // Line 222
     test('a `clean-react` change with a screen approved `none` and `1` spike task(s) is `not ready` #2', async () => {
       const steps = createSteps()
 
@@ -854,7 +854,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 220
+    // Line 222
     test('a `clean-react` change with a screen approved `none` and `0` spike task(s) is `ready`', async () => {
       const steps = createSteps()
 
@@ -872,7 +872,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 220
+    // Line 222
     test('a `clean-backend` change with a screen approved `none` and `0` spike task(s) is `ready`', async () => {
       const steps = createSteps()
 
@@ -892,7 +892,7 @@ describe('Feature: flow/plan-validation Specification', () => {
   })
 
   describe('Rule: Every decision names who took it', () => {
-    // Line 247
+    // Line 249
     test('a `line under Decisions` tagged `@by:person` makes the change `ready`', async () => {
       const steps = createSteps()
 
@@ -904,7 +904,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 247
+    // Line 249
     test('a `line under Decisions` tagged `@by:agent` makes the change `ready`', async () => {
       const steps = createSteps()
 
@@ -916,7 +916,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 247
+    // Line 249
     test('a `line under Decisions` tagged `none` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -928,7 +928,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 247
+    // Line 249
     test('a `line under Decisions` tagged `@by:person @by:agent` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -940,7 +940,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 247
+    // Line 249
     test('a `line under Decisions` tagged `@by:someone` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -952,7 +952,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 247
+    // Line 249
     test('a `architecture decision` tagged `@by:person` makes the change `ready`', async () => {
       const steps = createSteps()
 
@@ -964,7 +964,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 247
+    // Line 249
     test('a `architecture decision` tagged `none` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -976,7 +976,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 247
+    // Line 249
     test('a `procedure` tagged `@by:agent` makes the change `ready`', async () => {
       const steps = createSteps()
 
@@ -988,7 +988,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 247
+    // Line 249
     test('a `procedure` tagged `none` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -1000,7 +1000,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 247
+    // Line 249
     test('a `screen` tagged `@by:person` makes the change `ready`', async () => {
       const steps = createSteps()
 
@@ -1012,7 +1012,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 247
+    // Line 249
     test('a `screen` tagged `none` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -1024,7 +1024,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 247
+    // Line 249
     test('a `added requirement` tagged `@by:agent` makes the change `ready`', async () => {
       const steps = createSteps()
 
@@ -1036,7 +1036,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 247
+    // Line 249
     test('a `added requirement` tagged `none` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -1048,7 +1048,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 247
+    // Line 249
     test('a `modified requirement` tagged `@by:person` makes the change `ready`', async () => {
       const steps = createSteps()
 
@@ -1060,7 +1060,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 247
+    // Line 249
     test('a `modified requirement` tagged `none` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -1074,7 +1074,7 @@ describe('Feature: flow/plan-validation Specification', () => {
   })
 
   describe('Rule: A change is ready only once the person approved its plan', () => {
-    // Line 276
+    // Line 278
     test('a plan approved `2026-11-17` makes the change `ready`', async () => {
       const steps = createSteps()
 
@@ -1086,7 +1086,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 276
+    // Line 278
     test('a plan approved `none` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -1098,7 +1098,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 276
+    // Line 278
     test('a plan approved `yesterday` makes the change `not ready`', async () => {
       const steps = createSteps()
 
@@ -1112,7 +1112,7 @@ describe('Feature: flow/plan-validation Specification', () => {
   })
 
   describe('Rule: An architecture decision the agent took states its basis', () => {
-    // Line 293
+    // Line 295
     test('an architecture decision tagged `@by:person` against the consolidated decisions `none` is `ready`', async () => {
       const steps = createSteps()
 
@@ -1126,7 +1126,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 293
+    // Line 295
     test('an architecture decision tagged `@by:agent` against the consolidated decisions `none` is `not ready`', async () => {
       const steps = createSteps()
 
@@ -1140,7 +1140,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 293
+    // Line 295
     test('an architecture decision tagged `@by:agent @basis:no-fork` against the consolidated decisions `none` is `ready`', async () => {
       const steps = createSteps()
 
@@ -1154,7 +1154,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 293
+    // Line 295
     test('an architecture decision tagged `@by:agent @basis:precedent:rounding` against the consolidated decisions `rounding` is `ready`', async () => {
       const steps = createSteps()
 
@@ -1168,7 +1168,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 293
+    // Line 295
     test('an architecture decision tagged `@by:agent @basis:precedent:rounding` against the consolidated decisions `none` is `not ready`', async () => {
       const steps = createSteps()
 
@@ -1182,7 +1182,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 293
+    // Line 295
     test('an architecture decision tagged `@by:agent @basis:hunch` against the consolidated decisions `none` is `not ready`', async () => {
       const steps = createSteps()
 
@@ -1196,7 +1196,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 293
+    // Line 295
     test('an architecture decision tagged `@by:agent @basis:no-fork @basis:precedent:rounding` against the consolidated decisions `rounding` is `not ready`', async () => {
       const steps = createSteps()
 
@@ -1212,7 +1212,7 @@ describe('Feature: flow/plan-validation Specification', () => {
   })
 
   describe('Rule: The decision model judges the basis of an agent\'s architecture decision', () => {
-    // Line 315
+    // Line 317
     test('a decision tagged `@basis:no-fork` with the key `configured` and a model sure at `0.95` is `ready`', async () => {
       const steps = createSteps()
 
@@ -1226,7 +1226,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 315
+    // Line 317
     test('a decision tagged `@basis:no-fork` with the key `configured` and a model sure at `0.60` is `not ready`', async () => {
       const steps = createSteps()
 
@@ -1240,7 +1240,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 315
+    // Line 317
     test('a decision tagged `@basis:no-fork` with the key `configured` and a model sure at `unreachable` is `not ready`', async () => {
       const steps = createSteps()
 
@@ -1254,7 +1254,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 315
+    // Line 317
     test('a decision tagged `@basis:no-fork` with the key `absent` and a model sure at `unreachable` is `ready`', async () => {
       const steps = createSteps()
 
@@ -1268,7 +1268,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 315
+    // Line 317
     test('a decision tagged `@basis:precedent:rounding` with the key `configured` and a model sure at `0.92` is `ready`', async () => {
       const steps = createSteps()
 
@@ -1282,7 +1282,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('ready')
     })
 
-    // Line 315
+    // Line 317
     test('a decision tagged `@basis:precedent:rounding` with the key `configured` and a model sure at `0.40` is `not ready`', async () => {
       const steps = createSteps()
 
@@ -1296,7 +1296,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.changeReportedAs('not ready')
     })
 
-    // Line 330
+    // Line 332
     test('a decision tagged `@basis:no-fork` judged at `0.95` is asked `once` when its text `stays`', async () => {
       const steps = createSteps()
 
@@ -1314,7 +1314,7 @@ describe('Feature: flow/plan-validation Specification', () => {
       await steps.decisionModelAsked('once')
     })
 
-    // Line 330
+    // Line 332
     test('a decision tagged `@basis:no-fork` judged at `0.95` is asked `twice` when its text `changes`', async () => {
       const steps = createSteps()
 

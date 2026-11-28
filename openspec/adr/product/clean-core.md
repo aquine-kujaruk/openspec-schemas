@@ -2,9 +2,9 @@
 
 ### Decision: cli-composition-in-framework · Factory's CLI glue lives in its framework controllers
 
-@origin:2026-11-18-reparar-revision-semantica @applies:factory @enforced:pending @by:person
+@origin:2026-11-28-factory-cli-through-controllers @applies:factory @enforced:entry-files-only-wire @by:person
 
-Each Factory module SHALL have a controller in its framework layer that composes its use cases and translates arguments, hook payloads, standard input, output and exit status. A thin outer entry SHALL wire department dependencies and keep the public SDK and CLI commands. The framework SHALL NOT call static methods of the core directly.
+Each Factory module SHALL have a controller in its framework layer that composes its use cases and translates arguments, hook payloads, standard input, output and exit status through an `Io` port. A thin outer entry SHALL wire department dependencies and keep the public SDK and CLI commands. The framework SHALL NOT call static methods of the core directly.
 
 **Why** Another transport, such as an internal API, must reach the same core operation and keep its decision; a direct call from the CLI hides the process from the core.
 

@@ -55,9 +55,10 @@ const repository = (): string => {
 };
 
 describe("the examples of a layer are verified with the defaults of whoever holds its workstream", () => {
-  it("the holders are the core both schemas name and the schema with a workstream of its own", async () => {
+  it("the holders are the core both schemas name and each schema with a workstream of its own", async () => {
     expect(await holderNames(repository())).toEqual([
       "clean-core",
+      "clean-backend",
       "clean-react",
     ]);
   });

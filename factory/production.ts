@@ -1,4 +1,5 @@
-import { PlanTextEntity } from "./production/domain/entities/plan-text.entity.ts";
+import { ProductionController } from "./production/framework/controllers/production.controller.ts";
+import { consoleIo } from "./shared/infrastructure/adapters/cli.adapter.ts";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import { readFileSync } from "node:fs";
 import { products, schema } from "./engineering.ts";
@@ -104,7 +105,7 @@ export const merged = {
   openspec: projection.openspec.bind(projection),
   mergedSpecs: projectDrawings.execute.bind(projectDrawings),
   async specsAsReadyChangesLeaveThem(project: string) {
-    const projected = await projectDrawings.execute(project);
+    const projected = await merged.mergedSpecs(project);
 
     return projected
       ? { base: projected.root, dispose: projected.dispose }
@@ -166,122 +167,6 @@ const closing = new CloseWorkOrderUseCase(new ClosingRepositoryImplementation(ne
   },
 )));
 
-export async function dispatchWorkOrder(args: string[]): Promise<number> {
-  const [name, option, sessionRoot] = args;
-
-  if (!name || (option !== undefined && (option !== "--session-root" || !sessionRoot || args.length !== 3))) {
-    console.error("Usage: factory handoff <change> [--session-root <path>]");
-
-    return 2;
-  }
-
-  const { status, said } = await dispatch.execute(name, sessionRoot);
-  (status === 0 ? console.log : console.error)(said.join("\n"));
-
-  return status;
-}
-
-export async function makeReadingCopies(args: string[]): Promise<number> {
-  const local = args.map((arg) => {
-    if (arg.startsWith("--")) return arg;
-    const path = relative(root, resolve(root, arg));
-
-    return isAbsolute(path) || path.startsWith("..") ? arg : path;
-  });
-
-  const { status, lines } = await reading.execute(local);
-  (status === 0 ? console.log : console.error)(lines.join("\n"));
-
-  return status;
-}
-
-export async function pullAndon(args: string[]): Promise<number> {
-  const [name, action] = args;
-  const known = change.activeChanges(root);
-
-  if (!name || !known.includes(name)) {
-    console.error(`Name the change the feedback is about. Changes: ${known.join(", ") || "none"}`);
-
-    return 2;
-  }
-
-  if (!action) {
-    const pending = feedback.raised(root, name);
-
-    for (const { source, names, findings } of pending) {
-      const message = findings.map((finding) => `  ${finding.split("\n").join("\n  ")}`).join("\n");
-      console.log(`${source} about ${names}:\n${message}`);
-    }
-
-    if (!pending.length) console.log("no feedback is waiting to be taken in");
-
-    return 0;
-  }
-
-  const options = (flag: string) => args.flatMap((arg, index) =>
-    arg === flag && args[index + 1] !== undefined ? [args[index + 1]!] : []);
-
-  if (action === "reviewer-repair") {
-    const [scope] = options("--scope");
-    const [rule] = options("--rule");
-
-    if (!scope || !["approved", "unapproved"].includes(scope) ||
-        !rule || !["determinate", "ambiguous"].includes(rule)) {
-      console.error("Usage: factory feedback <change> reviewer-repair --scope <approved|unapproved> --rule <determinate|ambiguous>");
-
-      return 2;
-    }
-
-    console.log(PlanTextEntity.repairAction(scope === "approved", rule === "determinate"));
-
-    return 0;
-  }
-
-  const [source] = options("--from");
-  const [says] = options("--says");
-
-  if ((action !== "raise" && action !== "take") || !source || !says ||
-      !SOURCES.some((entry) => entry === source)) {
-    console.error(
-      `Say what to do with the feedback: raise or take, with --from (one of: ${SOURCES.join(", ")}) and --says.`,
-    );
-
-    return 2;
-  }
-
-  if (action === "raise") {
-    feedback.raise(root, name, { source, names: options("--names")[0] ?? name, findings: [says] });
-    console.log(`raised: ${source} about ${name}`);
-
-    return 0;
-  }
-
-  const [phase] = options("--phase");
-  await andon.execute(name, { source, says, phase: phase === undefined ? undefined : Number(phase), questions: options("--ask") });
-  console.log(`taken in: ${source} about ${name}`);
-
-  return 0;
-}
-
-export async function closeWorkOrders(args: string[]): Promise<number> {
-  const name = args.find((arg) => !arg.startsWith("--"));
-  const report = await closing.execute(name);
-
-  for (const outcome of report) console.log(outcome.place === "archived"
-    ? `archived: ${outcome.change} as ${outcome.as}`
-    : `still active: ${outcome.change} — ${outcome.reason}`);
-
-  if (!report.length) console.log("no active change");
-
-  if (report.some(({place}) => place === "archived")) {
-    const checked = self(root, DEVELOPING ? ["generate", "--check"] : ["check"]);
-    console.log(checked.status === 0 ? "every check passes" : `the checks fail:\n${checked.output}`);
-    if (checked.status !== 0) return 1;
-  }
-
-  return name && report.some(({place}) => place !== "archived") ? 1 : 0;
-}
-
 const workOrders = new WorkOrderRepositoryImplementation(new WorkOrderAdapter(
   directory,
   async () => change.activeChanges(root),
@@ -317,71 +202,37 @@ const start = new StartStageUseCase(workOrders, new StageStartRepositoryImplemen
   (args) => self(root, args),
 )));
 
-const released = new ListReleasedWorkOrdersUseCase(workOrders);
-export const listReleasedWorkOrders = () => released.execute();
-
-export async function startStage(args: string[]): Promise<number> {
-  const [name] = args;
-  const known = change.activeChanges(root);
-
-  if (!name || !known.includes(name)) {
-    console.error(`Name the change to implement. Changes: ${known.join(", ") || "none"}`);
-
-    return 2;
-  }
-
-  const result = await start.execute(name);
-
-  if (result.state === "started") {
-    const line = change.readChange(root, name)?.product;
-    console.log(`in implementation: ${name}${line ? ` (product ${line})` : ""} — ${result.phase}`);
-    for (const task of result.tasks) console.log(`- [ ] ${task}`);
-
-    return 0;
-  }
-
-  if (result.state === "cannot validate") {
-    console.error(result.message);
-
-    return 2;
-  }
-
-  if (result.state === "nothing to build") {
-    console.log(`every task of ${name} is done: the verify phase is next`);
-
-    return 0;
-  }
-
-  console.log(`${result.state}: ${name}`);
-  for (const finding of result.findings) console.log(`- ${finding}`);
-
-  return 1;
-}
 
 const assessment = new ValidateWorkOrderUseCase(new WorkOrderValidationRepositoryImplementation(
   { readPlan: async (name) => change.readChange(root, name)?.plan ?? null, listFindings: assess },
 ));
 
-export async function validateWorkOrder(args: string[]): Promise<number> {
-  const [name] = args;
+const controller = new ProductionController({
+  dispatch,
+  reading,
+  andon,
+  closing,
+  start,
+  assessment,
+  released: new ListReleasedWorkOrdersUseCase(workOrders),
+  sources: SOURCES,
+  activeChanges: () => change.activeChanges(root),
+  productOf: (name) => change.readChange(root, name)?.product,
+  schemaOf: (name) => change.readChange(root, name)?.schema,
+  localPath: (arg) => {
+    const path = relative(root, resolve(root, arg));
 
-  if (!name) {
-    console.error(`Name the change to validate. Changes: ${change.activeChanges(root).join(", ") || "none"}`);
+    return isAbsolute(path) || path.startsWith("..") ? arg : path;
+  },
+  raised: (name) => feedback.raised(root, name),
+  raise: (name, finding) => feedback.raise(root, name, finding),
+  checkAfterArchive: () => self(root, DEVELOPING ? ["generate", "--check"] : ["check"]),
+}, consoleIo);
 
-    return 2;
-  }
-
-  const verdict = await assessment.execute(name);
-  const invalid = verdict.findings.find(({rule}) => rule === "not-validatable");
-
-  if (invalid) {
-    console.error(invalid.message);
-
-    return 2;
-  }
-
-  console.log(`${verdict.ready ? "ready" : "not ready"}: ${name} (${change.readChange(root, name)?.schema})`);
-  for (const { rule, message } of verdict.findings) console.log(`- [${rule}] ${message}`);
-
-  return verdict.ready ? 0 : 1;
-}
+export const listReleasedWorkOrders = controller.releasedWorkOrders.bind(controller);
+export const dispatchWorkOrder = controller.handoff.bind(controller);
+export const makeReadingCopies = controller.reading.bind(controller);
+export const pullAndon = controller.feedback.bind(controller);
+export const closeWorkOrders = controller.archive.bind(controller);
+export const startStage = controller.implement.bind(controller);
+export const validateWorkOrder = controller.validate.bind(controller);

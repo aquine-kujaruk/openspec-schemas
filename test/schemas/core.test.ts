@@ -6,11 +6,10 @@ const { loadDefinition, loadSchema } = repositoryschema;
 
 /**
  * Spec: `repository/build`, "A schema builds through the workstreams of its core and its own".
- * clean-backend names the clean core and adds nothing: it builds as it did when it held the
- * workstreams itself.
+ * clean-backend names the clean core and adds one workstream of its own, the optional controllers.
  */
 describe("clean-backend builds through the clean core", () => {
-  it("its workstreams and their topology are the core's", async () => {
+  it("its workstreams and their topology are the core's and its controllers", async () => {
     const d = await loadDefinition("clean-backend");
     expect(d.core).toBe("clean-core");
     expect(d.workstreams).toEqual([
@@ -18,16 +17,18 @@ describe("clean-backend builds through the clean core", () => {
       "infrastructure",
       "adapters",
       "modules",
+      "controllers",
     ]);
     expect(d.defaults.workstreams).toEqual({
       "app-domain": { dependsOn: [] },
       infrastructure: { dependsOn: [] },
       adapters: { dependsOn: [] },
       modules: { dependsOn: ["app-domain", "infrastructure", "adapters"] },
+      controllers: { dependsOn: [] },
     });
   });
 
-  it("its workstreams and its rubric are found in the core's folder", async () => {
+  it("its core's workstreams and its rubric are found in the core's folder, its controllers in its own", async () => {
     const schema = await loadSchema("clean-backend");
     const core = "schemas/shared/cores/clean-core";
     expect(
@@ -41,7 +42,7 @@ describe("clean-backend builds through the clean core", () => {
       Object.fromEntries(
         schema.definition.workstreams.map((id) => [
           id,
-          join(core, "workstreams", id),
+          id === "controllers" ? "schemas/clean-backend/workstreams/controllers" : join(core, "workstreams", id),
         ]),
       ),
     );

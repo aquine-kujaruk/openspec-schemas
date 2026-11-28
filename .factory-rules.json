@@ -13,6 +13,8 @@
     "class-name-carries-role": "6d4cd9eb47868523",
     "closed-set-lives-in-schema": "2dcc2431878ce305",
     "code-breathes": "d14df8a83fb85996",
+    "controller-reaches-core-through-use-cases": "53fc4f3e1465bbf9",
+    "controllers-vocabulary": "7a8237d359e5076d",
     "domain-imports-only-domain": "76c2f2d3e208036d",
     "domain-service-named-by-policy": "c16fc5f73e005883",
     "domain-vocabulary": "d2c1322191353f5c",
