@@ -3,6 +3,7 @@ name: use-cases-branch-only-on-io
 description: A branch that decides a business policy moves into the domain, and a use case keeps only the branches that decide whether to perform I/O; a new rubric row judges it and the write guard proves it by never reading work orders for a path its policy already resolved.
 created_at: 2026-11-28
 created_by: Edgar
+approved_at: 2026-11-28
 schema: spec-plan
 ---
 
@@ -24,13 +25,10 @@ A use case reads as orchestration: it reads, asks the domain, and decides only w
 - The decision is held by a rubric row (S25) and an acceptance test of the write guard, not by a deterministic rule, because the facts do not separate policy from I/O; this follows the 2026-11-18 decision that a rubric row judges only interpretation. @by:agent
 - S25 asks over `application/use-cases`: does this use case decide a business rule in a branch (which case applies, which value wins) instead of asking a domain object, beyond deciding whether to read or write? @by:agent
 - The write policy becomes `WriteBoundaryAggregate.resolve(path)`, returning `harness`, `outside`, or the owning line; the use case reads the work orders only for an owning line. @by:agent
-- All eight use cases listed in Findings are refactored in this change, in two phases. Discarded: only `authorize-write`, which would leave the factory teaching the opposite. @by:agent
+- All eight use cases listed in Findings are refactored in this change, in two phases. Discarded: only `authorize-write`, which would leave the factory teaching the opposite. @by:person
 - Runs after `use-cases-hydrate-through-the-domain`, which gives the use cases the aggregates their policies move into. @by:agent
 
 ## Open questions
-
-- Do we refactor the eight use cases now, or only `authorize-write` and `inspect-work-order` (the worst two) and leave the rest to S25's warnings? Pick: all eight.
-- Do you approve this plan? Read [plan.md](plan.md) and [the delta spec](specs/factory/change-control/authorize-write/spec.md).
 
 ## Architecture decisions
 
