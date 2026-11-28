@@ -34,7 +34,13 @@ export function createSteps() {
     spawnSync(command, args, {
       cwd,
       encoding: "utf8",
-      env: { ...process.env, GH_TOKEN: "", GITHUB_TOKEN: "" },
+      env: {
+        ...process.env,
+        CI: "",
+        GITHUB_ACTIONS: "",
+        GH_TOKEN: "",
+        GITHUB_TOKEN: "",
+      },
     });
   const checked = (cwd: string, command: string, args: string[]): string => {
     const result = run(cwd, command, args);
@@ -141,7 +147,7 @@ export function createSteps() {
       symlinkSync(join(PACKAGE_ROOT, "node_modules"), join(root, "node_modules"));
       symlinkSync(join(PACKAGE_ROOT, releaseTools, "node_modules"), join(root, releaseTools, "node_modules"));
       git("tag", `v${previous}`);
-      git("init", "--quiet", "--bare", remote);
+      git("init", "--quiet", "--bare", "--initial-branch=main", remote);
       git("remote", "add", "origin", remote);
       git("push", "origin", "main", "packages", `v${previous}`, `packages-v${previous}`);
     },
