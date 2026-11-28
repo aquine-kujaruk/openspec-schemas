@@ -79,7 +79,7 @@ export const release = async (
     git(tree, "commit", "--quiet", "--message", `release ${version}`);
     git(tree, "tag", ref);
     if (push)
-      git(root, "push", push, `refs/heads/${BRANCH}`, `refs/tags/${ref}`);
+      git(root, "push", "--atomic", push, `refs/heads/${BRANCH}`, `refs/tags/${ref}`);
     return { version, ref, packages };
   } finally {
     capture("git", ["worktree", "remove", "--force", tree], { cwd: root });

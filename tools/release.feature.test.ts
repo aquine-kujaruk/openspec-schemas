@@ -110,4 +110,54 @@ describe('Feature: repository/release Specification', () => {
       await steps.releasedPackagesCommand('0.12.0')
     })
   })
+
+  describe('Rule: Main determines the next package release', () => {
+    // Line 50
+    test('Merging `fix` after `0.17.0` yields `v0.17.1 and packages-v0.17.1`', async () => {
+      const steps = createSteps()
+
+      // Given the latest source release is `0.17.0`
+      await steps.latestSourceRelease('0.17.0')
+      // When a change classified as `fix` is merged to the primary branch
+      await steps.classifiedChangeMerged('fix')
+      // Then the release outcome is `v0.17.1 and packages-v0.17.1`
+      await steps.automaticReleaseOutcome('v0.17.1 and packages-v0.17.1')
+    })
+
+    // Line 50
+    test('Merging `feature` after `0.17.0` yields `v0.18.0 and packages-v0.18.0`', async () => {
+      const steps = createSteps()
+
+      // Given the latest source release is `0.17.0`
+      await steps.latestSourceRelease('0.17.0')
+      // When a change classified as `feature` is merged to the primary branch
+      await steps.classifiedChangeMerged('feature')
+      // Then the release outcome is `v0.18.0 and packages-v0.18.0`
+      await steps.automaticReleaseOutcome('v0.18.0 and packages-v0.18.0')
+    })
+
+    // Line 50
+    test('Merging `breaking` after `0.17.0` yields `v1.0.0 and packages-v1.0.0`', async () => {
+      const steps = createSteps()
+
+      // Given the latest source release is `0.17.0`
+      await steps.latestSourceRelease('0.17.0')
+      // When a change classified as `breaking` is merged to the primary branch
+      await steps.classifiedChangeMerged('breaking')
+      // Then the release outcome is `v1.0.0 and packages-v1.0.0`
+      await steps.automaticReleaseOutcome('v1.0.0 and packages-v1.0.0')
+    })
+
+    // Line 50
+    test('Merging `documentation` after `0.17.0` yields `the released version stays at 0.17.0`', async () => {
+      const steps = createSteps()
+
+      // Given the latest source release is `0.17.0`
+      await steps.latestSourceRelease('0.17.0')
+      // When a change classified as `documentation` is merged to the primary branch
+      await steps.classifiedChangeMerged('documentation')
+      // Then the release outcome is `the released version stays at 0.17.0`
+      await steps.automaticReleaseOutcome('the released version stays at 0.17.0')
+    })
+  })
 })

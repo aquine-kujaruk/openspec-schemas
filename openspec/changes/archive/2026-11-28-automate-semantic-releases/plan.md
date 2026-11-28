@@ -90,10 +90,10 @@ The release job SHALL derive versions from Conventional Commits on main and publ
 - Exercise source and package refs, interrupted publication and recovery. Verify that versions already published stay immutable and that every built package identifies the source release version.
 - Run the repository suite and validate the workflow without writing production refs.
 
-- [ ] Pin and configure semantic-release and its Conventional Commits preset
-- [ ] Wire the main workflow to verify, stamp and publish with the existing Factory publisher. Serialize production release jobs and support recovery from a source tag
-- [ ] Update the release guidance in AGENTS.md and remove manual version bumps from the repository's delivery instructions
-- [ ] Verify the phase with the local publishing scenarios and the repository checks
+- [x] Pin and configure semantic-release and its Conventional Commits preset
+- [x] Wire the main workflow to verify, stamp and publish with the existing Factory publisher. Serialize production release jobs and support recovery from a source tag
+- [x] Update the release guidance in AGENTS.md and remove manual version bumps from the repository's delivery instructions
+- [x] Verify the phase with the local publishing scenarios and the repository checks
 
 ## Feedback
 

@@ -72,12 +72,9 @@ The package lands in `dist/backend`. `pnpm exec factory build backend --check` s
 
 ## Release
 
-A release publishes the three packages together on the branch `packages`, one folder each, tagged `packages-v<version>`; a project installs from that tag. A released version is never rewritten.
+Use Conventional Commits on changes merged to `main`. The release workflow derives the next version from the commits since the previous source tag. A fix increments the patch, a feature increments the minor version, and a breaking change increments the major version. Documentation-only changes leave the version as it is.
 
-1. Raise `version` in `package.json` in the change that alters what the packages carry, and merge it into `main`.
-2. Tag it and push the tag: `git tag v<version> && git push origin v<version>`. The workflow `.github/workflows/release.yml` checks the tag against `package.json`, runs `pnpm run check` and `pnpm exec factory release --push origin`.
-
-By hand, with the same result: `pnpm exec factory release --push origin`. Without `--push` it only commits and tags the release locally.
+After checks pass, the workflow updates `package.json` in a release commit, tags the source `v<version>`, and uses Factory to publish the three packages together as `packages-v<version>`. For verification or recovery, follow the release runbook.
 
 ## Work on this repository
 
