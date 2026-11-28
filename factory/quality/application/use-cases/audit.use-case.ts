@@ -30,19 +30,8 @@ export class AuditUseCase {
   }
 
   async execute({ root, modules, config, rubrics, key }: AuditInput): Promise<AuditReport> {
-    if (!key) {
-      return {
-        code: 2,
-        issue: `${config.keyVariable} is not set: factory review needs the decision model's key in the environment or in .env`,
-      };
-    }
-
-    if (!rubrics.length) {
-      return {
-        code: 2,
-        issue: "the schema this project is checked with has no rubric: there is nothing to review",
-      };
-    }
+    const issue = this.rubric.precondition(key, rubrics, config.keyVariable);
+    if (issue) return { code: 2, issue };
 
     const incomplete: string[] = [];
 
@@ -66,13 +55,10 @@ export class AuditUseCase {
       const folders = [...new Set(asked.flatMap((row) => row.folders))];
       const all = this.repository.listCoreFiles(root, modules, folders);
 
-      for (const row of rows.filter((row) => row.verdict === "rejected"))
-        incomplete.push(`a row was rejected: ${row.id} ${row.reason}`);
-
-      if (!all.length && this.repository.listCoreFiles(root, modules, ["domain", "application", "infrastructure", "framework"]).length)
-        incomplete.push("no core file selected");
-
+      const core = all.length ? all : this.repository.listCoreFiles(root, modules, ["domain", "application", "infrastructure", "framework"]);
+      incomplete.push(...this.rubric.gaps(rows, all.length, core.length));
       if (incomplete.length) return reportIncomplete();
+
       const record = this.repository.readPass(root);
       const fingerprint = this.records.rubricHash(asked);
       const files = this.records.touched(all, record, fingerprint);
@@ -118,12 +104,7 @@ export class AuditUseCase {
         findings,
         lines: [
           ...findings.map((finding) => finding.format()),
-          `${findings.length} warnings; ${judged.size} of ${selected.size} core files judged (${
-            record.rubric && record.rubric !== fingerprint
-              ? "the rubric changed: every file judged again"
-              : "touched since the last pass"
-          })`,
-          ...(crossFile.length ? [`skipped as cross-file (for the human reviewer): ${crossFile.join(", ")}`] : []),
+          ...this.records.summary(findings.length, judged.size, selected.size, record, fingerprint, crossFile),
         ],
       };
     } catch (cause) {

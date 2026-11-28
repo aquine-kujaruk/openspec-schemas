@@ -442,4 +442,54 @@ describe('Feature: factory/change-control/authorize-write Specification', () => 
       await steps.writeVerdict('refused')
     })
   })
+
+  describe('Rule: A write the policy already resolved reads no work order', () => {
+    // Line 146
+    test('a write to `openspec/specs/a.md` reads the work orders `0` time(s)', async () => {
+      const steps = createSteps()
+
+      // Given the product roots `src/*`
+      await steps.productRoots('src/*')
+      // And `1` change(s) in implementation
+      await steps.changesInImplementation('1')
+      // When an agent is about to write `openspec/specs/a.md`
+      await steps.aboutToWrite('openspec/specs/a.md')
+      // Then the write is `refused`
+      await steps.writeVerdict('refused')
+      // And the work orders are read `0` time(s)
+      await steps.workOrdersRead('0')
+    })
+
+    // Line 146
+    test('a write to `README.md` reads the work orders `0` time(s)', async () => {
+      const steps = createSteps()
+
+      // Given the product roots `src/*`
+      await steps.productRoots('src/*')
+      // And `1` change(s) in implementation
+      await steps.changesInImplementation('1')
+      // When an agent is about to write `README.md`
+      await steps.aboutToWrite('README.md')
+      // Then the write is `allowed`
+      await steps.writeVerdict('allowed')
+      // And the work orders are read `0` time(s)
+      await steps.workOrdersRead('0')
+    })
+
+    // Line 146
+    test('a write to `src/orders/domain/order.entity.ts` reads the work orders `1` time(s)', async () => {
+      const steps = createSteps()
+
+      // Given the product roots `src/*`
+      await steps.productRoots('src/*')
+      // And `1` change(s) in implementation
+      await steps.changesInImplementation('1')
+      // When an agent is about to write `src/orders/domain/order.entity.ts`
+      await steps.aboutToWrite('src/orders/domain/order.entity.ts')
+      // Then the write is `allowed`
+      await steps.writeVerdict('allowed')
+      // And the work orders are read `1` time(s)
+      await steps.workOrdersRead('1')
+    })
+  })
 })

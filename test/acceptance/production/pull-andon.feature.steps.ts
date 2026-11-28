@@ -1,6 +1,7 @@
 // Synced by feat2test. Matching step implementations are preserved.
 
 import { expect } from "vitest";
+import { PlanTextEntity } from "../../../factory/production/domain/entities/plan-text.entity.ts";
 import { PullAndonUseCase } from "../../../factory/production/application/use-cases/pull-andon.use-case.ts";
 import { ValidateWorkOrderUseCase } from "../../../factory/production/application/use-cases/validate-work-order.use-case.ts";
 import { InMemoryAndonRepository } from "./repositories/in-memory-andon.repository.ts";
@@ -105,7 +106,7 @@ export function createSteps() {
       });
     },
     takeReviewerFinding(): void {
-      action = pull.reviewerRepairAction(approvedScope, determinateRule);
+      action = PlanTextEntity.repairAction(approvedScope, determinateRule);
     },
 
     // Outcome

@@ -194,11 +194,29 @@
       "date": "2026-11-18T12:23:02.484Z"
     },
     {
+      "score": 0,
       "model": "gpt-6-luna",
       "question": "02422ebf1dc97dbb58d629e2d264ea727704d514aa9561a1813821d512f54021",
       "case": "0e5debb15844702d2a9e9b480119ef44b546083aed449797aa524f6f9ed7b71f",
-      "score": 0,
       "date": "2026-11-28T09:37:28.338Z"
+    }
+  ],
+  "S25/discount-in-use-case": [
+    {
+      "score": 1,
+      "model": "gpt-6-luna",
+      "question": "e0b41dcd58975952ff7a0070693b7c0c2d973ff82b6a1f6b8c7d90a2e6cbbe01",
+      "case": "2d2b85df0c86f51783c4ea38e881ea682004b5fc0c8beb7346536a9ac3bbd2ff",
+      "date": "2026-11-28T09:45:42.110Z"
+    }
+  ],
+  "S25/reference": [
+    {
+      "model": "gpt-6-luna",
+      "question": "e0b41dcd58975952ff7a0070693b7c0c2d973ff82b6a1f6b8c7d90a2e6cbbe01",
+      "case": "3feee70940a547125b1348316d093ee762c4e8ac7e1068d2b3ff374fe78e3db0",
+      "score": 0.05,
+      "date": "2026-11-28T09:45:44.639Z"
     }
   ]
 }

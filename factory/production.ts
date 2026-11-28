@@ -1,3 +1,4 @@
+import { PlanTextEntity } from "./production/domain/entities/plan-text.entity.ts";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import { readFileSync } from "node:fs";
 import { products, schema } from "./engineering.ts";
@@ -232,7 +233,7 @@ export async function pullAndon(args: string[]): Promise<number> {
       return 2;
     }
 
-    console.log(andon.reviewerRepairAction(scope === "approved", rule === "determinate"));
+    console.log(PlanTextEntity.repairAction(scope === "approved", rule === "determinate"));
 
     return 0;
   }

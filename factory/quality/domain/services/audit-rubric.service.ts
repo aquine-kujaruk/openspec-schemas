@@ -35,6 +35,20 @@ const mentions = (question: string, term: string): boolean =>
   ).test(question);
 
 export class AuditRubricService {
+  precondition(key: string | undefined, rubrics: string[], keyVariable: string): string | undefined {
+    if (!key) return `${keyVariable} is not set: factory review needs the decision model's key in the environment or in .env`;
+    if (!rubrics.length) return "the schema this project is checked with has no rubric: there is nothing to review";
+
+    return undefined;
+  }
+
+  gaps(rows: LoadedRow[], selected: number, coreFiles: number): string[] {
+    return [
+      ...rows.filter((row) => row.verdict === "rejected").map((row) => `a row was rejected: ${row.id} ${row.reason}`),
+      ...(!selected && coreFiles ? ["no core file selected"] : []),
+    ];
+  }
+
   parseRubric(
     markdown: string,
   ): { rows: Row[]; product: string[] } {

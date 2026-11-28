@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ProtectedAreaValueObject } from "../value-objects/protected-area.value-object.ts";
 
 export const WritableLineSchema = z.object({
   name: z.string(),
@@ -17,6 +18,15 @@ export const WriteBoundarySchema = z.object({
 });
 
 export type WriteBoundary = z.infer<typeof WriteBoundarySchema>;
+
+export const PathKind = { Harness: "harness", Outside: "outside", Product: "product" } as const;
+
+export const WriteBoundaryAggregateSchema = z.object({
+  lines: z.array(WritableLineSchema),
+  protectedAreas: z.array(z.instanceof(ProtectedAreaValueObject)),
+});
+
+export type WriteBoundaryAggregateProps = z.infer<typeof WriteBoundaryAggregateSchema>;
 
 export const ReleasedWorkOrderSchema = z.object({
   name: z.string(),
