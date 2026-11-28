@@ -3,6 +3,7 @@ name: use-cases-hydrate-through-the-domain
 description: Repositories return validated records and the use case hydrates them once through a factory of the domain, which owns the error for a missing required part; a clean-core rule refuses a repository that builds domain objects.
 created_at: 2026-11-28
 created_by: Edgar
+approved_at: 2026-11-28
 schema: spec-plan
 ---
 
@@ -23,14 +24,11 @@ Every repository implementation of the factory and of every clean-core product r
 
 - The rule lives in the clean core, like the three rules of 2026-11-27, so every product built with `backend`, `frontend` or `fullstack` is held by it and learns it through `factory doctor`. @by:agent
 - `repository-returns-records` refuses `new X(Entity|Aggregate|ValueObject)(` and imports from `domain/{entities,aggregates,value-objects}` in `infrastructure/repository-implementations`; S05 stays as the review of what the rule cannot see. Discarded: review only. @by:agent
-- The domain factory is a static method `from(record)` on the aggregate or entity it builds, since S12 puts a static method before a domain service. Discarded: a `domain/factories` folder, a new vocabulary for one method. @by:agent
+- The domain factory is a static method `from(record)` on the aggregate or entity it builds, since S12 puts a static method before a domain service. Discarded: a `domain/factories` folder, a new vocabulary for one method. @by:person
 - A lookup that a caller may miss stays optional (`findLine`); the required lookup (`lineNamed`) throws the domain exception. @by:agent
 - Runs after `doctor-reports-changed-rules`, so products learn the new rule through doctor. @by:agent
 
 ## Open questions
-
-- Is the domain factory a static `from(record)` on the object it builds, or a `domain/factories/<name>.factory.ts`? Pick: the static method.
-- Do you approve this plan? Read [plan.md](plan.md), [the infrastructure delta spec](specs/architecture/infrastructure/spec.md) and [the application delta spec](specs/architecture/application/spec.md).
 
 ## Architecture decisions
 
@@ -67,9 +65,9 @@ lineNamed(name: string): LineEntity; // throws the domain exception
 
 - The factory's tests keep passing; a unit test proves `lineNamed` throws the same exception for every caller.
 
-- [ ] Give each of the six repositories' aggregates a static `from(record)` and make the repositories return records
-- [ ] Make each use case hydrate once through it, and move the required-part errors into the domain
-- [ ] Verify the phase: `pnpm run check`
+- [x] Give each of the six repositories' aggregates a static `from(record)` and make the repositories return records
+- [x] Make each use case hydrate once through it, and move the required-part errors into the domain
+- [x] Verify the phase: `pnpm run check`
 
 ### Phase 2: The clean core holds the rules
 
@@ -86,9 +84,9 @@ id: "required-part-throws-in-domain"  // no `if (!x) throw` on a value read from
 
 - The tests generated from `architecture/infrastructure` and `architecture/application`: each case breaks the rule in the files its `expect` block records, and the reference breaks nothing.
 
-- [ ] Write both rules, their cases in `infrastructure.examples.md` and `application.examples.md`, record them with `pnpm exec factory expect` and generate the tests
-- [ ] Update the reference module and the `infrastructure` and `app-domain` skills
-- [ ] Verify the phase: `pnpm run check`
+- [x] Write both rules, their cases in `infrastructure.examples.md` and `application.examples.md`, record them with `pnpm exec factory expect` and generate the tests
+- [x] Update the reference module and the `infrastructure` and `app-domain` skills
+- [x] Verify the phase: `pnpm run check`
 
 ## Feedback
 

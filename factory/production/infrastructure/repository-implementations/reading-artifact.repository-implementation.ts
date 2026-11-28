@@ -1,4 +1,5 @@
 import type { ReadingArtifactRepositoryInterface } from "../../application/repository-interfaces/reading-artifact.repository-interface.ts";
+import { WorkOrderException } from "../../domain/exceptions/work-order.exceptions.ts";
 import type { ReadingArtifactAcl } from "../acl/reading-artifact.acl.ts";
 
 export class ReadingArtifactRepositoryImplementation implements ReadingArtifactRepositoryInterface {
@@ -12,8 +13,11 @@ export class ReadingArtifactRepositoryImplementation implements ReadingArtifactR
     return this.resource.getLanguage();
   }
 
-  readArtifact(path: string): Promise<{fingerprint: string} | null> {
-    return this.resource.readArtifact(path);
+  async getArtifact(path: string): Promise<{fingerprint: string}> {
+    const artifact = await this.resource.readArtifact(path);
+    if (!artifact) throw new WorkOrderException(`${path} does not exist`, { cause: { path } });
+
+    return artifact;
   }
 
   readingPath(language: string, source: string): string {

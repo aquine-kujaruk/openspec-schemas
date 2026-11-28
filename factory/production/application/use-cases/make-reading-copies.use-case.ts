@@ -25,10 +25,9 @@ export class MakeReadingCopiesUseCase {
       if (!path.startsWith("openspec/") || path.split("/").includes(".."))
         throw new WorkOrderException(`${source} is not an artifact of openspec/: only what the specification tool keeps gets a reading copy`);
 
-      const record = await this.artifacts.readArtifact(path);
-      if (!record) throw new WorkOrderException(`${source} does not exist`);
+      const { fingerprint } = await this.artifacts.getArtifact(path);
 
-      return { source: path, fingerprint: record.fingerprint };
+      return { source: path, fingerprint };
     }));
 
     const { person, project } = await this.artifacts.getLanguage();

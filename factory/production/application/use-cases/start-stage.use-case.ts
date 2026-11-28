@@ -1,3 +1,4 @@
+import { WorkOrderAggregate } from "../../domain/aggregates/work-order.aggregate.ts";
 
 import type { WorkOrderRepositoryInterface } from "../repository-interfaces/work-order.repository-interface.ts";
 import type { StageStartRepositoryInterface } from "../repository-interfaces/stage-start.repository-interface.ts";
@@ -26,7 +27,8 @@ export class StartStageUseCase {
       findings: findings.map(({rule, message}) => `[${rule}] ${message}`),
     };
 
-    const order = await this.orders.findWorkOrder(name);
+    const record = await this.orders.findWorkOrder(name);
+    const order = record && WorkOrderAggregate.from(record);
 
     if (!order || order.plan.stages.every(({complete}) => complete))
       return { state: "nothing to build" };

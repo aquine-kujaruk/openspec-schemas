@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PlantRepositoryImplementation } from "../../../factory/engineering/infrastructure/repository-implementations/plant.repository-implementation.ts";
 import type { PlantAcl, PlantRecord } from "../../../factory/engineering/infrastructure/acl/plant.acl.ts";
+import { PlantEntity } from "../../../factory/shared/domain/entities/plant.entity.ts";
 import { EngineeringException } from "../../../factory/engineering/domain/exceptions/engineering.exceptions.ts";
 
 const record: PlantRecord = {
@@ -23,7 +24,7 @@ describe("plant repository", () => {
     };
     const plants = new PlantRepositoryImplementation(files);
 
-    const plant = await plants.getPlant();
+    const plant = PlantEntity.from(await plants.getPlant());
     expect(plant.root).toBe(record.root);
     const [line] = plant.lines;
     expect(line?.name).toBe("");

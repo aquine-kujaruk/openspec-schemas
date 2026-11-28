@@ -1,6 +1,7 @@
 
 import type { EquipmentRepositoryInterface, MaintenanceOptions } from "../../application/repository-interfaces/equipment.repository-interface.ts";
-import { EquipmentEntity } from "../../domain/entities/equipment.entity.ts";
+import type { EquipmentEntity } from "../../domain/entities/equipment.entity.ts";
+import type { EquipmentRecord } from "../../domain/schemas/equipment.schema.ts";
 import { MaintenanceException } from "../../domain/exceptions/maintenance.exceptions.ts";
 import type { EquipmentRepair } from "../../domain/schemas/equipment-reading.schema.ts";
 import { RuleConformanceSchema, type RuleConformance } from "../../domain/schemas/rule-conformance.schema.ts";
@@ -13,26 +14,8 @@ export class EquipmentRepositoryImplementation implements EquipmentRepositoryInt
     this.resources = resources;
   }
 
-  findEquipment(root: string): EquipmentEntity | null {
-    return this.read(() => {
-      const found = this.resources.readInstalled(root);
-      if (!found) return null;
-      const { installed, assets } = found;
-
-      return new EquipmentEntity({
-        name: installed.package,
-        version: installed.version,
-        processes: installed.schemas,
-        workInstructions: installed.phases,
-        controls: installed.guards,
-        command: installed.command,
-        assets,
-        agents: installed.agents,
-        instructions: installed.instructions,
-        packageManager: installed.packageManager,
-        project: installed.project,
-      });
-    });
+  findEquipment(root: string): EquipmentRecord | null {
+    return this.read(() => this.resources.readInstalled(root) ?? null);
   }
 
   async inspectEquipment(root: string, equipment: EquipmentEntity, node?: string) {

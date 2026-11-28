@@ -15,4 +15,14 @@ export const WorkOrderSchema = z.object({
   andonPulls: z.array(z.instanceof(AndonPullValueObject)).default([]),
 }).transform(({ plan, ...order }) => ({ ...order, currentPlan: plan }));
 
+export const WorkOrderRecordSchema = z.object({
+  name: z.string(),
+  process: z.string(),
+  line: z.string().optional(),
+  plan: z.string(),
+  revisions: z.array(z.object({ drawing: z.string(), document: z.string() })),
+  andon: z.array(z.object({ from: z.string(), names: z.string(), says: z.string() })),
+});
+
 export type WorkOrderProps = z.input<typeof WorkOrderSchema>;
+export type WorkOrderRecord = z.infer<typeof WorkOrderRecordSchema>;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { WorkOrderAcl } from "../../../factory/production/infrastructure/acl/work-order.acl.ts";
+import { WorkOrderAggregate } from "../../../factory/production/domain/aggregates/work-order.aggregate.ts";
 import { WorkOrderRepositoryImplementation } from "../../../factory/production/infrastructure/repository-implementations/work-order.repository-implementation.ts";
 
 
@@ -19,7 +20,7 @@ describe("work order repository", () => {
       async writeRelease(_name, day) { released = day; },
     };
     const orders = new WorkOrderRepositoryImplementation(resource);
-    const order = (await orders.findWorkOrder("ship"))!;
+    const order = WorkOrderAggregate.from((await orders.findWorkOrder("ship"))!);
     expect(order.process).toBe("clean-backend");
     expect(order.revisions[0]?.requirements[0]?.name).toBe("Ship safely");
     expect(order.andonPulls[0]?.says).toBe("check the label");

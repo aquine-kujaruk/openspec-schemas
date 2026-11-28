@@ -1,4 +1,4 @@
-import type { WorkOrderAggregate } from "../../domain/aggregates/work-order.aggregate.ts";
+import { WorkOrderAggregate } from "../../domain/aggregates/work-order.aggregate.ts";
 import type { WorkOrderRepositoryInterface } from "../repository-interfaces/work-order.repository-interface.ts";
 
 export class ListReleasedWorkOrdersUseCase {
@@ -9,6 +9,8 @@ export class ListReleasedWorkOrdersUseCase {
   }
 
   async execute(): Promise<WorkOrderAggregate[]> {
-    return (await this.orders.listWorkOrders()).filter(({plan}) => plan.releasedOn && !plan.openQuestions.length);
+    return (await this.orders.listWorkOrders())
+      .map((record) => WorkOrderAggregate.from(record))
+      .filter(({plan}) => plan.releasedOn && !plan.openQuestions.length);
   }
 }

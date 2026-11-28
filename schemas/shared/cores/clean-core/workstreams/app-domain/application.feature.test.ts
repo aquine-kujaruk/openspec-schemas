@@ -213,8 +213,22 @@ describe('Feature: Build the application layer', () => {
     })
   })
 
+  describe('Rule: required-part-throws-in-domain · a missing required part fails in the domain', () => {
+    // Line 135
+    test('`use-case-throws-on-missing` breaks required-part-throws-in-domain', async () => {
+      const steps = createSteps()
+
+      // Given the example `use-case-throws-on-missing`
+      await steps.exampleFolder('use-case-throws-on-missing')
+      // When rule `required-part-throws-in-domain` is checked
+      await steps.ruleChecked('required-part-throws-in-domain')
+      // Then it is broken in the files the expectation records
+      await steps.brokenAsExpected()
+    })
+  })
+
   describe('Rule: Recorded rubric judgements', () => {
-    // Line 131
+    // Line 146
     test('rubric S13 / vague-operation is yes', async () => {
       const steps = createSteps()
 
@@ -226,7 +240,7 @@ describe('Feature: Build the application layer', () => {
       await steps.rubricVerdict('yes')
     })
 
-    // Line 131
+    // Line 146
     test('rubric S13 / reference is no', async () => {
       const steps = createSteps()
 
@@ -238,7 +252,7 @@ describe('Feature: Build the application layer', () => {
       await steps.rubricVerdict('no')
     })
 
-    // Line 131
+    // Line 146
     test('rubric S15 / field-copy is yes', async () => {
       const steps = createSteps()
 
@@ -250,7 +264,7 @@ describe('Feature: Build the application layer', () => {
       await steps.rubricVerdict('yes')
     })
 
-    // Line 131
+    // Line 146
     test('rubric S15 / reference is no', async () => {
       const steps = createSteps()
 
@@ -262,7 +276,7 @@ describe('Feature: Build the application layer', () => {
       await steps.rubricVerdict('no')
     })
 
-    // Line 131
+    // Line 146
     test('rubric S18 / unrelated-methods is yes', async () => {
       const steps = createSteps()
 
@@ -274,7 +288,7 @@ describe('Feature: Build the application layer', () => {
       await steps.rubricVerdict('yes')
     })
 
-    // Line 131
+    // Line 146
     test('rubric S18 / reference is no', async () => {
       const steps = createSteps()
 
@@ -286,7 +300,7 @@ describe('Feature: Build the application layer', () => {
       await steps.rubricVerdict('no')
     })
 
-    // Line 131
+    // Line 146
     test('rubric S19 / raw-props is yes', async () => {
       const steps = createSteps()
 
@@ -298,7 +312,7 @@ describe('Feature: Build the application layer', () => {
       await steps.rubricVerdict('yes')
     })
 
-    // Line 131
+    // Line 146
     test('rubric S19 / reference is no', async () => {
       const steps = createSteps()
 

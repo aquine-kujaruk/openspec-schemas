@@ -1,8 +1,12 @@
 import { sourceStem } from "../../source-path.ts";
+
+const DOMAIN_OBJECT = /\bnew \w+(?:Entity|Aggregate|ValueObject)\(/;
+const DOMAIN_OBJECT_IMPORT = /^import\s+(?!type\b)[^;]*?from\s+["'][^"']*\/domain\/(?:entities|aggregates|value-objects)\//m;
 import { globSync, readFileSync } from "node:fs";
 import {
   type ClassDecl,
   classesOf,
+  codeOnly,
   constructorParams,
   importsOf,
   namesTheRoleRule,
@@ -158,6 +162,20 @@ export const infrastructure = (o: Options): Layer => {
             .adhereTo(
               not(/\bnew \w+Adapter\(/),
               "[repository-never-news-adapter] no `new XAdapter(` in a repository: the adapter is injected through its ACL",
+            )
+            .check(ctx.opts),
+      },
+      {
+        id: "repository-returns-records",
+        title: "repository implementations return records and build no entity, aggregate or value object",
+        check: () =>
+          ctx
+            .files()
+            .inFolder(`${o.modules}/infrastructure/repository-implementations/**`)
+            .should()
+            .adhereTo(
+              (f) => !DOMAIN_OBJECT.test(codeOnly(f.content)) && !DOMAIN_OBJECT_IMPORT.test(f.content),
+              "[repository-returns-records] return the record the ACL validated (`InvoiceProps`) and let the use case hydrate it through the domain (`InvoiceEntity.from(record)`); a repository builds no entity, aggregate or value object",
             )
             .check(ctx.opts),
       },
