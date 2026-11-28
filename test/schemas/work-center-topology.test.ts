@@ -19,6 +19,7 @@ const DECLARATIONS = {
   infrastructure: declare("infrastructure"),
   adapters: declare("adapters"),
   modules: declare("modules"),
+  controllers: declare("controllers"),
 };
 const folders = (
   d: Record<string, WorkstreamDeclaration> = DECLARATIONS,
@@ -36,6 +37,7 @@ const SEQUENCE: Topology = {
   infrastructure: { dependsOn: ["app-domain"] },
   adapters: { dependsOn: ["infrastructure"] },
   modules: { dependsOn: ["adapters"] },
+  controllers: { dependsOn: [] },
 };
 
 describe("the implementer declares its workstreams and their dependencies", () => {

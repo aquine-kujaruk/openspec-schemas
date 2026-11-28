@@ -1,3 +1,5 @@
+import { QualityController } from "./quality/framework/controllers/quality.controller.ts";
+import { consoleIo, toStandardError } from "./shared/infrastructure/adapters/cli.adapter.ts";
 import { createCheck } from "./quality/infrastructure/adapters/inspection.adapter.ts";
 import * as compose from "./quality/infrastructure/adapters/inspection-config.adapter.ts";
 import { createExampleFile } from "./quality/infrastructure/adapters/sample-file.adapter.ts";
@@ -34,7 +36,6 @@ import { InspectWorkOrderUseCase, type InspectionOptions } from "./quality/appli
 import { HoldStageUseCase } from "./quality/application/use-cases/hold-stage.use-case.ts";
 import { QualityException } from "./quality/domain/exceptions/quality.exceptions.ts";
 import { RulesRecordSchema, type RulesLedger } from "./quality/domain/schemas/rules-ledger.schema.ts";
-import { RuleConformanceService } from "./quality/domain/services/rule-conformance.service.ts";
 import type { InspectionCertificateRecord } from "./quality/infrastructure/acl/final-inspection.acl.ts";
 import { FinalInspectionAdapter, scenariosOfDelta } from "./quality/infrastructure/adapters/final-inspection.adapter.ts";
 import { QualityCertificateFileAdapter } from "./quality/infrastructure/adapters/quality-certificate-file.adapter.ts";
@@ -233,11 +234,7 @@ const inspection = new RunQualityControlUseCase(new InspectionRepositoryImplemen
   },
 ));
 
-export const makeGauges = async (args: string[]) => (await newGauges.execute(args)).exitStatus;
-export const runGauges = (args: string[]) => gaugeRun.execute(args);
 
-const ledgers = new RuleConformanceService();
-const SCOPES = ["--workstream", "--layer", "--module", "--whole"];
 
 const rulesRecord = () => path.join(shared.paths.PROJECT_ROOT, project.product.root, ".factory-rules.json");
 const installedLedger = () => rules.ledger(project.architecture, project.EXAMPLE_FILES, project.RUBRICS);
@@ -247,85 +244,26 @@ const recordedLedger = (): RulesLedger | undefined =>
     ? RulesRecordSchema.parse(JSON.parse(fileSystem.readFileSync(rulesRecord(), "utf8"))).rules
     : undefined;
 
-export async function runQualityControl(args: string[]): Promise<number> {
-  await project.initialize();
-  const run = await inspection.execute(project.product.name, args);
-
-  if (run.passed() && !args.some((arg) => SCOPES.includes(arg)))
-    fileSystem.writeFileSync(rulesRecord(), `${JSON.stringify({ rules: installedLedger() }, null, 2)}\n`);
-
-  return run.passed() ? 0 : run.exitStatus || 1;
-}
-
-export async function ruleConformance(args: string[]): Promise<number> {
-  await project.initialize();
-  const changes = ledgers.compare(recordedLedger(), installedLedger());
-  const toCheck = new Set(ledgers.toCheck(changes, rules.deterministicIds(project.architecture)));
-  const broken = new Map<string, string[]>();
-
-  if (toCheck.size) {
-    const log = console.log;
-    console.log = console.error;
-
-    try {
-      await check.check([], ({ standard, file }) => {
-        if (!toCheck.has(standard)) return;
-        const files = new Set([...broken.get(standard) ?? [], file || "the whole product"]);
-        broken.set(standard, [...files]);
-      });
-    } finally {
-      console.log = log;
-    }
-  }
-
-  const conformance = ledgers.conformance(changes, broken).filter(({ change }) => change !== "unchanged");
-
-  if (args.includes("--json")) console.log(JSON.stringify(conformance));
-  else if (!conformance.length) console.log("the rules are the ones the project last passed");
-  else for (const { rule, change, files } of conformance)
-    console.log(`${change}: ${rule}${files.length ? ` — ${files.join(", ")}` : ""}`);
-
-  return 0;
-}
-
-const runAudit = async (
-  { config, rubrics, modules }: { config: Review; rubrics: string[]; modules: string },
-  root = PROJECT_ROOT,
-): Promise<number> => {
+const auditOf = async () => {
+  const config = project.architecture.review;
+  const root = PROJECT_ROOT;
   const key = loadEnv(root, runtime.environment())[config.keyVariable];
-
-  const client = openAiClient({
-    key: key ?? "",
-    model: config.model,
-    onIssue: (issue) => console.error(`model: ${issue}`),
-  });
+  const client = openAiClient({ key: key ?? "", model: config.model, onIssue: (issue) => consoleIo.warn(`model: ${issue}`) });
 
   const source = new AuditAdapter(
     (state, questions) => client.ask(state, questions),
-    (root) => {
-      const result = capture("git", ["rev-parse", "HEAD"], { cwd: root });
+    (at) => {
+      const result = capture("git", ["rev-parse", "HEAD"], { cwd: at });
 
       return result.status === 0 ? result.stdout.trim() : null;
     },
   );
 
-  const report = await new AuditUseCase(new AuditRepositoryImplementation(source))
-    .execute({ root, modules, rubrics, config, key });
-
-  if ("lines" in report) {
-    for (const line of report.lines) console.log(line);
-  } else {
-    console.error(report.issue);
-  }
-
-  return report.code;
+  return {
+    useCase: new AuditUseCase(new AuditRepositoryImplementation(source)),
+    input: { root, modules: project.config.modules, rubrics: project.RUBRICS, config, key },
+  };
 };
-
-export async function audit(): Promise<number> {
-  await project.initialize();
-
-  return runAudit({ modules: project.config.modules, config: project.architecture.review, rubrics: project.RUBRICS });
-}
 
 export function judgements(layer: string, dir: string) {
   const config = project.config.review;
@@ -369,7 +307,7 @@ export function writeEvidence(root: string, record: InspectionCertificateRecord)
   certificateFiles(root).writeEvidence(record);
 }
 
-export async function inspect(root: string, name: string, options: InspectionOptions = {}) {
+const inspectionOf = async (root: string, name: string) => {
   const order = change.readChange(root, name);
   if (!order) throw new QualityException(`no active change is called ${name}`);
 
@@ -432,66 +370,8 @@ export async function inspect(root: string, name: string, options: InspectionOpt
     },
   }, certificateFiles(root));
 
-  return new InspectWorkOrderUseCase(new FinalInspectionRepositoryImplementation(adapter)).execute(name, options);
-}
-
-export async function inspectWorkOrder(args: string[]): Promise<number> {
-  const [name] = args;
-  const known = change.activeChanges(PROJECT_ROOT);
-
-  if (!name || !known.includes(name)) {
-    console.error(`Name the change to verify. Changes: ${known.join(", ") || "none"}`);
-
-    return 2;
-  }
-
-  const procedures: NonNullable<InspectionOptions["procedures"]> = {};
-  const proved = args.flatMap((arg, i) => arg === "--proved" && args[i + 1] ? [args[i + 1]!] : []);
-
-  for (const [i, arg] of args.entries()) {
-    if (arg !== "--procedure") continue;
-    const match = /^(.+)=(passed|failed)$/.exec(args[i + 1] ?? "");
-
-    if (!match) {
-      console.error("Say how a procedure went as --procedure <slug>@<environment>=<passed|failed>.");
-
-      return 2;
-    }
-
-    procedures[match[1]!] = match[2] === "passed" ? "passed" : "failed";
-  }
-
-  const certificate = await inspect(PROJECT_ROOT, name, { procedures, proved });
-  console.log(`${certificate.verdict}: ${name}`);
-  const passed = certificate.scenarios.filter(({ result }) => result === "passed").length;
-  console.log(`- scenarios: ${passed} of ${certificate.scenarios.length} matched to a passing test`);
-
-  for (const { spec } of certificate.scenarios.filter(({ by }) => by))
-    console.log(`  by the person's word: ${spec}`);
-
-  for (const { result, spec, scenario } of certificate.unproved)
-    console.log(`  ${result}: ${spec} · ${scenario || "no generated test ran"}`);
-
-  console.log(`- checks: ${certificate.failing.length
-    ? `failing in ${certificate.failing.map(({ workstream }) => workstream).join(", ")}`
-    : "every check passes"}`);
-
-  const { review, e2e } = certificate;
-
-  console.log(`- review: ${review.state === "run"
-    ? `run, ${review.warnings.length} warning(s)`
-    : `${review.state} (${review.note})`}`);
-
-  if (e2e?.length)
-    console.log(`- end-to-end: ${e2e.filter(({ result }) => result === "passed").length} of ${e2e.length} passing`);
-
-  for (const { slug, env, treatment, outcome } of certificate.procedures)
-    console.log(`- procedure ${slug} in ${env}: ${treatment}${outcome ? `, ${outcome}` : ""}`);
-
-  console.log(`- evidence: openspec/changes/${name}/${EVIDENCE}`);
-
-  return certificate.verdict === "verified" ? 0 : 1;
-}
+  return new InspectWorkOrderUseCase(new FinalInspectionRepositoryImplementation(adapter));
+};
 
 const stageRepository = (root: string) => new StageHoldRepositoryImplementation(
   new StageHoldAdapter(root, change.CHANGES, change.GATE, {
@@ -526,14 +406,43 @@ const stageRepository = (root: string) => new StageHoldRepositoryImplementation(
   }),
 );
 
-export async function holdStage(args: string[]): Promise<number> {
-  const cwd = hookInput().cwd ?? runtime.workingDirectory();
-  const root = projectOf(runtime.environment().CLAUDE_PROJECT_DIR || cwd);
-  const hold = await new HoldStageUseCase(stageRepository(root)).execute(args.includes("--helper"));
-  for (const reason of hold.reasons) console.error(reason);
+const controller = new QualityController({
+  initialize: () => project.initialize(),
+  line: () => project.product.name,
+  gauges: newGauges,
+  gaugeRun,
+  inspection,
+  recordedLedger,
+  installedLedger,
+  recordRules: (ledger) => fileSystem.writeFileSync(rulesRecord(), `${JSON.stringify({ rules: ledger }, null, 2)}\n`),
+  deterministicIds: () => rules.deterministicIds(project.architecture),
+  brokenBy: (wanted) => toStandardError(async () => {
+    const broken = new Map<string, string[]>();
 
-  return hold.held ? 2 : 0;
-}
+    await check.check([], ({ standard, file }) => {
+      if (wanted.has(standard)) broken.set(standard, [...new Set([...broken.get(standard) ?? [], file || "the whole product"])]);
+    });
+
+    return broken;
+  }),
+  audit: auditOf,
+  activeChanges: () => change.activeChanges(PROJECT_ROOT),
+  inspectionOf: (name) => inspectionOf(PROJECT_ROOT, name),
+  evidenceFile: EVIDENCE,
+  hold: () => {
+    const cwd = hookInput().cwd ?? runtime.workingDirectory();
+
+    return new HoldStageUseCase(stageRepository(projectOf(runtime.environment().CLAUDE_PROJECT_DIR || cwd)));
+  },
+}, consoleIo);
+
+export const makeGauges = controller.generate.bind(controller);
+export const runGauges = controller.test.bind(controller);
+export const runQualityControl = controller.check.bind(controller);
+export const ruleConformance = controller.rules.bind(controller);
+export const audit = controller.review.bind(controller);
+export const inspectWorkOrder = controller.verify.bind(controller);
+export const holdStage = controller.gate.bind(controller);
 
 export { exampleFile, examples, expectFile, rules, test };
 

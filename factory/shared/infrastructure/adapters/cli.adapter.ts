@@ -8,6 +8,24 @@ export const cleanTestEnvironment = (): void => {
 };
 
 export const argumentsOf = (): string[] => process.argv.slice(2);
+
+export const toStandardError = async <T>(run: () => Promise<T>): Promise<T> => {
+  const log = console.log;
+  console.log = console.error;
+
+  try {
+    return await run();
+  } finally {
+    console.log = log;
+  }
+};
+
+export const consoleIo = {
+  write: (line: string) => console.log(line),
+  warn: (line: string) => console.error(line),
+  stdin: () => readFileSync(0, "utf8"),
+};
+
 export const exit = (status: number): never => process.exit(status);
 
 export const createHost = (

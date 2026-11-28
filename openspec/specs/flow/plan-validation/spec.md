@@ -156,6 +156,8 @@ A procedure SHALL name where a credential is kept and SHALL NOT contain a creden
 
 ### Requirement: Every task belongs to one workstream of the schema
 
+`@by:person`
+
 Every checkbox in a plan is a task, and every task SHALL sit inside a phase. When the change's schema has workstreams, every task SHALL name one of them. When it has none, no task SHALL name a workstream. Validation SHALL report the change as not ready when a task sits outside a phase, names a workstream the schema does not have, or names none in a schema that has some.
 
 #### Scenario Outline: a task naming `<workstream>` placed `<placement>` makes the change `<readiness>`
@@ -167,15 +169,15 @@ Every checkbox in a plan is a task, and every task SHALL sit inside a phase. Whe
 
 ##### Examples:
 
-  | workstreams                                              | workstream | placement       | readiness |
-  | -------------------------------------------------------- | ---------- | --------------- | --------- |
-  | app-domain, infrastructure, adapters, modules            | app-domain | inside a phase  | ready     |
-  | app-domain, infrastructure, adapters, modules            | react-ui   | inside a phase  | not ready |
-  | app-domain, infrastructure, adapters, modules            | app-domain | outside a phase | not ready |
-  | app-domain, infrastructure, adapters, modules            | none       | inside a phase  | not ready |
-  | none                                                     | none       | inside a phase  | ready     |
-  | none                                                     | app-domain | inside a phase  | not ready |
-  | none                                                     | none       | outside a phase | not ready |
+  | workstreams                                                | workstream | placement       | readiness |
+  | ---------------------------------------------------------- | ---------- | --------------- | --------- |
+  | app-domain, infrastructure, adapters, modules, controllers | app-domain | inside a phase  | ready     |
+  | app-domain, infrastructure, adapters, modules, controllers | react-ui   | inside a phase  | not ready |
+  | app-domain, infrastructure, adapters, modules, controllers | app-domain | outside a phase | not ready |
+  | app-domain, infrastructure, adapters, modules, controllers | none       | inside a phase  | not ready |
+  | none                                                       | none       | inside a phase  | ready     |
+  | none                                                       | app-domain | inside a phase  | not ready |
+  | none                                                       | none       | outside a phase | not ready |
 
 ### Requirement: A change without delta specs says so
 

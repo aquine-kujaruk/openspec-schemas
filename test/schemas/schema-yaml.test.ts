@@ -54,7 +54,7 @@ describe("the schema the specification tool sees", () => {
     );
     expect(plan.template).toBe(schema.templates["plan.md"]);
     expect(plan.instruction).toContain(
-      "Workstreams a task may name: `app-domain`, `infrastructure`, `adapters`, `modules`.",
+      "Workstreams a task may name: `app-domain`, `infrastructure`, `adapters`, `modules`, `controllers`.",
     );
     expect(plan.instruction.trim().endsWith(schema.questions.trim())).toBe(
       true,

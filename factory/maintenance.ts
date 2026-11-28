@@ -3,9 +3,9 @@ import { products } from "./engineering.ts";
 import { loadEnv } from "./shared/infrastructure/adapters/env.adapter.ts";
 import { capture, INSTALLED, PROJECT_ROOT, SETUP_ASSETS } from "./shared/infrastructure/adapters/paths.adapter.ts";
 import { runtime } from "./shared/infrastructure/adapters/runtime.adapter.ts";
+import { MaintenanceController } from "./maintenance/framework/controllers/maintenance.controller.ts";
+import { consoleIo } from "./shared/infrastructure/adapters/cli.adapter.ts";
 import { MaintainEquipmentUseCase } from "./maintenance/application/use-cases/maintain-equipment.use-case.ts";
-import type { MaintenanceOptions } from "./maintenance/application/repository-interfaces/equipment.repository-interface.ts";
-import { MaintenanceKind } from "./maintenance/domain/schemas/maintenance-item.schema.ts";
 import { EquipmentInstallationService, SECTION } from "./maintenance/domain/services/equipment-installation.service.ts";
 import { SuspectProcedureService } from "./maintenance/domain/services/suspect-procedure.service.ts";
 import { PLACES } from "./maintenance/infrastructure/acl/equipment.acl.ts";
@@ -45,58 +45,13 @@ const resources = new EquipmentAdapter({
 const maintain = new MaintainEquipmentUseCase(new EquipmentRepositoryImplementation(resources));
 const procedures = new SuspectProcedureService();
 
-export type DoctorReport = {
-  items: Array<{
-    requirement: string;
-    agent?: string;
-    report: "missing" | "drift" | "repaired";
-    detail: string;
-  }>;
-  notes: string[];
-  suspects: string[];
-  outdated: Array<{ requirement: string; detail: string }>;
-  status: 0 | 1;
-};
+const controller = new MaintenanceController({
+  maintain,
+  root: PROJECT_ROOT,
+  missingPackage: `no installed package found: install one with the agent package manager, so that an agent's skills hold ${SETUP_ASSETS}/${INSTALLED}`,
+}, consoleIo);
 
-const maintainAt = async (root: string, options?: MaintenanceOptions): Promise<DoctorReport | undefined> => {
-  const report = await maintain.execute(root, options);
-  if (!report) return undefined;
-
-  return {
-    items: report.items.flatMap(({ kind, requirement, agent, detail, repaired }) =>
-      kind === MaintenanceKind.Missing || kind === MaintenanceKind.Drift
-        ? [{ requirement, ...(agent === undefined ? {} : { agent }), detail, report: repaired ? "repaired" : kind }]
-        : [],
-    ),
-    notes: report.items.filter((item) => item.kind === MaintenanceKind.Note).map((item) => item.detail),
-    suspects: report.items.filter((item) => item.kind === MaintenanceKind.Suspect).map((item) => item.detail),
-    outdated: report.items.filter((item) => item.kind === MaintenanceKind.Outdated).map(({ requirement, detail }) => ({ requirement, detail })),
-    status: report.status,
-  };
-};
-
-export async function maintainEquipment(args: string[]): Promise<number> {
-  const report = await maintainAt(PROJECT_ROOT, { fix: args.includes("--fix") });
-
-  if (!report) {
-    console.error(
-      `no installed package found: install one with the agent package manager, so that an agent's skills hold ${SETUP_ASSETS}/${INSTALLED}`,
-    );
-
-    return 2;
-  }
-
-  for (const item of report.items) {
-    console.log(`${item.report}: ${item.requirement}${item.agent ? ` for ${item.agent}` : ""} — ${item.detail}`);
-  }
-
-  if (!report.items.length && !report.outdated.length) console.log("nothing is lacking");
-  for (const note of report.notes) console.log(`note: ${note}`);
-  for (const suspect of report.suspects) console.log(`suspect: ${suspect}`);
-  for (const rule of report.outdated) console.log(`outdated: ${rule.requirement} — ${rule.detail}`);
-
-  return report.status;
-}
+export const maintainEquipment = controller.doctor.bind(controller);
 
 export const installed = { PLACES, readInstalled: resources.readInstalled.bind(resources) };
 
@@ -106,7 +61,6 @@ export const doctor = {
   unwiredGuards: resources.unwiredGuards.bind(resources),
   pinnedVersion: resources.pinnedVersion.bind(resources),
   withSection: installation.withSection.bind(installation),
-  doctor: maintainAt,
   run: maintainEquipment,
 };
 
