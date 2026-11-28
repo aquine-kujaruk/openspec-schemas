@@ -3,6 +3,7 @@ name: adapters-wrap-external-systems
 description: An adapter wraps an external system and nothing else; internal ports such as change control reaching production are composed in the composition root, and a repository states the operation that a generic resource adapter executes. A clean-core rule refuses an adapter that only forwards a callback.
 created_at: 2026-11-28
 created_by: Edgar
+approved_at: 2026-11-28
 schema: spec-plan
 ---
 
@@ -23,14 +24,11 @@ Every adapter of the factory and of every clean-core product wraps something out
 ## Decisions
 
 - The rule lives in the clean core, like the 2026-11-27 rules. `adapter-wraps-external-system` refuses an adapter file that imports no package, no `node:` module and no platform global and whose constructor takes a function. An in-memory adapter (state, no function parameter) stays valid. @by:agent
-- An internal port is a repository interface of the consuming module whose implementation lives in `infrastructure/repository-implementations` and receives the other module's exported operation, validating its result with the consumer's ACL schema; no adapter and no ACL stand between them. `acl-adapter-paired` keeps applying to every ACL that remains. Discarded: keeping a forwarding adapter with an ACL. @by:agent
+- An internal port is a repository interface of the consuming module whose implementation lives in `infrastructure/repository-implementations` and receives the other module's exported operation, validating its result with the consumer's ACL schema; no adapter and no ACL stand between them. `acl-adapter-paired` keeps applying to every ACL that remains. Discarded: keeping a forwarding adapter with an ACL; a port interface filled with a plain function in the composition root. @by:person
 - The factory gains generic resource adapters in `shared/infrastructure/adapters` (files, process, HTTP where used) that execute what a repository states; module adapters that only wrap the disk or a process become contract adapters composing them. @by:agent
 - Runs after `use-cases-branch-only-on-io` and before `factory-cli-through-controllers`, which rewires the composition files this change slims. @by:agent
 
 ## Open questions
-
-- Does an internal port go through a repository implementation that takes the other module's operation, or through a port interface the composition root fills with a plain function? Pick: the repository implementation, so the consumer still validates and keeps its errors in one place.
-- Do you approve this plan? Read [plan.md](plan.md) and [the delta spec](specs/architecture/adapters/spec.md).
 
 ## Architecture decisions
 
