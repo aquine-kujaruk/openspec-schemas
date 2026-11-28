@@ -65,9 +65,9 @@ lineNamed(name: string): LineEntity; // throws the domain exception
 
 - The factory's tests keep passing; a unit test proves `lineNamed` throws the same exception for every caller.
 
-- [ ] Give each of the six repositories' aggregates a static `from(record)` and make the repositories return records
-- [ ] Make each use case hydrate once through it, and move the required-part errors into the domain
-- [ ] Verify the phase: `pnpm run check`
+- [x] Give each of the six repositories' aggregates a static `from(record)` and make the repositories return records
+- [x] Make each use case hydrate once through it, and move the required-part errors into the domain
+- [x] Verify the phase: `pnpm run check`
 
 ### Phase 2: The clean core holds the rules
 
@@ -84,9 +84,9 @@ id: "required-part-throws-in-domain"  // no `if (!x) throw` on a value read from
 
 - The tests generated from `architecture/infrastructure` and `architecture/application`: each case breaks the rule in the files its `expect` block records, and the reference breaks nothing.
 
-- [ ] Write both rules, their cases in `infrastructure.examples.md` and `application.examples.md`, record them with `pnpm exec factory expect` and generate the tests
-- [ ] Update the reference module and the `infrastructure` and `app-domain` skills
-- [ ] Verify the phase: `pnpm run check`
+- [x] Write both rules, their cases in `infrastructure.examples.md` and `application.examples.md`, record them with `pnpm exec factory expect` and generate the tests
+- [x] Update the reference module and the `infrastructure` and `app-domain` skills
+- [x] Verify the phase: `pnpm run check`
 
 ## Feedback
 

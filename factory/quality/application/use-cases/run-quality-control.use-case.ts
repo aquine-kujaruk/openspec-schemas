@@ -1,5 +1,5 @@
 import type { LineName } from "../../../shared/domain/schemas/line-name.schema.ts";
-import type { QualityControlRunAggregate } from "../../domain/aggregates/quality-control-run.aggregate.ts";
+import { QualityControlRunAggregate } from "../../domain/aggregates/quality-control-run.aggregate.ts";
 
 import type { InspectionRepositoryInterface } from "../repository-interfaces/inspection.repository-interface.ts";
 
@@ -10,7 +10,7 @@ export class RunQualityControlUseCase {
     this.repository = repository;
   }
 
-  execute(line: LineName, scope: readonly string[]): Promise<QualityControlRunAggregate> {
-    return this.repository.inspectLine(line, scope);
+  async execute(line: LineName, scope: readonly string[]): Promise<QualityControlRunAggregate> {
+    return QualityControlRunAggregate.from(await this.repository.inspectLine(line, scope));
   }
 }

@@ -40,6 +40,8 @@
     "repository-implements-interface": "700c748da4b9187a",
     "repository-method-naming": "e7355acfd9627a63",
     "repository-never-news-adapter": "97be6e6012e6e38e",
+    "repository-returns-records": "f9ef5e92d7cd20a6",
+    "required-part-throws-in-domain": "19dc4f1162d37ff6",
     "S05": "907894772780edc2",
     "S06": "a7ba8f1811b95608",
     "S07": "652b63e41d79d3f9",

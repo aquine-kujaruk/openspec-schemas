@@ -1,3 +1,4 @@
+import { WorkOrderException } from "../../../../factory/production/domain/exceptions/work-order.exceptions.ts";
 import type { ReadingArtifactRepositoryInterface } from "../../../../factory/production/application/repository-interfaces/reading-artifact.repository-interface.ts";
 
 type Language = Awaited<ReturnType<ReadingArtifactRepositoryInterface["getLanguage"]>>;
@@ -25,8 +26,11 @@ export class InMemoryReadingArtifactRepository implements ReadingArtifactReposit
     return this.language;
   }
 
-  async readArtifact(path: string): Promise<{ fingerprint: string } | null> {
-    return this.artifacts.get(path) ?? null;
+  async getArtifact(path: string): Promise<{ fingerprint: string }> {
+    const artifact = this.artifacts.get(path);
+    if (!artifact) throw new WorkOrderException(`${path} does not exist`);
+
+    return artifact;
   }
 
   readingPath(language: string, source: string): string {

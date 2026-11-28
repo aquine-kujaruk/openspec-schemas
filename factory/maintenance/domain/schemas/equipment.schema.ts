@@ -23,4 +23,21 @@ export const EquipmentSchema = z.object({
   project,
 });
 
+export const EquipmentRecordSchema = z.object({
+  installed: z.object({
+    package: z.string(),
+    version: z.string(),
+    command: z.string(),
+    agents: z.array(z.string()),
+    schemas: z.array(ProcessNameSchema),
+    phases: z.array(z.string()),
+    instructions: z.record(z.string(), z.string()),
+    guards: z.array(z.string()),
+    packageManager,
+    project,
+  }),
+  assets: z.string(),
+});
+
 export type EquipmentProps = z.input<typeof EquipmentSchema>;
+export type EquipmentRecord = z.input<typeof EquipmentRecordSchema>;

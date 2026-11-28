@@ -11,4 +11,20 @@ export const ProcessSchema = z.object({
   workCenters: z.array(z.instanceof(WorkCenterEntity)),
 });
 
+export const ProcessRecordSchema = z.object({
+  name: z.string(),
+  base: z.string().optional(),
+  description: z.string(),
+  pilot: z.string().optional(),
+  workCenters: z.array(z.object({
+    id: z.string(),
+    waitsFor: z.array(z.string()),
+    parts: z.array(z.object({
+      name: z.string(),
+      standards: z.array(z.object({ id: z.string(), title: z.string() })),
+    })),
+  })),
+});
+
 export type ProcessProps = z.infer<typeof ProcessSchema>;
+export type ProcessRecord = z.infer<typeof ProcessRecordSchema>;

@@ -10,7 +10,9 @@ import type {
 import type { ProcessName } from "../../../shared/domain/schemas/process-name.schema.ts";
 import { WorkCenterEntity } from "../entities/work-center.entity.ts";
 import { EngineeringException } from "../exceptions/engineering.exceptions.ts";
-import { ProcessSchema, type ProcessProps } from "../schemas/process.schema.ts";
+import { ProcessRecordSchema, ProcessSchema, type ProcessProps, type ProcessRecord } from "../schemas/process.schema.ts";
+import { PartValueObject } from "../value-objects/part.value-object.ts";
+import { StandardValueObject } from "../value-objects/standard.value-object.ts";
 import type { WorkCenterId } from "../schemas/work-center-id.schema.ts";
 
 export type Folders = Record<string, { layerFiles: string[] }>;
@@ -24,6 +26,25 @@ export class ProcessAggregate {
 
   constructor(props: ProcessProps) {
     validateSchema(this, ProcessSchema, props);
+  }
+
+  static from(record: ProcessRecord): ProcessAggregate {
+    const { name, base, description, pilot, workCenters } = ProcessRecordSchema.parse(record);
+
+    return new ProcessAggregate({
+      name,
+      base: base || undefined,
+      description,
+      pilot: pilot || undefined,
+      workCenters: workCenters.map((center) => new WorkCenterEntity({
+        id: center.id,
+        waitsFor: center.waitsFor,
+        parts: center.parts.map((part) => new PartValueObject({
+          name: part.name,
+          standards: part.standards.map((standard) => new StandardValueObject(standard)),
+        })),
+      })),
+    });
   }
 
   static ofTopology(name: ProcessName, topology: Topology): ProcessAggregate {

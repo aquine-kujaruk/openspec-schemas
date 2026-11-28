@@ -2,6 +2,7 @@ import type { EquipmentRepositoryInterface } from "../../../../factory/maintenan
 import type { EquipmentEntity } from "../../../../factory/maintenance/domain/entities/equipment.entity.ts";
 import { RepairKind, type EquipmentNotes, type EquipmentReading, type EquipmentRepair } from "../../../../factory/maintenance/domain/schemas/equipment-reading.schema.ts";
 import type { EquipmentHoldings, EquipmentProcedure } from "../../../../factory/maintenance/domain/schemas/procedure-reading.schema.ts";
+import type { EquipmentRecord } from "../../../../factory/maintenance/domain/schemas/equipment.schema.ts";
 import type { RuleConformance } from "../../../../factory/maintenance/domain/schemas/rule-conformance.schema.ts";
 import { EquipmentInstallationService } from "../../../../factory/maintenance/domain/services/equipment-installation.service.ts";
 
@@ -26,8 +27,18 @@ export class InMemoryEquipmentRepository implements EquipmentRepositoryInterface
   readonly files = new Set<string>();
   ruleConformance: RuleConformance[] = [];
 
-  findEquipment(): EquipmentEntity | null {
-    return this.equipment;
+  findEquipment(): EquipmentRecord | null {
+    const found = this.equipment;
+    if (!found) return null;
+
+    return {
+      installed: {
+        package: found.name, version: found.version, command: found.command, agents: found.agents,
+        schemas: found.processes, phases: found.workInstructions, instructions: found.instructions,
+        guards: found.controls, packageManager: found.packageManager, project: found.project,
+      },
+      assets: found.assets,
+    };
   }
 
   async inspectEquipment(): Promise<EquipmentReading> {

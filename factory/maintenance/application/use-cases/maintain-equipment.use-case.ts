@@ -1,3 +1,4 @@
+import { EquipmentEntity } from "../../domain/entities/equipment.entity.ts";
 import { MaintenanceReportAggregate } from "../../domain/aggregates/maintenance-report.aggregate.ts";
 import type { EquipmentFinding } from "../../domain/schemas/equipment-reading.schema.ts";
 import { MaintenanceKind } from "../../domain/schemas/maintenance-item.schema.ts";
@@ -20,8 +21,10 @@ export class MaintainEquipmentUseCase {
   }
 
   async execute(root: string, { fix, env, node }: MaintenanceOptions = {}): Promise<MaintenanceReportAggregate | null> {
-    const installed = this.equipment.findEquipment(root);
-    if (!installed) return null;
+    const record = this.equipment.findEquipment(root);
+    if (!record) return null;
+
+    const installed = EquipmentEntity.from(record);
 
     const findings = async () => this.inspection.findings(
       installed,

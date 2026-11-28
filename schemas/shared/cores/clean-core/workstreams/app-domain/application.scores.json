@@ -1,82 +1,89 @@
 {
   "S13/vague-operation": [
     {
+      "score": 0.86,
       "model": "gpt-6-luna",
       "question": "ca53c99c9e2ab85284212b654b777f02ec26cd79607b945d461f11396e16110b",
       "case": "a5a0f50e64a71ddeb15149a150270902449eb1354b88df85ea4a98ff5d94b8a7",
-      "score": 0.86,
       "date": "2026-11-18T12:23:00.152Z"
     },
     {
+      "score": 0.43,
       "model": "gpt-6-luna",
       "question": "1c2d0fb8b7619212c4d09ef1def306f006a917778f6c366e7c3f9c653f24e1f9",
       "case": "a5a0f50e64a71ddeb15149a150270902449eb1354b88df85ea4a98ff5d94b8a7",
-      "score": 0.43,
       "date": "2026-11-18T12:58:02.065Z"
     },
     {
+      "score": 0.43,
       "model": "gpt-6-luna",
       "question": "1c2d0fb8b7619212c4d09ef1def306f006a917778f6c366e7c3f9c653f24e1f9",
       "case": "a5a0f50e64a71ddeb15149a150270902449eb1354b88df85ea4a98ff5d94b8a7",
-      "score": 0.43,
       "date": "2026-11-18T12:58:03.564Z"
     },
     {
+      "score": 0.98,
       "model": "gpt-6-luna",
       "question": "1c2d0fb8b7619212c4d09ef1def306f006a917778f6c366e7c3f9c653f24e1f9",
       "case": "b197783c41f26c83a7ed0116a1a6f66a1f735032b7ba07d674cf22bcab845f78",
-      "score": 0.98,
       "date": "2026-11-18T12:58:41.749Z"
     },
     {
+      "score": 0.98,
       "model": "gpt-6-luna",
       "question": "1c2d0fb8b7619212c4d09ef1def306f006a917778f6c366e7c3f9c653f24e1f9",
       "case": "b197783c41f26c83a7ed0116a1a6f66a1f735032b7ba07d674cf22bcab845f78",
-      "score": 0.98,
       "date": "2026-11-18T12:58:42.227Z"
+    },
+    {
+      "score": 0.98,
+      "model": "gpt-6-luna",
+      "question": "1c2d0fb8b7619212c4d09ef1def306f006a917778f6c366e7c3f9c653f24e1f9",
+      "case": "b197783c41f26c83a7ed0116a1a6f66a1f735032b7ba07d674cf22bcab845f78",
+      "date": "2026-11-28T09:37:25.135Z"
     }
   ],
   "S13/reference": [
     {
+      "score": 0.46,
       "model": "gpt-6-luna",
       "question": "ca53c99c9e2ab85284212b654b777f02ec26cd79607b945d461f11396e16110b",
       "case": "134936869f6d8782dba339cb610d89ca8a72feaff855385f8befa939adad21f8",
-      "score": 0.46,
       "date": "2026-11-18T12:23:00.415Z"
     },
     {
+      "score": 0.46,
       "model": "gpt-6-luna",
       "question": "ca53c99c9e2ab85284212b654b777f02ec26cd79607b945d461f11396e16110b",
       "case": "134936869f6d8782dba339cb610d89ca8a72feaff855385f8befa939adad21f8",
-      "score": 0.46,
       "date": "2026-11-18T12:23:00.660Z"
     },
     {
+      "score": 0.64,
       "model": "gpt-6-luna",
       "question": "ca53c99c9e2ab85284212b654b777f02ec26cd79607b945d461f11396e16110b",
       "case": "6c1a9b34319fbee0660b1d10e983d1fe0726b8ec134a305e9a41f6a372ec5699",
-      "score": 0.64,
       "date": "2026-11-18T12:39:32.369Z"
     },
     {
+      "score": 0.64,
       "model": "gpt-6-luna",
       "question": "ca53c99c9e2ab85284212b654b777f02ec26cd79607b945d461f11396e16110b",
       "case": "6c1a9b34319fbee0660b1d10e983d1fe0726b8ec134a305e9a41f6a372ec5699",
-      "score": 0.64,
       "date": "2026-11-18T12:39:32.770Z"
     },
     {
+      "score": 0.55,
       "model": "gpt-6-luna",
       "question": "ca53c99c9e2ab85284212b654b777f02ec26cd79607b945d461f11396e16110b",
       "case": "ae996ef1a39fc0ff770819f89b2e91f43e164d1345e9ff06e11b1d4e0cca5e24",
-      "score": 0.55,
       "date": "2026-11-18T12:41:51.205Z"
     },
     {
+      "score": 0,
       "model": "gpt-6-luna",
       "question": "1c2d0fb8b7619212c4d09ef1def306f006a917778f6c366e7c3f9c653f24e1f9",
       "case": "ae996ef1a39fc0ff770819f89b2e91f43e164d1345e9ff06e11b1d4e0cca5e24",
-      "score": 0,
       "date": "2026-11-18T12:58:03.789Z",
       "baseline": {
         "by": "person",
@@ -84,65 +91,114 @@
       }
     },
     {
+      "score": 0,
       "model": "gpt-6-luna",
       "question": "1c2d0fb8b7619212c4d09ef1def306f006a917778f6c366e7c3f9c653f24e1f9",
       "case": "ae996ef1a39fc0ff770819f89b2e91f43e164d1345e9ff06e11b1d4e0cca5e24",
-      "score": 0,
       "date": "2026-11-18T12:58:04.463Z"
+    },
+    {
+      "score": 0,
+      "model": "gpt-6-luna",
+      "question": "1c2d0fb8b7619212c4d09ef1def306f006a917778f6c366e7c3f9c653f24e1f9",
+      "case": "ae996ef1a39fc0ff770819f89b2e91f43e164d1345e9ff06e11b1d4e0cca5e24",
+      "date": "2026-11-28T09:37:25.319Z"
     }
   ],
   "S15/field-copy": [
     {
+      "score": 0.97,
       "model": "gpt-6-luna",
       "question": "9a8c41972cc6c6d5edbd7662d65e70ece201f6f9fd404579462ad3051a404200",
       "case": "25bc70161d4bd8ab2d8aca1d50c269c83025c0823fd6dbb7138b64dd99f923bf",
-      "score": 0.97,
       "date": "2026-11-18T12:23:00.999Z"
+    },
+    {
+      "score": 0.97,
+      "model": "gpt-6-luna",
+      "question": "9a8c41972cc6c6d5edbd7662d65e70ece201f6f9fd404579462ad3051a404200",
+      "case": "25bc70161d4bd8ab2d8aca1d50c269c83025c0823fd6dbb7138b64dd99f923bf",
+      "date": "2026-11-28T09:37:25.469Z"
     }
   ],
   "S15/reference": [
     {
+      "score": 0,
       "model": "gpt-6-luna",
       "question": "9a8c41972cc6c6d5edbd7662d65e70ece201f6f9fd404579462ad3051a404200",
       "case": "1338d8b08cdffe64ca0d50fe883d82b04c5d4e853ed8d7d3a3961f502419881c",
-      "score": 0,
       "date": "2026-11-18T12:23:01.379Z"
+    },
+    {
+      "score": 0,
+      "model": "gpt-6-luna",
+      "question": "9a8c41972cc6c6d5edbd7662d65e70ece201f6f9fd404579462ad3051a404200",
+      "case": "1338d8b08cdffe64ca0d50fe883d82b04c5d4e853ed8d7d3a3961f502419881c",
+      "date": "2026-11-28T09:37:25.649Z"
     }
   ],
   "S18/unrelated-methods": [
     {
+      "score": 0.95,
       "model": "gpt-6-luna",
       "question": "5020eafc5f375ee1fefefc72bd661f61e089f4e4dc8bff280e17cbe6d7417d68",
       "case": "af971dacc0a0a0648e631a96b8f8b06de54bc3d8cff6aa93d6e45afa2600e5d3",
-      "score": 0.95,
       "date": "2026-11-18T12:23:01.559Z"
+    },
+    {
+      "score": 0.95,
+      "model": "gpt-6-luna",
+      "question": "5020eafc5f375ee1fefefc72bd661f61e089f4e4dc8bff280e17cbe6d7417d68",
+      "case": "af971dacc0a0a0648e631a96b8f8b06de54bc3d8cff6aa93d6e45afa2600e5d3",
+      "date": "2026-11-28T09:37:27.484Z"
     }
   ],
   "S18/reference": [
     {
+      "score": 0,
       "model": "gpt-6-luna",
       "question": "5020eafc5f375ee1fefefc72bd661f61e089f4e4dc8bff280e17cbe6d7417d68",
       "case": "6e9eb21e6e9dd1415073aefa296920428435ef241aab2491a621e39ef27f28fb",
-      "score": 0,
       "date": "2026-11-18T12:23:01.745Z"
+    },
+    {
+      "score": 0,
+      "model": "gpt-6-luna",
+      "question": "5020eafc5f375ee1fefefc72bd661f61e089f4e4dc8bff280e17cbe6d7417d68",
+      "case": "6e9eb21e6e9dd1415073aefa296920428435ef241aab2491a621e39ef27f28fb",
+      "date": "2026-11-28T09:37:27.717Z"
     }
   ],
   "S19/raw-props": [
     {
+      "score": 1,
       "model": "gpt-6-luna",
       "question": "02422ebf1dc97dbb58d629e2d264ea727704d514aa9561a1813821d512f54021",
       "case": "87c6f7a108e2e30ef71ba0d82d5b1eafcd1758f1c2c51e547f3cfd5f0a6d83f3",
-      "score": 1,
       "date": "2026-11-18T12:23:02.104Z"
+    },
+    {
+      "score": 1,
+      "model": "gpt-6-luna",
+      "question": "02422ebf1dc97dbb58d629e2d264ea727704d514aa9561a1813821d512f54021",
+      "case": "87c6f7a108e2e30ef71ba0d82d5b1eafcd1758f1c2c51e547f3cfd5f0a6d83f3",
+      "date": "2026-11-28T09:37:27.965Z"
     }
   ],
   "S19/reference": [
+    {
+      "score": 0,
+      "model": "gpt-6-luna",
+      "question": "02422ebf1dc97dbb58d629e2d264ea727704d514aa9561a1813821d512f54021",
+      "case": "0e5debb15844702d2a9e9b480119ef44b546083aed449797aa524f6f9ed7b71f",
+      "date": "2026-11-18T12:23:02.484Z"
+    },
     {
       "model": "gpt-6-luna",
       "question": "02422ebf1dc97dbb58d629e2d264ea727704d514aa9561a1813821d512f54021",
       "case": "0e5debb15844702d2a9e9b480119ef44b546083aed449797aa524f6f9ed7b71f",
       "score": 0,
-      "date": "2026-11-18T12:23:02.484Z"
+      "date": "2026-11-28T09:37:28.338Z"
     }
   ]
 }

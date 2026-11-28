@@ -1,0 +1,6 @@
+{
+  "phase": "Phase 1: The factory hydrates in the domain",
+  "failures": 0,
+  "waitingFor": "the agent",
+  "findings": []
+}

@@ -1,7 +1,6 @@
-import { LineEntity } from "../../../shared/domain/entities/line.entity.ts";
-import { PlantEntity } from "../../../shared/domain/entities/plant.entity.ts";
-
-import { LineRootsValueObject } from "../../../shared/domain/value-objects/line-roots.value-object.ts";
+import type { LineEntity } from "../../../shared/domain/entities/line.entity.ts";
+import type { PlantEntity } from "../../../shared/domain/entities/plant.entity.ts";
+import type { PlantRecord } from "../../../shared/domain/schemas/plant.schema.ts";
 
 import type { PlantRepositoryInterface } from "../../application/repository-interfaces/plant.repository-interface.ts";
 import { EngineeringException } from "../../domain/exceptions/engineering.exceptions.ts";
@@ -14,19 +13,9 @@ export class PlantRepositoryImplementation implements PlantRepositoryInterface {
     this.records = records;
   }
 
-  async getPlant(): Promise<PlantEntity> {
+  async getPlant(): Promise<PlantRecord> {
     try {
-      const record = PlantRecordSchema.parse(await this.records.readPlant());
-
-      return new PlantEntity({
-        root: record.root,
-        lines: record.lines.map((line) => new LineEntity({
-          name: line.name,
-          folder: line.folder,
-          process: line.process,
-          roots: new LineRootsValueObject(line.roots),
-        })),
-      });
+      return PlantRecordSchema.parse(await this.records.readPlant());
     } catch (cause) {
       throw new EngineeringException("The plant configuration could not be loaded", { cause });
     }

@@ -1,7 +1,7 @@
 import type { ProcessName } from "../../../shared/domain/schemas/process-name.schema.ts";
-import type { ProcessAggregate } from "../../domain/aggregates/process.aggregate.ts";
+import type { ProcessRecord } from "../../domain/schemas/process.schema.ts";
 
 export interface ProcessRepositoryInterface {
-  findProcess(name: ProcessName): Promise<ProcessAggregate | null>;
-  listProcesses(): Promise<ProcessAggregate[]>;
+  findProcess(name: ProcessName): Promise<ProcessRecord | null>;
+  listProcesses(): Promise<ProcessRecord[]>;
 }

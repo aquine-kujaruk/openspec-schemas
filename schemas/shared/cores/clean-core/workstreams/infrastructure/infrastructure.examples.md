@@ -259,6 +259,72 @@ export class InvoiceRepositoryImplementation {
 - src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
 ```
 
+## repository-returns-records
+
+### repository-builds-entity
+
+```ts src/module/domain/entities/invoice.entity.ts
+export class InvoiceEntity {
+  constructor(readonly id: string) {}
+}
+```
+
+```ts src/module/infrastructure/acl/invoice.acl.ts
+export interface InvoiceAcl {
+  findInvoice(invoiceId: string): Promise<{ id: string } | null>;
+}
+```
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+import type { InvoiceAcl } from "../acl/invoice.acl";
+import { InvoiceEntity } from "../../domain/entities/invoice.entity";
+export class InvoiceRepositoryImplementation {
+  constructor(private readonly invoices: InvoiceAcl) {}
+  async findInvoice(invoiceId: string) {
+    const record = await this.invoices.findInvoice(invoiceId);
+
+    return record && new InvoiceEntity(record.id);
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
+```
+
+### repository-imports-entity
+
+```ts src/module/domain/entities/invoice.entity.ts
+export class InvoiceEntity {
+  static from(record: { id: string }) {
+    return new InvoiceEntity(record.id);
+  }
+
+  constructor(readonly id: string) {}
+}
+```
+
+```ts src/module/infrastructure/acl/invoice.acl.ts
+export interface InvoiceAcl {
+  listInvoices(): Promise<Array<{ id: string }>>;
+}
+```
+
+```ts src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts
+import type { InvoiceAcl } from "../acl/invoice.acl";
+import { InvoiceEntity } from "../../domain/entities/invoice.entity";
+export class InvoiceRepositoryImplementation {
+  constructor(private readonly invoices: InvoiceAcl) {}
+  async listInvoices() {
+    return (await this.invoices.listInvoices()).map((record) => InvoiceEntity.from(record));
+  }
+}
+```
+
+```expect
+- src/module/infrastructure/repository-implementations/invoice.repository-implementation.ts (archunit)
+```
+
 ## repository-never-news-adapter
 
 ### news-adapter-in-default

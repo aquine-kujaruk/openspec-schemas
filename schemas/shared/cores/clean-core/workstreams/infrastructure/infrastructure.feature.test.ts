@@ -287,8 +287,34 @@ describe('Feature: Build the infrastructure layer', () => {
     })
   })
 
+  describe('Rule: repository-returns-records · infrastructure repositories return records, not domain objects', () => {
+    // Line 155
+    test('`repository-builds-entity` breaks repository-returns-records', async () => {
+      const steps = createSteps()
+
+      // Given the example `repository-builds-entity`
+      await steps.exampleFolder('repository-builds-entity')
+      // When rule `repository-returns-records` is checked
+      await steps.ruleChecked('repository-returns-records')
+      // Then it is broken in the files the expectation records
+      await steps.brokenAsExpected()
+    })
+
+    // Line 155
+    test('`repository-imports-entity` breaks repository-returns-records', async () => {
+      const steps = createSteps()
+
+      // Given the example `repository-imports-entity`
+      await steps.exampleFolder('repository-imports-entity')
+      // When rule `repository-returns-records` is checked
+      await steps.ruleChecked('repository-returns-records')
+      // Then it is broken in the files the expectation records
+      await steps.brokenAsExpected()
+    })
+  })
+
   describe('Rule: Recorded rubric judgements', () => {
-    // Line 151
+    // Line 167
     test('rubric S05 / domain-return is yes', async () => {
       const steps = createSteps()
 
@@ -300,7 +326,7 @@ describe('Feature: Build the infrastructure layer', () => {
       await steps.rubricVerdict('yes')
     })
 
-    // Line 151
+    // Line 167
     test('rubric S05 / reference is no', async () => {
       const steps = createSteps()
 
@@ -312,7 +338,7 @@ describe('Feature: Build the infrastructure layer', () => {
       await steps.rubricVerdict('no')
     })
 
-    // Line 151
+    // Line 167
     test('rubric S10 / unparsed-record is yes', async () => {
       const steps = createSteps()
 
@@ -324,7 +350,7 @@ describe('Feature: Build the infrastructure layer', () => {
       await steps.rubricVerdict('yes')
     })
 
-    // Line 151
+    // Line 167
     test('rubric S10 / reference is no', async () => {
       const steps = createSteps()
 
@@ -336,7 +362,7 @@ describe('Feature: Build the infrastructure layer', () => {
       await steps.rubricVerdict('no')
     })
 
-    // Line 151
+    // Line 167
     test('rubric S14 / three-resource-clients is yes', async () => {
       const steps = createSteps()
 
@@ -348,7 +374,7 @@ describe('Feature: Build the infrastructure layer', () => {
       await steps.rubricVerdict('yes')
     })
 
-    // Line 151
+    // Line 167
     test('rubric S14 / reference is no', async () => {
       const steps = createSteps()
 

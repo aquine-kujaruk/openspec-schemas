@@ -1,14 +1,9 @@
 import type { Architecture, Check, FactoryConfig, Layer, OxlintOverride, Rule, Workstream } from "../../../shared/domain/schemas/line-types.schema.ts";
 
+import type { QualityControlRunRecord } from "../../domain/schemas/quality-control-run.schema.ts";
 
-import { z } from "zod";
-
-export const InspectionRecordSchema = z.object({
-  exitStatus: z.number().int().min(0),
-  defects: z.array(z.object({file: z.string(), standard: z.string(), tool: z.string()})),
-});
-
-export type InspectionRecord = z.input<typeof InspectionRecordSchema>;
+export { QualityControlRunRecordSchema as InspectionRecordSchema } from "../../domain/schemas/quality-control-run.schema.ts";
+export type InspectionRecord = QualityControlRunRecord;
 
 export interface InspectionAcl {
   inspectLine(line: string, scope: readonly string[]): Promise<InspectionRecord>;

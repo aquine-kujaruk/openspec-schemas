@@ -1,4 +1,5 @@
 import {
+  codeOnly,
   constructorParams,
   has,
   pascal,
@@ -8,6 +9,15 @@ import { coreRules } from "factory/sdk";
 import type { Layer } from "factory/sdk";
 import type { Options } from "factory/sdk";
 import { schemaPackageVeto } from "factory/sdk";
+
+const OPTIONAL_PART = /\bconst (\w+) = (?!await\b)(?!this\.)\w+\.find\w*\(/g;
+
+const throwsForMissingPart = (content: string): boolean => {
+  const code = codeOnly(content);
+
+  return [...code.matchAll(OPTIONAL_PART)].some(([, name]) =>
+    new RegExp(`if\\s*\\(\\s*!\\s*${name}\\s*\\)\\s*\\{?\\s*throw\\b`).test(code));
+};
 
 /** Folder → file suffix (application-vocabulary). */
 const VOCABULARY = {
@@ -121,6 +131,20 @@ export const application = (o: Options): Layer => ({
                 params.every((p) => /^\w+(RepositoryInterface|UseCase)$/.test(p.type ?? "")),
               ),
             "[use-case-depends-on-contracts] type every constructor parameter as XRepositoryInterface or XUseCase: never an adapter, an implementation or a platform object",
+          )
+          .check(ctx.opts),
+    },
+    {
+      id: "required-part-throws-in-domain",
+      title: "a use case asks a domain object for a required part instead of throwing when its optional lookup misses",
+      check: () =>
+        ctx
+          .files()
+          .inFolder(`${o.modules}/application/use-cases/**`)
+          .should()
+          .adhereTo(
+            (f) => !throwsForMissingPart(f.content),
+            "[required-part-throws-in-domain] ask the domain object for the part it requires (`book.invoiceNamed(id)`), which throws its exception, instead of `const x = book.findInvoice(id); if (!x) throw`",
           )
           .check(ctx.opts),
     },

@@ -32,22 +32,10 @@ export type MisplacedResource = {
 };
 
 
-export const ProcessRecordSchema = z.object({
-  name: z.string(),
-  base: z.string().optional(),
-  description: z.string(),
-  pilot: z.string().optional(),
-  workCenters: z.array(z.object({
-    id: z.string(),
-    waitsFor: z.array(z.string()),
-    parts: z.array(z.object({
-      name: z.string(),
-      standards: z.array(z.object({ id: z.string(), title: z.string() })),
-    })),
-  })),
-});
+export { ProcessRecordSchema } from "../../domain/schemas/process.schema.ts";
+import type { ProcessRecord } from "../../domain/schemas/process.schema.ts";
 
-export type ProcessRecord = z.infer<typeof ProcessRecordSchema>;
+export type { ProcessRecord };
 
 export interface ProcessAcl {
   listProcesses(): Promise<ProcessRecord[]>;

@@ -240,6 +240,37 @@ export class HttpInvoiceAdapter {
 - src/module/application/use-cases/list-invoices.use-case.ts (archunit)
 ```
 
+## required-part-throws-in-domain
+
+### use-case-throws-on-missing
+
+```ts src/module/application/repository-interfaces/invoice-book.repository-interface.ts
+export interface InvoiceBookRepositoryInterface {
+  getInvoiceBook(): Promise<{ invoices: Array<{ id: string }> }>;
+}
+```
+
+```ts src/module/application/use-cases/open-invoice.use-case.ts
+import { InvoiceBookAggregate } from "../../domain/aggregates/invoice-book.aggregate";
+import { InvoiceNotFoundException } from "../../domain/exceptions/invoice.exceptions";
+import type { InvoiceBookRepositoryInterface } from "../repository-interfaces/invoice-book.repository-interface";
+
+export class OpenInvoiceUseCase {
+  constructor(private readonly books: InvoiceBookRepositoryInterface) {}
+  async execute(invoiceId: string) {
+    const book = InvoiceBookAggregate.from(await this.books.getInvoiceBook());
+    const invoice = book.findInvoice(invoiceId);
+    if (!invoice) throw new InvoiceNotFoundException(invoiceId);
+
+    return invoice;
+  }
+}
+```
+
+```expect
+- src/module/application/use-cases/open-invoice.use-case.ts (archunit)
+```
+
 ## application-imports-only-domain
 
 ### imports-infrastructure

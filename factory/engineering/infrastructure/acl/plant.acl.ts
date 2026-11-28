@@ -1,4 +1,4 @@
-import { z } from "zod";
+import type { LineRootsProps } from "../../../shared/domain/schemas/line-roots.schema.ts";
 import type { Architecture, FactoryConfig, SchemaDefinition } from "../../../shared/domain/schemas/line-types.schema.ts";
 import type { ProductEntry, ProjectConfig, resolveConfig } from "../../../shared/domain/schemas/configuration.schema.ts";
 import type { CatalogSchema } from "./process.acl.ts";
@@ -35,31 +35,11 @@ export type ActiveProjectDefinitions<V> = {
 };
 
 
-const roots = z.object({
-  modules: z.string(),
-  productSpecs: z.string(),
-  entry: z.array(z.string()),
-  acceptance: z.string(),
-  integration: z.string(),
-  unit: z.string(),
-  e2e: z.string(),
-  ignore: z.array(z.string()),
-  base: z.array(z.string()).optional(),
-  allowUnmatched: z.array(z.string()).optional(),
-});
+export { PlantRecordSchema } from "../../../shared/domain/schemas/plant.schema.ts";
+import type { PlantRecord } from "../../../shared/domain/schemas/plant.schema.ts";
 
-export const PlantRecordSchema = z.object({
-  root: z.string(),
-  lines: z.array(z.object({
-    name: z.string(),
-    folder: z.string(),
-    process: z.string(),
-    roots,
-  })),
-});
-
-export type PlantRecord = z.infer<typeof PlantRecordSchema>;
-export type RootRecord = z.infer<typeof roots>;
+export type { PlantRecord };
+export type RootRecord = LineRootsProps;
 
 export interface PlantAcl {
   readPlant(): Promise<PlantRecord>;

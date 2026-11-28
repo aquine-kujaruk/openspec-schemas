@@ -10,11 +10,11 @@ Each Factory module SHALL have a controller in its framework layer that composes
 
 ### Decision: domain-hydrates-through-factory · The use case hydrates once through a domain factory
 
-@origin:2026-11-18-reparar-revision-semantica @applies:factory @enforced:pending @by:person
+@origin:2026-11-28-use-cases-hydrate-through-the-domain @applies:schemas,factory @enforced:repository-returns-records,required-part-throws-in-domain @by:person
 
-A Factory repository SHALL return validated data, and the use case SHALL call a domain factory once to obtain the complete aggregate. The domain SHALL own the error for a missing required part, and SHALL keep the optional lookup for callers that accept absence.
+A repository SHALL return validated records, and the use case SHALL call a static factory of the domain once to obtain the complete aggregate. The domain SHALL own the error for a missing required part, and SHALL keep the optional lookup for callers that accept absence.
 
-**Why** The capture showed `PlantRepositoryImplementation` building `Plant` and `PrepareLineUseCase` handling a missing line itself.
+**Why** `PlantRepositoryImplementation` built `PlantEntity` and `PrepareLineUseCase` handled a missing line itself.
 
 ### Decision: domain-contracts-execute · A schema in the domain validates at runtime
 
