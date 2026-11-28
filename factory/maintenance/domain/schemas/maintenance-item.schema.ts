@@ -5,6 +5,7 @@ export const MaintenanceKind = {
   Drift: "drift",
   Note: "note",
   Suspect: "suspect",
+  Outdated: "outdated",
 } as const;
 
 export const MaintenanceItemSchema = z.object({

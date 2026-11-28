@@ -24,7 +24,7 @@ A project that updates its package learns from `factory doctor` which rules of i
 
 ## Decisions
 
-- The package carries a rules ledger in its manifest: each deterministic rule and rubric row by id, with a hash of its definition (title, or question and layers) and of its cases. Discarded: a hand-written changelog, which drifts from the rules. @by:agent
+- The rules ledger is computed from the installed schemas: each deterministic rule and rubric row by id, with a hash of its definition (title, message or configuration, or the rubric row) and of its cases. `factory rules [--json] [--product <name>]` prints it with each rule's change since the record and the files that break the added or changed ones. Discarded: a hand-written changelog, which drifts from the rules; writing the ledger into the manifest at build, which gives the same hashes coupled to the build. @by:agent
 - The project records the ledger it conforms to in `.factory-rules.json` at its root, written by `factory check` when it passes. Discarded: writing it at install, which would record rules the code never passed. @by:agent
 - Doctor compares the installed ledger with the record and reports `outdated` for each added or changed rule the project now breaks, with the files, and as a `note` each one it passes or each removed rule. `outdated` sets status 1, like `drift`; `--fix` never repairs it, because only a change to the code can. @by:agent
 - A project with no record (installed before this change) is judged against every rule once: doctor runs the check and reports what breaks, and the first passing check writes the record. @by:agent
@@ -55,24 +55,25 @@ A built package SHALL carry the ledger of its rules, each id with the hash of it
 
 ## Phases
 
-### Phase 1: The package carries its rules ledger
+### Phase 1: The factory computes its rules ledger
 
 **Seams**
 
 ```ts
-// factory/engineering (or quality): one ledger per schema set
-export type RulesLedger = Record<string, string>; // rule id → hash of definition and cases
-// setup/assets/manifest.json gains `rules: RulesLedger`
-// .factory-rules.json in the project: { version: string; rules: RulesLedger }
+// factory/quality/domain/schemas/rules-ledger.schema.ts
+export const RulesLedgerSchema = z.record(z.string(), z.string()); // rule id → hash of definition and cases
+export const RuleConformanceSchema = z.object({ rule, change: "added" | "changed" | "removed" | "unchanged", files: string[] });
+// <product root>/.factory-rules.json: { rules: RulesLedger }
+// factory rules [--json] [--product <name>]
 ```
 
 **Tests**
 
-- A build test: the manifest lists every rule id of the packaged schemas, and changing a case changes only that rule's hash.
+- A unit test of the ledger comparison (added, changed, removed, unchanged), and an integration test: the ledger of this repository lists every rule id, and changing a case changes only that rule's hash.
 
-- [ ] Compute the ledger from the rules and rubric rows of the packaged schemas and write it into the manifest at build
-- [ ] Make `factory check` write `.factory-rules.json` when it passes
-- [ ] Verify the phase: `pnpm run check`
+- [x] Compute the ledger from the rules, cases and rubric rows of the installed schemas, and print it with `factory rules`
+- [x] Make `factory check` write `.factory-rules.json` when it passes
+- [x] Verify the phase: `pnpm run check`
 
 ### Phase 2: Doctor reports the outdated rules
 
@@ -87,11 +88,13 @@ MaintenanceKind.Outdated // "outdated: <rule> — <n> file(s): <paths>"
 
 - The acceptance tests generated from the delta spec of `maintain-equipment`.
 
-- [ ] Compare the installed ledger with the project's record and run the added or changed deterministic rules
-- [ ] Report `outdated` items and notes, and make `outdated` set status 1
-- [ ] Teach the `setup` and `plan` skills to offer `adapt-to-rules-<version>` on an `outdated` report, and document it in `docs/upgrading.md`
-- [ ] Verify the phase: `pnpm run check`
+- [x] Compare the installed ledger with the project's record and run the added or changed deterministic rules
+- [x] Report `outdated` items and notes, and make `outdated` set status 1
+- [x] Teach the `setup` and `plan` skills to offer `adapt-to-rules-<version>` on an `outdated` report, and document it in `docs/upgrading.md`
+- [x] Verify the phase: `pnpm run check`
 
 ## Feedback
+
+- **the implement phase**: the ledger is computed from the installed schemas' rules, cases and rubric rows by a new command `factory rules`, not written into the manifest at build: the installed schemas are the package's, so the result is the same without coupling the build, and doctor reads it per product through `factory rules --json`
 
 ## Next step

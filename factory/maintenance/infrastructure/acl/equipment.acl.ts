@@ -25,6 +25,7 @@ export type EquipmentAuthority = {
   run(command: string, args: string[], cwd: string): { status: number; stdout: string; stderr: string };
   withSection(own: string | undefined, instructions: string[]): string;
   pinnedVersion(command: string, manifest: { devDependencies?: Record<string, string> }, lock: object): string | undefined;
+  readRules(root: string): Promise<unknown[]>;
 };
 
 export const PLACES: Record<string, EquipmentPlace> = {
@@ -47,4 +48,5 @@ export interface EquipmentAcl {
   readNotes(root: string, equipment: EquipmentEntity, env?: MaintenanceOptions["env"]): EquipmentNotes;
   listProcedures(root: string): Map<string, EquipmentProcedure>;
   readHoldings(root: string): Promise<EquipmentHoldings>;
+  readRuleConformance(root: string): Promise<unknown[]>;
 }

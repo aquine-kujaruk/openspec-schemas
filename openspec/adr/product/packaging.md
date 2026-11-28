@@ -19,3 +19,11 @@ A resource that lives in another repository at a version SHALL reach a project b
 A release SHALL publish every package the repository builds, together, under the ref `packages-v<version>` of this repository's GitHub, each package in a folder named after it at that ref, and SHALL never rewrite a ref it already published. A project SHALL be able to install a package with one command run in its root, the installer, which SHALL install the latest released version unless one is named, for the agents asked, and SHALL pin the command and run setup.
 
 **Why** The person wants installing to be "apretar un botón y ya"; until now a package installed only from a local build of this repository, in four steps.
+
+### Decision: rules-ledger-travels-with-package · A package names its rules and a project records the ones it passed
+
+@origin:2026-11-28-doctor-reports-changed-rules @applies:factory,tools,packages @enforced:maintain-equipment-acceptance @by:person
+
+A built package SHALL carry the ledger of its rules, each id with the hash of its definition and its cases, and a project SHALL record the ledger it last passed. Setup SHALL report every added or changed rule the project breaks as `outdated`, until the project's check passes again.
+
+**Why** An update that adds a rule otherwise reaches a project as an unexplained red check, and the agent cannot tell an old debt from a new standard.

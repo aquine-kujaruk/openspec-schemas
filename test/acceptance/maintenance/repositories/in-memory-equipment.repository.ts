@@ -2,6 +2,7 @@ import type { EquipmentRepositoryInterface } from "../../../../factory/maintenan
 import type { EquipmentEntity } from "../../../../factory/maintenance/domain/entities/equipment.entity.ts";
 import { RepairKind, type EquipmentNotes, type EquipmentReading, type EquipmentRepair } from "../../../../factory/maintenance/domain/schemas/equipment-reading.schema.ts";
 import type { EquipmentHoldings, EquipmentProcedure } from "../../../../factory/maintenance/domain/schemas/procedure-reading.schema.ts";
+import type { RuleConformance } from "../../../../factory/maintenance/domain/schemas/rule-conformance.schema.ts";
 import { EquipmentInstallationService } from "../../../../factory/maintenance/domain/services/equipment-installation.service.ts";
 
 export class InMemoryEquipmentRepository implements EquipmentRepositoryInterface {
@@ -23,6 +24,7 @@ export class InMemoryEquipmentRepository implements EquipmentRepositoryInterface
   readonly scripts = new Set<string>();
   readonly binaries = new Set<string>();
   readonly files = new Set<string>();
+  ruleConformance: RuleConformance[] = [];
 
   findEquipment(): EquipmentEntity | null {
     return this.equipment;
@@ -82,5 +84,9 @@ export class InMemoryEquipmentRepository implements EquipmentRepositoryInterface
       binaries: (name) => this.binaries.has(name),
       file: (path) => this.files.has(path.replace(/^.\//, "")),
     };
+  }
+
+  async inferRuleConformance(): Promise<RuleConformance[]> {
+    return this.ruleConformance;
   }
 }

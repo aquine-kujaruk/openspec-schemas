@@ -646,4 +646,114 @@ describe('Feature: factory/maintenance/maintain-equipment Specification', () => 
       await steps.setupExitStatus('0')
     })
   })
+
+  describe('Rule: Setup reports the rules an update changed and the project breaks', () => {
+    // Line 229
+    test('a rule that is `added` and that the code `breaks` is reported `outdated`', async () => {
+      const steps = createSteps()
+
+      // Given a project that last passed its check under a ledger where rule `code-breathes` was `absent`
+      await steps.recordedLedger('code-breathes', 'absent')
+      // And the installed package's ledger has rule `code-breathes` `added`
+      await steps.installedLedger('code-breathes', 'added')
+      // And the project's code `breaks` rule `code-breathes`
+      await steps.codeAgainstRule('breaks', 'code-breathes')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `code-breathes` as `outdated`
+      await steps.reportsRequirementAs('code-breathes', 'outdated')
+      // And it exits with status `1`
+      await steps.setupExitStatus('1')
+    })
+
+    // Line 229
+    test('a rule that is `added` and that the code `passes` is reported `note`', async () => {
+      const steps = createSteps()
+
+      // Given a project that last passed its check under a ledger where rule `code-breathes` was `absent`
+      await steps.recordedLedger('code-breathes', 'absent')
+      // And the installed package's ledger has rule `code-breathes` `added`
+      await steps.installedLedger('code-breathes', 'added')
+      // And the project's code `passes` rule `code-breathes`
+      await steps.codeAgainstRule('passes', 'code-breathes')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `code-breathes` as `note`
+      await steps.reportsRequirementAs('code-breathes', 'note')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+
+    // Line 229
+    test('a rule that is `changed` and that the code `breaks` is reported `outdated`', async () => {
+      const steps = createSteps()
+
+      // Given a project that last passed its check under a ledger where rule `code-breathes` was `present`
+      await steps.recordedLedger('code-breathes', 'present')
+      // And the installed package's ledger has rule `code-breathes` `changed`
+      await steps.installedLedger('code-breathes', 'changed')
+      // And the project's code `breaks` rule `code-breathes`
+      await steps.codeAgainstRule('breaks', 'code-breathes')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `code-breathes` as `outdated`
+      await steps.reportsRequirementAs('code-breathes', 'outdated')
+      // And it exits with status `1`
+      await steps.setupExitStatus('1')
+    })
+
+    // Line 229
+    test('a rule that is `unchanged` and that the code `breaks` is reported `not reported`', async () => {
+      const steps = createSteps()
+
+      // Given a project that last passed its check under a ledger where rule `code-breathes` was `present`
+      await steps.recordedLedger('code-breathes', 'present')
+      // And the installed package's ledger has rule `code-breathes` `unchanged`
+      await steps.installedLedger('code-breathes', 'unchanged')
+      // And the project's code `breaks` rule `code-breathes`
+      await steps.codeAgainstRule('breaks', 'code-breathes')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `code-breathes` as `not reported`
+      await steps.reportsRequirementAs('code-breathes', 'not reported')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+
+    // Line 229
+    test('a rule that is `removed` and that the code `passes` is reported `note`', async () => {
+      const steps = createSteps()
+
+      // Given a project that last passed its check under a ledger where rule `code-breathes` was `present`
+      await steps.recordedLedger('code-breathes', 'present')
+      // And the installed package's ledger has rule `code-breathes` `removed`
+      await steps.installedLedger('code-breathes', 'removed')
+      // And the project's code `passes` rule `code-breathes`
+      await steps.codeAgainstRule('passes', 'code-breathes')
+      // When setup runs without repair
+      await steps.runSetupWithoutRepair()
+      // Then it reports `code-breathes` as `note`
+      await steps.reportsRequirementAs('code-breathes', 'note')
+      // And it exits with status `0`
+      await steps.setupExitStatus('0')
+    })
+
+    // Line 245
+    test('an outdated rule is still `outdated` after repair', async () => {
+      const steps = createSteps()
+
+      // Given a project that last passed its check under a ledger where rule `code-breathes` was `absent`
+      await steps.recordedLedger('code-breathes', 'absent')
+      // And the installed package's ledger has rule `code-breathes` `added`
+      await steps.installedLedger('code-breathes', 'added')
+      // And the project's code `breaks` rule `code-breathes`
+      await steps.codeAgainstRule('breaks', 'code-breathes')
+      // When setup runs with repair
+      await steps.runSetupWithRepair()
+      // Then it reports `code-breathes` as `outdated`
+      await steps.reportsRequirementAs('code-breathes', 'outdated')
+      // And it exits with status `1`
+      await steps.setupExitStatus('1')
+    })
+  })
 })

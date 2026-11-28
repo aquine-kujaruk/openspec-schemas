@@ -78,6 +78,7 @@ function repository(overrides: Partial<EquipmentAuthority> = {}) {
       command === "pnpm" ? pnpm(command, args, cwd) : { status: 0, stdout: "", stderr: "" },
     withSection: (own, instructions) => installation.withSection(own, instructions),
     pinnedVersion: (command, manifest, lock) => installation.pinnedVersion(command, manifest, lock),
+    readRules: async () => [],
     ...overrides,
   }));
 }
@@ -206,4 +207,15 @@ it("finds a script, a binary or a file in a product's folder", async () => {
   expect(await found.execute(root)).toEqual([]);
   const missing = new FindSuspectProceduresUseCase(repository({ readProcedures }));
   expect(await missing.execute(root)).toHaveLength(3);
+});
+
+it("refuses a rule conformance record without a known change", async () => {
+  await expect(repository({ readRules: async () => [{ rule: "code-breathes", change: "renamed", files: [] }] })
+    .inferRuleConformance(root)).rejects.toThrow();
+});
+
+it("reads the rule conformance the command reports", async () => {
+  const record = { rule: "code-breathes", change: "added", files: ["src/a.ts"] };
+
+  expect(await repository({ readRules: async () => [record] }).inferRuleConformance(root)).toEqual([record]);
 });

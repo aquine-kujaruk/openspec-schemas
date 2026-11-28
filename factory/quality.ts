@@ -13,6 +13,7 @@ import * as path from "node:path";
 import { projectFiles, clearGraphCache } from "archunit";
 import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { createGenerated } from "./quality/infrastructure/adapters/gauge-layout.adapter.ts";
 import { graph, products, project, schema, schemaYaml } from "./engineering.ts";
 import { runtime } from "./shared/infrastructure/adapters/runtime.adapter.ts";
@@ -35,6 +36,8 @@ import { hookInput, projectOf } from "./change-control.ts";
 import { InspectWorkOrderUseCase, type InspectionOptions } from "./quality/application/use-cases/inspect-work-order.use-case.ts";
 import { HoldStageUseCase } from "./quality/application/use-cases/hold-stage.use-case.ts";
 import { QualityException } from "./quality/domain/exceptions/quality.exceptions.ts";
+import { RulesRecordSchema, type RulesLedger } from "./quality/domain/schemas/rules-ledger.schema.ts";
+import { RuleConformanceService } from "./quality/domain/services/rule-conformance.service.ts";
 import type { InspectionCertificateRecord } from "./quality/infrastructure/acl/final-inspection.acl.ts";
 import { FinalInspectionAdapter, scenariosOfDelta } from "./quality/infrastructure/adapters/final-inspection.adapter.ts";
 import { QualityCertificateFileAdapter } from "./quality/infrastructure/adapters/quality-certificate-file.adapter.ts";
@@ -95,6 +98,8 @@ const rules: typeof import("./quality/infrastructure/adapters/standard-check-con
   cacheDir: shared.paths.cacheDir,
   product: project.product,
   workingDirectory: runtime.workingDirectory,
+  readFileSync: fileSystem.readFileSync,
+  digest: (text) => createHash("sha256").update(text).digest("hex").slice(0, 16),
 });
 
 const examples: typeof import("./quality/infrastructure/adapters/sample-inspection-contract.adapter.ts") =
@@ -234,11 +239,56 @@ const inspection = new RunQualityControlUseCase(new InspectionRepositoryImplemen
 export const makeGauges = async (args: string[]) => (await newGauges.execute(args)).exitStatus;
 export const runGauges = (args: string[]) => gaugeRun.execute(args);
 
+const ledgers = new RuleConformanceService();
+const SCOPES = ["--workstream", "--layer", "--module", "--whole"];
+
+const rulesRecord = () => path.join(shared.paths.PROJECT_ROOT, project.product.root, ".factory-rules.json");
+const installedLedger = () => rules.ledger(project.architecture, project.EXAMPLE_FILES, project.RUBRICS);
+
+const recordedLedger = (): RulesLedger | undefined =>
+  fileSystem.existsSync(rulesRecord())
+    ? RulesRecordSchema.parse(JSON.parse(fileSystem.readFileSync(rulesRecord(), "utf8"))).rules
+    : undefined;
+
 export async function runQualityControl(args: string[]): Promise<number> {
   await project.initialize();
   const run = await inspection.execute(project.product.name, args);
 
+  if (run.passed() && !args.some((arg) => SCOPES.includes(arg)))
+    fileSystem.writeFileSync(rulesRecord(), `${JSON.stringify({ rules: installedLedger() }, null, 2)}\n`);
+
   return run.passed() ? 0 : run.exitStatus || 1;
+}
+
+export async function ruleConformance(args: string[]): Promise<number> {
+  await project.initialize();
+  const changes = ledgers.compare(recordedLedger(), installedLedger());
+  const toCheck = new Set(ledgers.toCheck(changes, rules.deterministicIds(project.architecture)));
+  const broken = new Map<string, string[]>();
+
+  if (toCheck.size) {
+    const log = console.log;
+    console.log = console.error;
+
+    try {
+      await check.check([], ({ standard, file }) => {
+        if (!toCheck.has(standard)) return;
+        const files = new Set([...broken.get(standard) ?? [], file || "the whole product"]);
+        broken.set(standard, [...files]);
+      });
+    } finally {
+      console.log = log;
+    }
+  }
+
+  const conformance = ledgers.conformance(changes, broken).filter(({ change }) => change !== "unchanged");
+
+  if (args.includes("--json")) console.log(JSON.stringify(conformance));
+  else if (!conformance.length) console.log("the rules are the ones the project last passed");
+  else for (const { rule, change, files } of conformance)
+    console.log(`${change}: ${rule}${files.length ? ` — ${files.join(", ")}` : ""}`);
+
+  return 0;
 }
 
 const runAudit = async (
