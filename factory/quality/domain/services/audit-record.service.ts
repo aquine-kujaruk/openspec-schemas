@@ -18,6 +18,15 @@ export class AuditRecordService {
     );
   }
 
+  summary(warnings: number, judged: number, selected: number, record: AuditPass, rubric: string, crossFile: string[]): string[] {
+    const why = record.rubric && record.rubric !== rubric ? "the rubric changed: every file judged again" : "touched since the last pass";
+
+    return [
+      `${warnings} warnings; ${judged} of ${selected} core files judged (${why})`,
+      ...(crossFile.length ? [`skipped as cross-file (for the human reviewer): ${crossFile.join(", ")}`] : []),
+    ];
+  }
+
   touched<F extends AuditSource>(files: F[], record: AuditPass, rubric: string): F[] {
     return record.rubric !== rubric
       ? files

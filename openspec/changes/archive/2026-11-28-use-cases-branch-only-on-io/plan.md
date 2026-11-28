@@ -63,9 +63,9 @@ resolve(path: string): { kind: "harness"; area: ProtectedAreaValueObject } | { k
 
 - The acceptance tests generated from the delta spec of `authorize-write`, with a spy on the work-order repository.
 
-- [ ] Move the harness areas, the line lookup and the implicit roots into `WriteBoundaryAggregate`
-- [ ] Make `AuthorizeWriteUseCase` read the started work orders only for a path that resolves to a line
-- [ ] Verify the phase: `pnpm run check`
+- [x] Move the harness areas, the line lookup and the implicit roots into `WriteBoundaryAggregate`
+- [x] Make `AuthorizeWriteUseCase` read the started work orders only for a path that resolves to a line
+- [x] Verify the phase: `pnpm run check`
 
 ### Phase 2: The other use cases orchestrate
 
@@ -79,9 +79,9 @@ S25 · policy-branch-in-use-case, over application/use-cases, with one yes case 
 
 - The factory's tests keep passing; S25's cases are judged and recorded.
 
-- [ ] Move the policy branches of `inspect-work-order`, `hold-stage`, `audit`, `pull-andon`, `assess-work-order`, `make-reading-copies` and `close-work-order` into their domain objects
-- [ ] Add S25 to `RUBRIC.md` with its cases and scores, and teach it in the `app-domain` skill
-- [ ] Verify the phase: `pnpm run check`
+- [x] Move the policy branches of `inspect-work-order`, `hold-stage`, `audit`, `pull-andon`, `assess-work-order`, `make-reading-copies` and `close-work-order` into their domain objects
+- [x] Add S25 to `RUBRIC.md` with its cases and scores, and teach it in the `app-domain` skill
+- [x] Verify the phase: `pnpm run check`
 
 ## Feedback
 

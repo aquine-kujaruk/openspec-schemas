@@ -1,10 +1,11 @@
 import type { ReadingArtifactRepositoryInterface } from "../repository-interfaces/reading-artifact.repository-interface.ts";
-import { WorkOrderException } from "../../domain/exceptions/work-order.exceptions.ts";
+import { ReadingCopyService } from "../../domain/services/reading-copy.service.ts";
 
 type Reading = { source: string; copy: string; fresh: boolean };
 
 export class MakeReadingCopiesUseCase {
   private readonly artifacts: ReadingArtifactRepositoryInterface;
+  private readonly policy = new ReadingCopyService();
 
   constructor(artifacts: ReadingArtifactRepositoryInterface) {
     this.artifacts = artifacts;
@@ -20,27 +21,22 @@ export class MakeReadingCopiesUseCase {
 
   private async readings(paths: string[], written: boolean): Promise<Reading[]> {
     const sources = await Promise.all(paths.map(async (source) => {
-      const path = source.replaceAll("\\", "/").replace(/^(?:\.\/)+/, "");
-
-      if (!path.startsWith("openspec/") || path.split("/").includes(".."))
-        throw new WorkOrderException(`${source} is not an artifact of openspec/: only what the specification tool keeps gets a reading copy`);
-
+      const path = this.policy.artifactPath(source);
       const { fingerprint } = await this.artifacts.getArtifact(path);
 
       return { source: path, fingerprint };
     }));
 
-    const { person, project } = await this.artifacts.getLanguage();
-    const language = person?.trim() || project?.trim();
-    if (!language || /^en(?:[-_]|$)/i.test(language)) return [];
+    const language = this.policy.language(await this.artifacts.getLanguage());
+    if (!language) return [];
+
     const copies: Reading[] = [];
 
     for (const { source, fingerprint } of sources) {
       const copy = this.artifacts.readingPath(language, source);
-      const saved = await this.artifacts.readCopy(copy);
-      if (written && !saved) throw new WorkOrderException(`the copy of ${source} was not written at ${copy}`);
+      const fresh = this.policy.fresh(source, copy, written, await this.artifacts.readCopy(copy), fingerprint);
       if (written) await this.artifacts.recordFingerprint(copy, fingerprint);
-      copies.push({ source, copy, fresh: written || saved?.fingerprint === fingerprint });
+      copies.push({ source, copy, fresh });
     }
 
     return copies;

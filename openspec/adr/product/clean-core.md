@@ -26,7 +26,7 @@ A domain contract named as a schema SHALL be an executable validation with its i
 
 ### Decision: branch-by-responsibility · A branch lives with the responsibility it decides
 
-@origin:2026-11-18-reparar-revision-semantica @applies:factory @enforced:pending @by:person
+@origin:2026-11-28-use-cases-branch-only-on-io @applies:schemas,factory @enforced:S25,authorize-write-acceptance @by:person
 
 A branch that decides a domain policy SHALL live in the domain; a branch in a use case SHALL only coordinate whether to perform I/O.
 

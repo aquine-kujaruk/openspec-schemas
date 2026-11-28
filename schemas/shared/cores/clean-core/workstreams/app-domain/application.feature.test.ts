@@ -323,5 +323,29 @@ describe('Feature: Build the application layer', () => {
       // Then its verdict is `no`
       await steps.rubricVerdict('no')
     })
+
+    // Line 146
+    test('rubric S25 / discount-in-use-case is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `discount-in-use-case`
+      await steps.exampleFolder('discount-in-use-case')
+      // When rubric row `S25` is judged
+      await steps.rubricJudged('S25')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 146
+    test('rubric S25 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S25` is judged
+      await steps.rubricJudged('S25')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
   })
 })

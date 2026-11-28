@@ -434,3 +434,26 @@ class ReadItemUseCase { async execute(id: string) { const props = await this.rep
 ```expect
 no
 ```
+
+## S25 · policy-branch-in-use-case
+
+### discount-in-use-case
+
+```ts src/catalog/application/use-cases/price.ts
+class PriceItemUseCase { async execute(id: string) { const item = ItemEntity.from(await this.repo.getItem(id)); if (item.stock > 100 && item.category === "bulk") return item.price * 0.9; return item.price; } }
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/application/use-cases/price.ts
+class PriceItemUseCase { async execute(id: string) { const item = ItemEntity.from(await this.repo.getItem(id)); if (!item.priced) await this.repo.savePrice(id, item.listPrice()); return item.price(); } }
+```
+
+```expect
+no
+```
+

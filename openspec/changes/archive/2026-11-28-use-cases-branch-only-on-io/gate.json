@@ -1,0 +1,6 @@
+{
+  "phase": "Phase 1: The write guard asks its policy",
+  "failures": 0,
+  "waitingFor": "the agent",
+  "findings": []
+}

@@ -1,3 +1,4 @@
+import { NotValidatable } from "../exceptions/work-order.exceptions.ts";
 import type { Plan } from "../schemas/plan-document.schema.ts";
 import type { Consolidated } from "./standing-records.service.ts";
 
@@ -86,6 +87,18 @@ export class WorkOrderAssessmentService {
       ];
 
     return [];
+  }
+
+  knownSchema(change: Change, schemas: string[]): string {
+    if (change.schema && schemas.includes(change.schema)) return change.schema;
+
+    throw new NotValidatable(
+      `the change ${change.name} was made with the schema ${change.schema ?? "(none)"}, which this package does not define; schemas: ${schemas.join(", ")}`,
+    );
+  }
+
+  planFindings(change: Change): Finding[] {
+    return change.plan === undefined ? [{ rule: "has-a-plan", message: "the change has no plan.md: every change has a plan" }] : [];
   }
 
   linkFindings(change: Change, lookup: (name: string) => Change | undefined): Finding[] {

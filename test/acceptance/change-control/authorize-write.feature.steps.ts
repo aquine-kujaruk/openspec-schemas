@@ -94,5 +94,8 @@ export function createSteps() {
       expect(authorization.refusals.map(({ part }) => part)).toContain(part);
       expect(authorization.refusals.map(({ reason }) => reason).join("\n")).toContain(part);
     },
+    workOrdersRead(reads: string): void {
+      expect(orders.reads).toBe(Number(reads));
+    },
   };
 }

@@ -15,13 +15,18 @@ export const StageRecordSchema = z.object({
 export type StageHoldProps = z.input<typeof StageHoldSchema>;
 export type StageRecord = z.infer<typeof StageRecordSchema>;
 
-export type BuildingStage = {
-  name: string;
-  process: string;
-  line?: string;
-  pendingFeedback?: boolean;
-  phases: { title: string; tasks: { done: boolean; text?: string; workstream?: string }[] }[];
-};
+export const BuildingStageSchema = z.object({
+  name: z.string(),
+  process: z.string(),
+  line: z.string().optional(),
+  pendingFeedback: z.boolean().optional(),
+  phases: z.array(z.object({
+    title: z.string(),
+    tasks: z.array(z.object({ done: z.boolean(), text: z.string().optional(), workstream: z.string().optional() })),
+  })),
+});
+
+export type BuildingStage = z.infer<typeof BuildingStageSchema>;
 
 export type StageWorkstream = {
   id: string;

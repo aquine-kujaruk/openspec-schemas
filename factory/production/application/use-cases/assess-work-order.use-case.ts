@@ -19,22 +19,10 @@ export class AssessWorkOrderUseCase {
         `no active change is called ${name}; changes: ${this.records.listWorkOrders(root).join(", ") || "none"}`,
       );
 
-    if (!change.schema || !this.records.listProcesses().includes(change.schema))
-      throw new NotValidatable(
-        `the change ${name} was made with the schema ${change.schema ?? "(none)"}, which this package does not define; schemas: ${this.records.listProcesses().join(", ")}`,
-      );
-
-    const schema = await this.records.loadProcess(change.schema);
-
-    const findings =
-      change.plan === undefined
-        ? [
-            {
-              rule: "has-a-plan",
-              message: "the change has no plan.md: every change has a plan",
-            },
-          ]
-        : await this.judgeAndValidate(root, change, change.plan, schema);
+    const schemaName = this.policy.knownSchema(change, this.records.listProcesses());
+    const schema = await this.records.loadProcess(schemaName);
+    const missing = this.policy.planFindings(change);
+    const findings = change.plan === undefined ? missing : await this.judgeAndValidate(root, change, change.plan, schema);
 
     findings.push(
       ...this.policy.productFindings(change, await this.records.listProducts(root)),
@@ -43,7 +31,7 @@ export class AssessWorkOrderUseCase {
 
     return {
       change: name,
-      schema: change.schema,
+      schema: schemaName,
       ready: findings.length === 0,
       findings,
     };
