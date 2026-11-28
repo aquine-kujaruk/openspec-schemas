@@ -6,4 +6,5 @@ export const OperationSchema = z.object({
   text: z.string().min(1),
   done: z.boolean(),
 });
+
 export type OperationProps = z.input<typeof OperationSchema>;

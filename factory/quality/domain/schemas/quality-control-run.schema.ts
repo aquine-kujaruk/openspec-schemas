@@ -5,4 +5,5 @@ export const QualityControlRunSchema = z.object({
   defects: z.array(z.instanceof(DefectValueObject)),
   exitStatus: z.number().int().min(0),
 });
+
 export type QualityControlRunProps = z.input<typeof QualityControlRunSchema>;

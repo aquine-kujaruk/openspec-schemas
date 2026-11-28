@@ -5,6 +5,7 @@ import type { ClosingAcl } from "../acl/closing.acl.ts";
 
 const day = () => new Date().toISOString().slice(0, 10);
 const read = (file: string) => existsSync(file) ? readFileSync(file, "utf8") : null;
+
 const write = (file: string, text: string | null): void => {
   if (text === null) rmSync(file, { force: true });
   else {
@@ -49,20 +50,26 @@ export class ClosingAdapter implements ClosingAcl {
     documents: { path: string; before: string | null; after: string | null }[],
   ) {
     let merged = false;
+
     try {
       for (const { path, after } of documents) write(join(this.root, path), after);
       const result = this.openSpec(name);
       const moved = join(this.directory, "archive", `${day()}-${name}`);
       merged = result.status === 0 && existsSync(moved);
+
       if (merged) {
         const target = join(this.directory, "archive", origin);
         if (target !== moved) renameSync(moved, target);
+
         return { success: true, output: result.output };
       }
+
       for (const { path, before } of documents) write(join(this.root, path), before);
+
       return { success: false, output: result.output };
     } catch (cause) {
       if (!merged) for (const { path, before } of documents) write(join(this.root, path), before);
+
       throw new WorkOrderException(`Could not archive ${name}`, { cause });
     }
   }

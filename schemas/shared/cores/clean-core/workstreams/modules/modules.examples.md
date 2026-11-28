@@ -311,3 +311,50 @@ import { Unit } from "../../shared/domain/unit"; export class Item { unit = new 
 ```expect
 no
 ```
+
+## code-breathes
+
+### return-glued
+
+```ts src/module/application/use-cases/read.use-case.ts
+export class ReadUseCase {
+  execute(value: number) {
+    const doubled = value * 2;
+    return doubled;
+  }
+}
+```
+
+```expect
+- src/module/application/use-cases/read.use-case.ts (archunit)
+```
+
+### multiline-glued
+
+```ts src/module/domain/entities/item.entity.ts
+export class ItemEntity {
+  label = "item";
+}
+export const defaultItem = new ItemEntity();
+```
+
+```expect
+- src/module/domain/entities/item.entity.ts (archunit)
+```
+
+### multiline-block-glued
+
+```ts src/module/application/use-cases/read.use-case.ts
+export class ReadUseCase {
+  execute(values: number[]) {
+    const first = values[0];
+    if (first !== undefined) {
+      values.push(first);
+    }
+  }
+}
+```
+
+```expect
+- src/module/application/use-cases/read.use-case.ts (archunit)
+```

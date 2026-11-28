@@ -1,6 +1,6 @@
 import { globSync, statSync } from "node:fs";
 import { basename } from "node:path";
-import { codeOnly, not } from "factory/sdk";
+import { codeOnly, glued, not } from "factory/sdk";
 import type { Layer } from "factory/sdk";
 import type { Options } from "factory/sdk";
 
@@ -76,6 +76,20 @@ export const modules = (o: Options): Layer => ({
             .inFolder(`${root}/**`)
             .shouldNot()
             .haveName(/\.(test|spec)\.tsx?$/)
+            .check(ctx.opts),
+      },
+      {
+        id: "code-breathes",
+        title: `statements in ${root} leave a blank line around blocks and before returns or throws`,
+        check: () =>
+          ctx
+            .files()
+            .inFolder(`${root}/**`)
+            .should()
+            .adhereTo(
+              (file) => /\.(test|spec)\.[cm]?[jt]sx?$/.test(file.name) || glued(file.content, file.path).length === 0,
+              "[code-breathes] leave a blank line between statements when either takes multiple lines or the latter is a return or throw",
+            )
             .check(ctx.opts),
       },
       {

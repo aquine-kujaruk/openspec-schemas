@@ -26,6 +26,7 @@ export class WorkOrderRepositoryImplementation implements WorkOrderRepositoryInt
       if (!source) return null;
       const { plan, process, line, revisions, andon } = WorkOrderRecordSchema.parse(source);
       const document = parsePlan(plan);
+
       return new WorkOrderAggregate({
         name,
         process: process,
@@ -39,6 +40,7 @@ export class WorkOrderRepositoryImplementation implements WorkOrderRepositoryInt
           })),
           decisions: document.changeDecisions.flatMap(({text, tags}) => {
             const by = tags.find(({name}) => name === "by")?.value;
+
             return by === "person" || by === "agent" ? [new DecisionValueObject({text, by})] : [];
           }),
           openQuestions: document.openQuestions,
@@ -58,6 +60,7 @@ export class WorkOrderRepositoryImplementation implements WorkOrderRepositoryInt
   async listWorkOrders(): Promise<WorkOrderAggregate[]> {
     const names = await this.files.listOrders();
     const orders = await Promise.all(names.map((value) => this.findWorkOrder(value)));
+
     return orders.filter((order) => order !== null);
   }
 

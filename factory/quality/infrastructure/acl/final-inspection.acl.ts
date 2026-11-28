@@ -11,10 +11,12 @@ const FileGaugeRecordSchema = z.object({
   status: z.string().optional(),
   assertionResults: z.array(z.object({ ancestorTitles: z.array(z.string()), title: z.string(), status: z.string() })),
 });
+
 export const FileGaugeReportSchema = z.object({ testResults: z.array(FileGaugeRecordSchema) });
 export type FileGaugeRecord = z.infer<typeof FileGaugeRecordSchema>;
 export type EndToEndRecord = { test: string; result: "passed" | "failed"; output?: string };
 export type InspectionFinding = { source: string; names: string; findings: string[] };
+
 export interface FinalInspectionAcl {
   load(name: string): Promise<FinalInspectionRecord>;
   gauges(files: string[]): Promise<FileGaugeRecord[]>;

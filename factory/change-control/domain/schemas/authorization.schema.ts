@@ -4,6 +4,7 @@ import { ProtectedAreaValueObject } from "../value-objects/protected-area.value-
 const RefusalSchema = z.object({
   path: z.string(), part: z.string().optional(), reason: z.string(),
 });
+
 export const AuthorizationSchema = z.object({
   blockedBy: z.instanceof(ProtectedAreaValueObject).optional(),
   refusals: z.array(RefusalSchema),

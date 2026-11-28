@@ -54,11 +54,14 @@ const harness = ({ lines, changes, decisions, procedures }: WriteBoundary): Prot
 const refusalFor = (path: string, started: ReleasedWorkOrder[], line?: WritableLine): string => {
   if (!started.length)
     return `${path} is product code and no change is in implementation: start with the \`plan\` phase, and write product code through the \`implement\` phase once validation reports the change ready`;
+
   const listed = started.map(({ name, line, process }) =>
     `${name}, ${line ? `product ${line}, ` : ""}${process}`,
   ).join("; ");
+
   if (line)
     return `${path} belongs to the product ${line.name}, and no change of that product is in implementation (${listed}): a product's folder opens only to a change of that product, opened by the \`plan\` phase`;
+
   return `${path} is product code and the change in implementation (${listed}) was made with a schema that builds none: product code is written through a change of a schema that has workstreams, opened by the \`plan\` phase`;
 };
 
@@ -84,12 +87,15 @@ export class AuthorizeWriteUseCase {
       const path = this.boundary.findProjectPath(file);
       if (path === null) continue;
       const area = protectedAreas.find((candidate) => candidate.covers(path));
+
       if (area) {
         blockedBy ??= area;
+
         refusals.push({
           path, part: area.name,
           reason: `${path} belongs to the harness (${area.name}) and an agent never writes it: ${area.guidance}`,
         });
+
         continue;
       }
 
@@ -97,6 +103,7 @@ export class AuthorizeWriteUseCase {
         ? configured.lines.filter(({ folder }) => folder === "." || within(path, folder))
             .sort((left, right) => right.folder.length - left.folder.length)[0]
         : undefined;
+
       if (declared ? !line : !implicitRoots.some((root) => within(path, root))) continue;
       started ??= await this.orders.listReleasedWorkOrders();
       if (line ? started.some((order) => order.line === line.name) : started.some(({ builds }) => builds)) continue;

@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import type {
   CoreDefinition,
   SchemaDefinition,
@@ -6,12 +7,12 @@ import type {
   Topology,
   WorkstreamDeclaration,
 } from "../../../shared/domain/schemas/line-types.schema.ts";
+
 import type { ProjectConfig } from "../../../shared/domain/schemas/configuration.schema.ts";
 export type { CoreDefinition, ProjectConfig, SchemaDefinition, SchemaVariant, Topology, WorkstreamDeclaration };
 
 export type CatalogResourceKind = "core" | "workstream" | "validator" | "question policy" | "template";
 
-/** The process definition and the resources it names, read from the package. */
 export type CatalogSchema<V = unknown> = {
   definition: SchemaDefinition;
   workstreams: Record<string, WorkstreamDeclaration>;

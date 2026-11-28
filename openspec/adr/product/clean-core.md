@@ -47,3 +47,11 @@ A work center SHALL describe its direct dependencies; the Process aggregate SHAL
 A Factory adapter SHALL wrap an external system (a package, an API, the disk). The composition root SHALL connect an internal port such as change control to the production operation, adapt its result to the validated consumer contract and keep its error semantics. The repository SHALL state the operation or query, a generic resource adapter SHALL execute it, and a contract adapter MAY compose a disk or HTTP adapter and transform the record with the contract schema.
 
 **Why** Adapters that forwarded an internal callback, such as `ReleasedWorkOrderAdapter.readStarted()`, are not glue to anything external.
+
+### Decision: code-breathes · Blocks are separated; a comment is the exception
+
+@origin:2026-11-28-code-breathes @applies:schemas,factory @enforced:code-breathes @by:person
+
+A statement SHALL be separated by a blank line from the statement before it when either spans several lines or when it is a `return` or `throw` that is not alone in its block; single-line declarations and imports MAY stay together. A comment SHALL stay only when it is a seed the next agent could not deduce from the code and the artifacts.
+
+**Why** Code that breathes reads in blocks, and a comment is a second copy of what the code says that the next change has to keep in step.

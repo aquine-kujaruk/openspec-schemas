@@ -547,5 +547,41 @@ describe('Feature: Build the domain layer', () => {
       // Then its verdict is `no`
       await steps.rubricVerdict('no')
     })
+
+    // Line 212
+    test('rubric S20 / external-constraint is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `external-constraint`
+      await steps.exampleFolder('external-constraint')
+      // When rubric row `S20` is judged
+      await steps.rubricJudged('S20')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
+
+    // Line 212
+    test('rubric S24 / prepare-and-execute is yes', async () => {
+      const steps = createSteps()
+
+      // Given the example `prepare-and-execute`
+      await steps.exampleFolder('prepare-and-execute')
+      // When rubric row `S24` is judged
+      await steps.rubricJudged('S24')
+      // Then its verdict is `yes`
+      await steps.rubricVerdict('yes')
+    })
+
+    // Line 212
+    test('rubric S24 / reference is no', async () => {
+      const steps = createSteps()
+
+      // Given the example `reference`
+      await steps.exampleFolder('reference')
+      // When rubric row `S24` is judged
+      await steps.rubricJudged('S24')
+      // Then its verdict is `no`
+      await steps.rubricVerdict('no')
+    })
   })
 })

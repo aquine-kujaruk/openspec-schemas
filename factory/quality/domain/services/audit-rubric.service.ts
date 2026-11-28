@@ -16,10 +16,10 @@ const cells = (line: string): string[] | undefined =>
 const firstSentence = (text: string): string => {
   const plain = text.replace(/[*_]/g, "");
   const end = plain.search(/[.;](\s|$)/);
+
   return end === -1 ? plain : plain.slice(0, end);
 };
 
-/** `@scope/name` is also matched by its bare `name`. Every term matches at the start of a word. */
 const terms = (words: string[]): string[] => [
   ...new Set(
     words
@@ -35,25 +35,30 @@ const mentions = (question: string, term: string): boolean =>
   ).test(question);
 
 export class AuditRubricService {
-  /** The rows of the rubric table and the product vocabulary its header lists. */
   parseRubric(
     markdown: string,
   ): { rows: Row[]; product: string[] } {
     const start = markdown.search(RUBRIC_HEADING);
     const section = start === -1 ? "" : markdown.slice(start);
+
     const product = [
       ...(VOCABULARY.exec(section)?.[1] ?? "").matchAll(/`([^`]+)`/g),
     ].map((m) => m[1].toLowerCase());
+
     const rows: Row[] = [];
+
     for (const line of section.split("\n")) {
       const c = cells(line);
       if (!c || !/^S\d{2}$/.test(c[0])) continue;
+
       if (c.length < 4)
         throw new QualityException(
           `rubric row ${c[0]}: expected ID, rule, question and layers (${c.length} cells)`,
         );
+
       const [id, rule, question, layers] = c;
       const crossFile = layers === CROSS_FILE;
+
       rows.push({
         id,
         title: firstSentence(rule),
@@ -67,13 +72,10 @@ export class AuditRubricService {
         crossFile,
       });
     }
+
     return { rows, product };
   }
 
-  /**
-   * A question is generic when it names no package of the harness and no word of the product
-   * vocabulary; it then reads the same in every application built with the package.
-   */
   checkGeneric(
     question: string,
     vocabulary: { packages: string[]; product: string[] },
@@ -82,18 +84,20 @@ export class AuditRubricService {
       ...terms(vocabulary.packages).filter((t) => mentions(question, t)),
       ...terms(vocabulary.product).filter((t) => mentions(question, t)),
     ];
+
     return named.length
       ? `names ${named.map((n) => `\`${n}\``).join(", ")}`
       : undefined;
   }
 
-  /** Every row with its verdict: a row that is not generic, or has no question, is rejected and never asked. */
   loadRubric(markdown: string, packages: string[]): LoadedRow[] {
     const { rows, product } = this.parseRubric(markdown);
+
     return rows.map((row) => {
       const reason = row.question
         ? this.checkGeneric(row.question, { packages, product })
         : "has no question";
+
       return reason
         ? { ...row, verdict: "rejected", reason }
         : { ...row, verdict: "accepted" };
@@ -103,15 +107,18 @@ export class AuditRubricService {
   loadDocuments(documents: AuditRubric[], packages: string[]): LoadedRow[] {
     const from = new Map<string, string>();
     const rows: LoadedRow[] = [];
+
     for (const { path, markdown } of documents)
       for (const row of this.loadRubric(markdown, packages)) {
         if (from.has(row.id))
           throw new QualityException(
             `rubric row ${row.id} is in ${from.get(row.id)} and in ${path}: a row id belongs to one rubric`,
           );
+
         from.set(row.id, path);
         rows.push(row);
       }
+
     return rows;
   }
 }

@@ -7,4 +7,5 @@ export const DrawingSchema = z.object({
   path: z.string().min(1),
   scenarios: z.array(ScenarioSchema),
 });
+
 export type DrawingProps = z.input<typeof DrawingSchema>;

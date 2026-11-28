@@ -20,16 +20,21 @@ export class StartStageUseCase {
     const findings = await this.setup.validateWorkOrder(name);
     const invalid = findings.find(({rule}) => rule === "not-validatable");
     if (invalid) return { state: "cannot validate", message: invalid.message };
+
     if (findings.length) return {
       state: "not ready",
       findings: findings.map(({rule, message}) => `[${rule}] ${message}`),
     };
+
     const order = await this.orders.findWorkOrder(name);
+
     if (!order || order.plan.stages.every(({complete}) => complete))
       return { state: "nothing to build" };
+
     const stage = order.startNextStage();
     const prepared = await this.setup.prepareStage(name, stage.title);
     if (!prepared.success) return { state: "cannot start", findings: [prepared.output] };
+
     return { state: "started", phase: stage.title, tasks: stage.operations.filter(({done}) => !done).map(({text}) => text) };
   }
 }

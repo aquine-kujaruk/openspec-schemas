@@ -9,5 +9,6 @@ export const validateSchema = <S extends z.ZodType>(
   const result = schema.safeParse(props);
   if (!result.success) throw new ValidationException(target.constructor.name, result.error);
   Object.assign(target, result.data);
+
   return result.data;
 };

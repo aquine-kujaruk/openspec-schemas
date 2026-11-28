@@ -13,6 +13,7 @@ export class DomainException extends Error {
 
 ```ts src/shared/domain/exceptions/validation.exceptions.ts
 import { DomainException } from "./domain.exceptions";
+
 export class ValidationException extends DomainException {
   constructor(
     public readonly source: string,
@@ -26,6 +27,7 @@ export class ValidationException extends DomainException {
 ```ts src/shared/domain/schemas/validation.schema.ts
 import type { z } from "zod";
 import { ValidationException } from "../exceptions/validation.exceptions";
+
 export const validateSchema = <S extends z.ZodType>(
   target: object,
   schema: S,
@@ -34,31 +36,37 @@ export const validateSchema = <S extends z.ZodType>(
   const result = schema.safeParse(props);
   if (!result.success) throw new ValidationException(target.constructor.name, result.error);
   Object.assign(target, result.data);
+
   return result.data;
 };
 ```
 
 ```ts src/module/domain/schemas/invoice.schema.ts
 import { z } from "zod";
+
 export enum InvoiceStatus {
   PAID = "paid",
   PENDING = "pending",
 }
+
 export const InvoiceSchema = z.object({
   id: z.string().min(1),
   total: z.number().int(),
   status: z.enum(InvoiceStatus),
 });
+
 export type InvoiceProps = z.infer<typeof InvoiceSchema>;
 ```
 
 ```ts src/module/domain/schemas/invoice-book.schema.ts
 import { z } from "zod";
 import { InvoiceSchema } from "./invoice.schema";
+
 export const InvoiceBookSchema = z.object({
   year: z.number().int(),
   invoices: z.array(InvoiceSchema),
 });
+
 export type InvoiceBookProps = z.infer<typeof InvoiceBookSchema>;
 ```
 
@@ -66,6 +74,7 @@ export type InvoiceBookProps = z.infer<typeof InvoiceBookSchema>;
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema.ts";
 import { InvoiceAlreadyPaidException } from "../exceptions/invoice.exceptions";
 import { InvoiceSchema, InvoiceStatus, type InvoiceProps } from "../schemas/invoice.schema.ts";
+
 export class InvoiceEntity {
   public readonly id!: string;
   public readonly total!: number;
@@ -78,6 +87,7 @@ export class InvoiceEntity {
   }
   pay() {
     if (this.isPaid) throw new InvoiceAlreadyPaidException(this.id);
+
     return new InvoiceEntity({ id: this.id, total: this.total, status: InvoiceStatus.PAID });
   }
 }
@@ -87,6 +97,7 @@ export class InvoiceEntity {
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
 import { InvoiceEntity } from "../entities/invoice.entity.ts";
 import { InvoiceBookSchema, type InvoiceBookProps } from "../schemas/invoice-book.schema.ts";
+
 export class InvoiceBookAggregate {
   public readonly year!: number;
   public readonly invoices: InvoiceEntity[];
@@ -103,6 +114,7 @@ export class InvoiceBookAggregate {
 ```ts src/module/domain/exceptions/invoice.exceptions.ts
 import { DomainException } from "../../../shared/domain/exceptions/domain.exceptions.ts";
 export class ModuleException extends DomainException {}
+
 export class InvoiceNotFoundException extends ModuleException {
   constructor(
     public readonly invoiceId: string,
@@ -111,6 +123,7 @@ export class InvoiceNotFoundException extends ModuleException {
     super(`Invoice ${invoiceId} does not exist`, options);
   }
 }
+
 export class InvoiceAlreadyPaidException extends ModuleException {
   constructor(
     public readonly invoiceId: string,
@@ -119,11 +132,13 @@ export class InvoiceAlreadyPaidException extends ModuleException {
     super(`Invoice ${invoiceId} is already paid`, options);
   }
 }
+
 export class InvoiceUnavailableException extends ModuleException {
   constructor(options: { cause?: unknown } = {}) {
     super("Invoices are unavailable", options);
   }
 }
+
 export class ClientsUnavailableException extends ModuleException {
   constructor(options: { cause?: unknown } = {}) {
     super("Clients are unavailable", options);
@@ -133,6 +148,7 @@ export class ClientsUnavailableException extends ModuleException {
 
 ```ts src/module/domain/services/late-payment.service.ts
 import type { InvoiceEntity } from "../entities/invoice.entity";
+
 export class LatePaymentService {
   lateOn(invoices: InvoiceEntity[], graceDays: number) {
     return invoices.filter((invoice) => !invoice.isPaid && graceDays > 30);
@@ -153,6 +169,7 @@ export class DomainException extends Error {
 
 ```ejs src/shared/domain/exceptions/validation.exceptions.ts
 import { DomainException } from "./domain.exceptions";
+
 export class ValidationException extends DomainException {
   constructor(
     public readonly source: string,
@@ -166,6 +183,7 @@ export class ValidationException extends DomainException {
 ```ejs src/shared/domain/schemas/validation.schema.ts
 import type { z } from "zod";
 import { ValidationException } from "../exceptions/validation.exceptions";
+
 export const validateSchema = <S extends z.ZodType>(
   target: object,
   schema: S,
@@ -174,6 +192,7 @@ export const validateSchema = <S extends z.ZodType>(
   const result = schema.safeParse(props);
   if (!result.success) throw new ValidationException(target.constructor.name, result.error);
   Object.assign(target, result.data);
+
   return result.data;
 };
 ```
@@ -187,6 +206,7 @@ export type <%= Name %>Props = z.infer<typeof <%= Name %>Schema>;
 ```ejs src/<module>/domain/entities/<name>.entity.ts
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
 import { <%= Name %>Schema, type <%= Name %>Props } from "../schemas/<%= name %>.schema";
+
 export class <%= Name %>Entity {
   constructor(props: <%= Name %>Props) {
     validateSchema(this, <%= Name %>Schema, props);
@@ -197,6 +217,7 @@ export class <%= Name %>Entity {
 ```ejs src/<module>/domain/value-objects/<name>.value-object.ts
 import { validateSchema } from "../../../shared/domain/schemas/validation.schema";
 import { <%= Name %>Schema, type <%= Name %>Props } from "../schemas/<%= name %>.schema";
+
 export class <%= Name %>ValueObject {
   constructor(props: <%= Name %>Props) {
     validateSchema(this, <%= Name %>Schema, props);
@@ -771,6 +792,53 @@ yes
 
 ```ts src/catalog/domain/entities/total.ts
 class Total { add(n: number) { this.sum += n; } }
+```
+
+```expect
+no
+```
+
+### external-constraint
+
+```ts src/catalog/domain/entities/calendar.ts
+export function next(date: Date): Date {
+  const nextDay = new Date(date);
+  // The external calendar publishes its daily cutoff at 04:00 UTC during maintenance.
+  nextDay.setUTCHours(4, 0, 0, 0);
+
+  return nextDay;
+}
+```
+
+```expect
+no
+```
+
+## S24 · code-blocks
+
+### prepare-and-execute
+
+```ts src/catalog/application/use-cases/refresh.use-case.ts
+export function refresh(path: string) {
+  const command = createCommand("refresh", path);
+  const result = executeCommand(command);
+  publishResult(result);
+}
+```
+
+```expect
+yes
+```
+
+### reference
+
+```ts src/catalog/application/use-cases/refresh.use-case.ts
+export function credentials(rawUser: string, rawToken: string) {
+  const user = rawUser.trim();
+  const token = rawToken.trim();
+
+  return { user, token };
+}
 ```
 
 ```expect

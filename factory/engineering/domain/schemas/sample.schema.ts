@@ -9,4 +9,5 @@ export const SampleSchema = z.object({
   files: z.map(z.string(), z.string()),
   expected: z.array(defectSchema),
 });
+
 export type SampleProps = z.infer<typeof SampleSchema>;

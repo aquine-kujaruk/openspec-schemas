@@ -13,9 +13,11 @@ export class ProjectDrawingsUseCase {
 
   async execute(root: string): Promise<DrawingProjection | undefined> {
     const found: Array<{ name: string; created: string }> = [];
+
     for (const change of this.drawings.listWorkOrders(root)) {
       if (!change.deltaSpecs.length) continue;
       const { name } = change;
+
       try {
         if ((await this.assess.execute(root, name)).ready)
           found.push({ name, created: change.created ?? "" });
@@ -23,12 +25,14 @@ export class ProjectDrawingsUseCase {
         if (!(e instanceof NotValidatable)) throw e;
       }
     }
+
     const ready = found
       .sort(
         (a, b) =>
           a.created.localeCompare(b.created) || a.name.localeCompare(b.name),
       )
       .map((c) => c.name);
+
     return ready.length ? this.drawings.mergeDrawings(root, ready) : undefined;
   }
 }

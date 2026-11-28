@@ -39,6 +39,7 @@ export class WorkOrderAggregate {
   release(on: Day): void {
     if (this.plan.openQuestions.length)
       throw new WorkOrderException("the plan has open questions");
+
     this.currentPlan = new PlanEntity({ ...this.plan, releasedOn: on });
   }
 
@@ -46,11 +47,13 @@ export class WorkOrderAggregate {
     this.requireRelease();
     const next = this.plan.stages.find((stage) => !stage.complete);
     if (!next) throw new WorkOrderException("nothing to build");
+
     return next;
   }
 
   close(on: Day): ClosedWorkOrder {
     this.requireRelease();
+
     return {
       name: this.name,
       process: this.process,
@@ -65,6 +68,7 @@ export class WorkOrderAggregate {
   private requireRelease(): void {
     if (!this.plan.releasedOn)
       throw new WorkOrderException("the plan has not been released");
+
     if (this.plan.openQuestions.length)
       throw new WorkOrderException("the plan has open questions");
   }

@@ -17,6 +17,7 @@ export class EquipmentRepositoryImplementation implements EquipmentRepositoryInt
       const found = this.resources.readInstalled(root);
       if (!found) return null;
       const { installed, assets } = found;
+
       return new EquipmentEntity({
         name: installed.package,
         version: installed.version,

@@ -24,6 +24,7 @@ export class AuditAdapter implements AuditAcl {
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
     };
+
     return Object.keys({ ...pkg.dependencies, ...pkg.devDependencies });
   }
 
@@ -43,6 +44,7 @@ export class AuditAdapter implements AuditAcl {
     const file = join(root, RECORD_FILE);
     if (!existsSync(file)) return { files: {} };
     const pass = JSON.parse(readFileSync(file, "utf8")) as Partial<ReturnType<AuditAcl["readPass"]>>;
+
     return {
       ...(pass.rubric ? { rubric: pass.rubric } : {}),
       files: pass.files ?? {},

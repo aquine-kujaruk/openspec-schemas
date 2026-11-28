@@ -24,12 +24,15 @@ export async function guard(root: string, paths: string[], cwd = root) {
     decisions: consolidated.DECISIONS,
     procedures: consolidated.PROCEDURES,
   })));
+
   const orders = new ReleasedWorkOrderRepositoryImplementation(new ReleasedWorkOrderAdapter(async () =>
     (await validate.changesInImplementation(root)).map(({ name, schema, product, builds }) => ({
       name, process: schema, line: product, builds,
     })),
   ));
+
   const check = await new AuthorizeWriteUseCase(boundary, orders).execute(paths);
+
   return check.refusals;
 }
 
@@ -39,5 +42,6 @@ export async function authorizeWrite(args: string[]): Promise<number> {
   const root = projectOf(runtime.environment().CLAUDE_PROJECT_DIR || cwd);
   const refusals = await guard(root, args.length ? args : filesOf(input), cwd);
   for (const refusal of refusals) console.error(refusal.reason);
+
   return refusals.length ? 2 : 0;
 }

@@ -10,4 +10,5 @@ export const ProcessSchema = z.object({
   pilot: WorkCenterIdSchema.optional(),
   workCenters: z.array(z.instanceof(WorkCenterEntity)),
 });
+
 export type ProcessProps = z.infer<typeof ProcessSchema>;

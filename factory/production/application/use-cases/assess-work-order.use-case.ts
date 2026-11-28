@@ -11,21 +11,21 @@ export class AssessWorkOrderUseCase {
     this.records = records;
   }
 
-  /**
-   * Whether the change `name` of the project at `root` is ready, by the validator of the schema it
-   * was made with. A change with no plan is not ready and nothing else is said about it.
-   */
   async execute(root: string, name: string): Promise<Verdict> {
     const change = this.records.findWorkOrder(root, name);
+
     if (!change)
       throw new NotValidatable(
         `no active change is called ${name}; changes: ${this.records.listWorkOrders(root).join(", ") || "none"}`,
       );
+
     if (!change.schema || !this.records.listProcesses().includes(change.schema))
       throw new NotValidatable(
         `the change ${name} was made with the schema ${change.schema ?? "(none)"}, which this package does not define; schemas: ${this.records.listProcesses().join(", ")}`,
       );
+
     const schema = await this.records.loadProcess(change.schema);
+
     const findings =
       change.plan === undefined
         ? [
@@ -35,10 +35,12 @@ export class AssessWorkOrderUseCase {
             },
           ]
         : await this.judgeAndValidate(root, change, change.plan, schema);
+
     findings.push(
       ...this.policy.productFindings(change, await this.records.listProducts(root)),
       ...this.policy.linkFindings(change, (name) => this.records.findWorkOrder(root, name) ?? this.records.findArchivedWorkOrder(root, name)),
     );
+
     return {
       change: name,
       schema: change.schema,
@@ -55,7 +57,9 @@ export class AssessWorkOrderUseCase {
       workstreams: schema.workstreams,
       spike: schema.spike,
     };
+
     const judged = await this.judge(root, change, schema.validator.judgements?.(candidate) ?? []);
+
     return schema.validator.ready({ ...candidate, judged });
   }
 
@@ -64,12 +68,15 @@ export class AssessWorkOrderUseCase {
     if (!requests.length) return { configured: false, answers };
     const judge = await this.records.findJudge(root, change.product);
     if (!judge) return { configured: false, answers };
+
     for (const request of requests) {
       const recorded = this.records.findJudgement(root, change.name, judge.model, request);
+
       if (recorded !== undefined) {
         answers.set(request.block, recorded);
         continue;
       }
+
       try {
         const probability = await judge.ask(request);
         this.records.recordJudgement(root, change.name, judge.model, request, probability);
@@ -78,18 +85,21 @@ export class AssessWorkOrderUseCase {
         answers.set(request.block, { error: e instanceof Error ? e.message : String(e) });
       }
     }
+
     return { configured: true, answers };
   }
 
-  /** The changes in implementation: those the implement phase started and whose plan is still ready. */
   async changesInImplementation(root: string): Promise<Building[]> {
     const found: Building[] = [];
+
     for (const name of this.records.listWorkOrders(root)) {
       const order = this.records.findWorkOrder(root, name);
       const text = order?.plan;
       if (text === undefined || !this.records.isWorkOrderStarted(root, name)) continue;
+
       try {
         const verdict = await this.execute(root, name);
+
         if (verdict.ready)
           found.push({
             name,
@@ -104,6 +114,7 @@ export class AssessWorkOrderUseCase {
         if (!(e instanceof NotValidatable)) throw e;
       }
     }
+
     return found;
   }
 }

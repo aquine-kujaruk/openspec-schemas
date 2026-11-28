@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ProcessNameSchema } from "../../../shared/domain/schemas/process-name.schema.ts";
 
 const packageManager = z.object({ name: z.string(), version: z.string() });
+
 const project = z.object({
   testRunner: z.string(),
   typeChecker: z.object({ name: z.string(), version: z.string() }),
@@ -21,4 +22,5 @@ export const EquipmentSchema = z.object({
   packageManager,
   project,
 });
+
 export type EquipmentProps = z.input<typeof EquipmentSchema>;

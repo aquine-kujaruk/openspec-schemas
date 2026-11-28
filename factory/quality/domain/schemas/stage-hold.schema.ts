@@ -4,6 +4,7 @@ export const StageHoldSchema = z.object({
   held: z.boolean(),
   reasons: z.array(z.string()),
 });
+
 export const StageRecordSchema = z.object({
   phase: z.string().optional(),
   failures: z.number(),
@@ -13,6 +14,7 @@ export const StageRecordSchema = z.object({
 
 export type StageHoldProps = z.input<typeof StageHoldSchema>;
 export type StageRecord = z.infer<typeof StageRecordSchema>;
+
 export type BuildingStage = {
   name: string;
   process: string;
@@ -20,6 +22,7 @@ export type BuildingStage = {
   pendingFeedback?: boolean;
   phases: { title: string; tasks: { done: boolean; text?: string; workstream?: string }[] }[];
 };
+
 export type StageWorkstream = {
   id: string;
   upstream: string[];

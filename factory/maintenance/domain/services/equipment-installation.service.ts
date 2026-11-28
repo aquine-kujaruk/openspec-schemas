@@ -10,6 +10,7 @@ export class EquipmentInstallationService {
     if (!manifest.devDependencies?.[command]) return undefined;
     // pnpm can append the peers it resolved to a tarball name.
     const resolved = lock.importers?.["."]?.devDependencies?.[command]?.version?.replace(/\(.*\)$/, "");
+
     return resolved ? (lock.packages?.[`${command}@${resolved}`]?.version ?? resolved) : undefined;
   }
 
@@ -18,9 +19,11 @@ export class EquipmentInstallationService {
     const before = own ?? "";
     const start = before.indexOf(SECTION.start);
     const end = before.indexOf(SECTION.end);
+
     if (start !== -1 && end > start) {
       return before.slice(0, start) + section + before.slice(end + SECTION.end.length);
     }
+
     return `${before.trim() ? `${before.trimEnd()}\n\n` : ""}${section}\n`;
   }
 }

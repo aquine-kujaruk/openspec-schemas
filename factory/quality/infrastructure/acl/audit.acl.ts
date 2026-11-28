@@ -8,7 +8,6 @@ import type {
   AuditSpan,
 } from "../../domain/schemas/audit-material.schema.ts";
 
-/** The resources the audit uses, before their errors are translated for the use case. */
 export interface AuditAcl {
   listRubrics(root: string, paths: string[]): AuditRubric[];
   listPackageNames(root: string): string[];

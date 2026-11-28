@@ -32,6 +32,7 @@ export { deltaSpecGlob } from "./shared/infrastructure/adapters/paths.adapter.ts
 export { sdkExampleArchitecture as exampleArchitecture } from "./quality.ts";
 export { sdkExamples as examples } from "./quality.ts";
 export { sdkExpectations as expectations } from "./quality.ts";
+export { glued } from "./quality/domain/services/architecture-standards.service.ts";
 export { has } from "./quality/domain/services/architecture-standards.service.ts";
 export { importsOf } from "./quality/domain/services/architecture-standards.service.ts";
 export { sdkLoadSchema as loadSchema } from "./engineering.ts";

@@ -5,8 +5,10 @@ import {
   createHost,
   exit,
 } from "./shared/infrastructure/adapters/cli.adapter.ts";
+
 import { runCli } from "./cli.ts";
 import { runtime } from "./shared/infrastructure/adapters/runtime.adapter.ts";
+
 import {
   PACKAGE_ROOT,
   PROJECT_ROOT,
@@ -14,7 +16,9 @@ import {
   runTool,
   capture,
 } from "./shared/infrastructure/adapters/paths.adapter.ts";
+
 cleanTestEnvironment();
+
 const host = createHost(
   PACKAGE_ROOT,
   PROJECT_ROOT,
@@ -23,6 +27,7 @@ const host = createHost(
     (await import("./engineering.ts")).products.projectProducts(PROJECT_ROOT),
   capture,
 );
+
 const commands = {
   schemas: {
     usage: "schemas [--json]: the schemas a change can be opened with, and the products the project declares",
@@ -102,4 +107,5 @@ const commands = {
       }).status,
   },
 };
+
 exit(await runCli(argumentsOf(), commands, host));

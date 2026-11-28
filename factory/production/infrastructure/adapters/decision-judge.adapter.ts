@@ -9,7 +9,6 @@ import { DECISIONS_ENDPOINT, decisionModelClient } from "../../../shared/infrast
 import { CHANGES } from "./work-order-record.adapter.ts";
 import { JudgementUnanswered } from "../../domain/exceptions/work-order.exceptions.ts";
 
-/** The file of a change that records the decision model's answers. */
 export const JUDGEMENTS = "judgements.json";
 const QUESTION = "basis-holds";
 
@@ -18,9 +17,7 @@ const RecordSchema = z.array(
 );
 
 type Settings = {
-  /** The decision model the product configures: the `.env` variable of its key and the model. */
   reviewOf(root: string, product?: string): Promise<{ keyVariable: string; model: string }>;
-  /** The project's `.env` under the process environment. */
   environment(root: string): Record<string, string | undefined>;
 };
 
@@ -33,27 +30,33 @@ export class DecisionJudgeAdapter implements DecisionJudgeAcl {
 
   async judgeOf(root: string, product?: string): Promise<Judge | null> {
     let review: { keyVariable: string; model: string };
+
     try {
       review = await this.settings.reviewOf(root, product);
     } catch {
       return null;
     }
+
     const env = this.settings.environment(root);
     const key = env[review.keyVariable];
     if (!key) return null;
+
     const client = decisionModelClient({
       key,
       model: review.model,
       endpoint: env.FACTORY_DECISIONS_ENDPOINT || DECISIONS_ENDPOINT,
       timeoutMs: 30_000,
     });
+
     return {
       model: review.model,
       async ask(request) {
         const answers = await client.ask(request.state, [{ name: QUESTION, instructions: request.instructions }]);
         const probability = answers.get(QUESTION);
+
         if (probability === undefined)
           throw new JudgementUnanswered("decision model: no answer to the basis question", { cause: answers });
+
         return probability;
       },
     };
@@ -61,6 +64,7 @@ export class DecisionJudgeAdapter implements DecisionJudgeAcl {
 
   recorded(root: string, name: string, model: string, request: JudgementRequest) {
     const fingerprint = this.fingerprint(request);
+
     return this.read(root, name).find((r) => r.block === request.block && r.model === model && r.fingerprint === fingerprint)
       ?.probability;
   }
@@ -80,6 +84,7 @@ export class DecisionJudgeAdapter implements DecisionJudgeAcl {
     const file = this.file(root, name);
     if (!existsSync(file)) return [];
     const parsed = RecordSchema.safeParse(JSON.parse(readFileSync(file, "utf8")));
+
     return parsed.success ? parsed.data : [];
   }
 

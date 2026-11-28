@@ -44,12 +44,14 @@ export class StageHoldAdapter implements StageHoldAcl {
     const { root, resources } = this;
     const found: string[] = [];
     const fresh = self(root, ["generate", "--check"]);
+
     if (fresh.status !== 0)
       found.push(
         `generated tests: they differ from what their specs generate; run \`pnpm exec factory generate\` and leave them as it writes them\n${fresh.output}`,
       );
 
     const installed = resources.installed();
+
     for (const schema of installed?.schemas ?? [])
       if (!resources.linked(schema))
         found.push(
@@ -57,25 +59,31 @@ export class StageHoldAdapter implements StageHoldAcl {
         );
 
     const status = capture("git", ["status", "--porcelain", "--", "factory.config.ts"], { cwd: root });
+
     if (status.status === 0 && status.stdout.trim())
       found.push("factory configuration: factory.config.ts differs from what is committed; the person edits and commits it, an agent restores it");
 
     const lock = join(root, "apm.lock.yaml");
+
     if (existsSync(lock)) {
       const skills = Object.values(resources.places).flatMap((place) => place ? [`${place.skills}/`] : []);
+
       const { dependencies = [] } = (parse(readFileSync(lock, "utf8")) ?? {}) as {
         dependencies?: Array<{ deployed_file_hashes?: Record<string, string> }>;
       };
+
       const altered = dependencies
         .flatMap((dependency) => Object.entries(dependency.deployed_file_hashes ?? {}))
         .filter(([path]) => skills.some((folder) => path.startsWith(folder)))
         .filter(([path, expected]) => {
           const file = join(root, path);
+
           return expected !== (existsSync(file)
             ? `sha256:${createHash("sha256").update(readFileSync(file)).digest("hex")}`
             : "absent");
         })
         .map(([path]) => path);
+
       if (altered.length) {
         const more = altered.length > 5 ? ` and ${altered.length - 5} more` : "";
         found.push(`agent skills: ${altered.slice(0, 5).join(", ")}${more} differ from what was installed; install the package again`);
@@ -85,11 +93,13 @@ export class StageHoldAdapter implements StageHoldAcl {
     if (installed?.guards.length)
       for (const agent of installed.agents) {
         const unwired = resources.hooks(agent);
+
         if (unwired.length)
           found.push(
             `agent guards: ${resources.places[agent]?.hooks} no longer calls ${unwired.join(" or ")}; install the package again`,
           );
       }
+
     return found;
   }
 
@@ -99,6 +109,7 @@ export class StageHoldAdapter implements StageHoldAcl {
 
   async readRecord(name: string): Promise<unknown> {
     const path = this.path(name);
+
     return existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : null;
   }
 
@@ -112,6 +123,7 @@ export class StageHoldAdapter implements StageHoldAcl {
 
   async run(stage: BuildingRecord, args: string[]) {
     const selection = stage.line ? ["--product", stage.line] : [];
+
     return self(this.root, [...args, ...selection]);
   }
 }

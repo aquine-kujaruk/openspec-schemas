@@ -17,6 +17,7 @@ export class PlantRepositoryImplementation implements PlantRepositoryInterface {
   async getPlant(): Promise<PlantEntity> {
     try {
       const record = PlantRecordSchema.parse(await this.records.readPlant());
+
       return new PlantEntity({
         root: record.root,
         lines: record.lines.map((line) => new LineEntity({

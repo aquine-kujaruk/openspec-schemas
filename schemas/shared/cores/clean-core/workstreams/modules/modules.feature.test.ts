@@ -283,8 +283,46 @@ describe('Feature: Keep the modules apart', () => {
     })
   })
 
+  describe('Rule: code-breathes · statements are separated by blank lines', () => {
+    // Line 167
+    test('`return-glued` breaks code-breathes', async () => {
+      const steps = createSteps()
+
+      // Given the example `return-glued`
+      await steps.exampleFolder('return-glued')
+      // When rule `code-breathes` is checked
+      await steps.ruleChecked('code-breathes')
+      // Then it is broken in the files the expectation records
+      await steps.brokenAsExpected()
+    })
+
+    // Line 167
+    test('`multiline-glued` breaks code-breathes', async () => {
+      const steps = createSteps()
+
+      // Given the example `multiline-glued`
+      await steps.exampleFolder('multiline-glued')
+      // When rule `code-breathes` is checked
+      await steps.ruleChecked('code-breathes')
+      // Then it is broken in the files the expectation records
+      await steps.brokenAsExpected()
+    })
+
+    // Line 167
+    test('`multiline-block-glued` breaks code-breathes', async () => {
+      const steps = createSteps()
+
+      // Given the example `multiline-block-glued`
+      await steps.exampleFolder('multiline-block-glued')
+      // When rule `code-breathes` is checked
+      await steps.ruleChecked('code-breathes')
+      // Then it is broken in the files the expectation records
+      await steps.brokenAsExpected()
+    })
+  })
+
   describe('Rule: Recorded rubric judgements', () => {
-    // Line 163
+    // Line 180
     test('rubric S08 / cross-module-import is yes', async () => {
       const steps = createSteps()
 
@@ -296,7 +334,7 @@ describe('Feature: Keep the modules apart', () => {
       await steps.rubricVerdict('yes')
     })
 
-    // Line 163
+    // Line 180
     test('rubric S08 / reference is no', async () => {
       const steps = createSteps()
 

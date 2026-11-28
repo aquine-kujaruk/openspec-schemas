@@ -8,7 +8,6 @@ export const CHANGES = "openspec/changes";
 export const GATE = "gate.json";
 
 export class WorkOrderRecordAdapter implements WorkOrderRecordAcl {
-  /** The implement phase started the change and nothing has ended that yet. */
   isStarted(root: string, name: string): boolean {
     return existsSync(join(root, CHANGES, name, GATE));
   }
@@ -17,20 +16,22 @@ export class WorkOrderRecordAdapter implements WorkOrderRecordAcl {
     return this.readChangeAt(join(root, CHANGES, name), name);
   }
 
-  /** The change archived under `name`, if any: the folder `archive/<date>-<name>`. */
   readArchivedChange(root: string, name: string): Change | undefined {
     const archive = join(root, CHANGES, "archive");
     if (!existsSync(archive)) return undefined;
+
     const folder = readdirSync(archive)
       .filter((f) => /^\d{4}-\d{2}-\d{2}-/.test(f) && f.slice(11) === name)
       .sort()
       .at(-1);
+
     return folder ? this.readChangeAt(join(archive, folder), name) : undefined;
   }
 
   private readChangeAt(dir: string, name: string): Change | undefined {
     if (!existsSync(dir)) return undefined;
     const meta = join(dir, ".openspec.yaml");
+
     const {
       schema,
       skip_specs,
@@ -44,7 +45,9 @@ export class WorkOrderRecordAdapter implements WorkOrderRecordAcl {
       "x-product"?: unknown;
       "x-linked"?: unknown;
     };
+
     const plan = join(dir, "plan.md");
+
     return {
       name,
       dir,
@@ -60,9 +63,9 @@ export class WorkOrderRecordAdapter implements WorkOrderRecordAcl {
     };
   }
 
-  /** The changes that are not archived, by name. */
   activeChanges(root: string): string[] {
     const dir = join(root, CHANGES);
+
     return existsSync(dir)
       ? readdirSync(dir, { withFileTypes: true })
           .filter((d) => d.isDirectory() && d.name !== "archive")

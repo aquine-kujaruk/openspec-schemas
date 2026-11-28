@@ -14,6 +14,7 @@ export class ProtectedAreaValueObject {
 
   covers(path: string): boolean {
     if (this.suffix && !path.endsWith(this.suffix)) return false;
+
     return this.patterns.some((pattern) =>
       this.regularExpression
         ? new RegExp(pattern).test(path)

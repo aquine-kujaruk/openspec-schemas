@@ -21,6 +21,7 @@ export class WorkOrderAssessmentAdapter implements WorkOrderAssessmentAcl {
 
   async loadProcess(name: string): Promise<WorkOrderProcess> {
     const { definition, validator } = await this.catalog.loadSchema(name);
+
     return { validator, workstreams: definition.workstreams, spike: definition.spike?.workstream };
   }
 

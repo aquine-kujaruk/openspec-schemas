@@ -66,19 +66,23 @@ const generated: typeof import("./quality/infrastructure/adapters/gauge-layout-c
     holderNames: schema.holderNames,
     loadHolder: schema.loadHolder,
   });
+
 const expectFile: typeof import("./quality/infrastructure/adapters/sample-expected-contract.adapter.ts") =
   createExpectFile();
+
 const exampleFile: typeof import("./quality/infrastructure/adapters/sample-file-contract.adapter.ts") =
   createExampleFile({
     readFileSync: fileSystem.readFileSync,
     findingLines: expectFile.findingLines,
     parseFindingLines: expectFile.parseFindingLines,
   });
+
 const expectations: typeof import("./quality/infrastructure/adapters/sample-proof-contract.adapter.ts") =
   createExpectations({
     parseExampleFile: exampleFile.parseExampleFile,
     findingLines: expectFile.findingLines,
   });
+
 const rules: typeof import("./quality/infrastructure/adapters/standard-check-contract.adapter.ts") = createRules({
   existsSync: fileSystem.existsSync,
   writeFileSync: fileSystem.writeFileSync,
@@ -92,6 +96,7 @@ const rules: typeof import("./quality/infrastructure/adapters/standard-check-con
   product: project.product,
   workingDirectory: runtime.workingDirectory,
 });
+
 const examples: typeof import("./quality/infrastructure/adapters/sample-inspection-contract.adapter.ts") =
   createExamples({
     globSync: fileSystem.globSync,
@@ -117,6 +122,7 @@ const examples: typeof import("./quality/infrastructure/adapters/sample-inspecti
     workingDirectory: runtime.workingDirectory,
     changeDirectory: runtime.changeDirectory,
   });
+
 const test = createTest({
   spawnSync,
   existsSync: fileSystem.existsSync,
@@ -132,6 +138,7 @@ const test = createTest({
   environment: runtime.environment,
   nodeExecutable: runtime.nodeExecutable,
 });
+
 const generate =
   createGenerate({
     existsSync: fileSystem.existsSync,
@@ -148,9 +155,12 @@ const generate =
     rubricExamples: (dir, layer) => {
       const source = path.join(dir, layer + ".examples.md");
       if (!fileSystem.existsSync(source)) return "";
+
       const rows = [...exampleFile.parseExampleFile(source).rubric].flatMap(([row, cases]) =>
         [...cases].map(([name, sample]) => `        | ${row} | ${name} | ${sample.expectedVerdict} |`));
+
       if (!rows.length) return "";
+
       return [
         "", "  Rule: Recorded rubric judgements", "",
         "    Scenario Outline: rubric <row> / <example> is <verdict>",
@@ -171,6 +181,7 @@ const generate =
     emitSchema: schemaYaml.emitSchema,
     schemaFiles: schemaYaml.schemaFiles,
   });
+
 const check = createCheck({
   globSync: fileSystem.globSync,
   writeFileSync: fileSystem.writeFileSync,
@@ -198,6 +209,7 @@ const newGauges = new MakeGaugesUseCase(new DrawingRepositoryImplementation(
     await project.initialize();
     const drawings: DrawingRecord[] = [];
     const exitStatus = await generate.generate([...args], (drawing) => drawings.push(drawing));
+
     return { exitStatus, drawings };
   }),
 ));
@@ -205,6 +217,7 @@ const newGauges = new MakeGaugesUseCase(new DrawingRepositoryImplementation(
 const gaugeRun = new RunGaugesUseCase(new GaugeRunRepositoryImplementation(
   new GaugeRunAdapter(async (args) => {
     await project.initialize();
+
     return test.test([...args]);
   }),
 ));
@@ -213,15 +226,18 @@ const inspection = new RunQualityControlUseCase(new InspectionRepositoryImplemen
   new InspectionAdapter(async (_line, scope) => {
     const defects: InspectionRecord["defects"] = [];
     const exitStatus = await check.check([...scope], (finding) => defects.push(finding));
+
     return { defects, exitStatus };
   }),
 ));
 
 export const makeGauges = async (args: string[]) => (await newGauges.execute(args)).exitStatus;
 export const runGauges = (args: string[]) => gaugeRun.execute(args);
+
 export async function runQualityControl(args: string[]): Promise<number> {
   await project.initialize();
   const run = await inspection.execute(project.product.name, args);
+
   return run.passed() ? 0 : run.exitStatus || 1;
 }
 
@@ -230,30 +246,37 @@ const runAudit = async (
   root = PROJECT_ROOT,
 ): Promise<number> => {
   const key = loadEnv(root, runtime.environment())[config.keyVariable];
+
   const client = openAiClient({
     key: key ?? "",
     model: config.model,
     onIssue: (issue) => console.error(`model: ${issue}`),
   });
+
   const source = new AuditAdapter(
     (state, questions) => client.ask(state, questions),
     (root) => {
       const result = capture("git", ["rev-parse", "HEAD"], { cwd: root });
+
       return result.status === 0 ? result.stdout.trim() : null;
     },
   );
+
   const report = await new AuditUseCase(new AuditRepositoryImplementation(source))
     .execute({ root, modules, rubrics, config, key });
+
   if ("lines" in report) {
     for (const line of report.lines) console.log(line);
   } else {
     console.error(report.issue);
   }
+
   return report.code;
 };
 
 export async function audit(): Promise<number> {
   await project.initialize();
+
   return runAudit({ modules: project.config.modules, config: project.architecture.review, rubrics: project.RUBRICS });
 }
 
@@ -262,15 +285,18 @@ export function judgements(layer: string, dir: string) {
   const key = loadEnv(PROJECT_ROOT, runtime.environment())[config.keyVariable];
   const client = key ? openAiClient({ key, model: config.model }) : undefined;
   const adapter = new AuditAdapter(async () => new Map(), () => null);
+
   const rows = new AuditRubricService().loadDocuments(
     adapter.listRubrics(PROJECT_ROOT, project.RUBRICS), adapter.listPackageNames(PROJECT_ROOT),
   );
+
   return createRubricCases({
     layer, dir, model: config.model,
     cases: exampleFile.parseExampleFile(path.join(dir, layer + ".examples.md")).rubric,
     questions: new Map(rows.filter((row) => row.verdict === "accepted").map((row) => [row.id, row.question])),
     ask: client && (async (state, question) => {
       const answers = await client.ask(state, [{ name: "violation", instructions: question, excerpt: state }]);
+
       return answers.get("violation") ?? NaN;
     }),
   });
@@ -280,6 +306,7 @@ const EVIDENCE = "evidence.md";
 
 const certificateFiles = (root: string) => new QualityCertificateFileAdapter(root, change.CHANGES, async (name) => {
   const product = await products.productOf(root, change.readChange(root, name)?.product);
+
   return product.name ? [product.root] : products.productRoots(product.config);
 });
 
@@ -298,21 +325,25 @@ export function writeEvidence(root: string, record: InspectionCertificateRecord)
 export async function inspect(root: string, name: string, options: InspectionOptions = {}) {
   const order = change.readChange(root, name);
   if (!order) throw new QualityException(`no active change is called ${name}`);
+
   if (!order.schema || !schema.schemaNames().includes(order.schema))
     throw new QualityException(
       `the change ${name} was made with the schema ${order.schema ?? "(none)"}, which this package does not define; schemas: ${schema.schemaNames().join(", ")}`,
     );
+
   const product = await products.productOf(root, order.product);
   const layout = await generated.layoutOf(root, order.product);
   const process = await schema.loadSchema(order.schema);
   const lineProcess = await schema.loadSchema(product.schema);
   const keyVariable = product.config.review.keyVariable;
   const key = loadEnv(root, runtime.environment())[keyVariable];
+
   const zones = Object.entries(process.workstreams).flatMap(([id, workstream]) =>
     workstream.layers(product.config).flatMap((layer) =>
       (layer.fallow?.zones ?? []).map(({ patterns }) => ({ id, patterns })),
     ),
   );
+
   const adapter = new FinalInspectionAdapter(root, {
     line: product.name,
     auditEnvironment: { ...runtime.environment(), [keyVariable]: key },
@@ -320,6 +351,7 @@ export async function inspect(root: string, name: string, options: InspectionOpt
       const relative = product.name && file.startsWith(`${product.root}/`)
         ? file.slice(product.root.length + 1)
         : file;
+
       return zones.find(({ patterns }) => patterns.some((pattern) => path.matchesGlob(relative, pattern)))?.id;
     },
     feedback: (name, finding) => feedback.raise(root, name, finding),
@@ -332,11 +364,12 @@ export async function inspect(root: string, name: string, options: InspectionOpt
         const text = fileSystem.readFileSync(source, "utf8");
         const gauge = generated.testOf(spec, layout);
         const suite = path.join("test", "schemas", spec + ".test.ts");
+
         if (!gauge && layout.repository && fileSystem.existsSync(path.join(root, suite)))
           return { spec, text, gauge: suite, expected: scenariosOfDelta(source) };
+
         return { spec, text, gauge };
       }),
-      // A change whose plan holds no task builds nothing: no workstream check and no end-to-end run.
       workstreams: !plan.parsePlan(order.plan ?? "").phases.some((phase) => phase.tasks.length) ? [] : Object.entries(process.workstreams).map(([id, workstream]) => ({
         id,
         upstream: product.config.workstreams[id]?.dependsOn ?? [],
@@ -351,47 +384,65 @@ export async function inspect(root: string, name: string, options: InspectionOpt
       review: { hasRubric: lineProcess.rubrics.length > 0, keyVariable, configured: Boolean(key) },
     },
   }, certificateFiles(root));
+
   return new InspectWorkOrderUseCase(new FinalInspectionRepositoryImplementation(adapter)).execute(name, options);
 }
 
 export async function inspectWorkOrder(args: string[]): Promise<number> {
   const [name] = args;
   const known = change.activeChanges(PROJECT_ROOT);
+
   if (!name || !known.includes(name)) {
     console.error(`Name the change to verify. Changes: ${known.join(", ") || "none"}`);
+
     return 2;
   }
+
   const procedures: NonNullable<InspectionOptions["procedures"]> = {};
   const proved = args.flatMap((arg, i) => arg === "--proved" && args[i + 1] ? [args[i + 1]!] : []);
+
   for (const [i, arg] of args.entries()) {
     if (arg !== "--procedure") continue;
     const match = /^(.+)=(passed|failed)$/.exec(args[i + 1] ?? "");
+
     if (!match) {
       console.error("Say how a procedure went as --procedure <slug>@<environment>=<passed|failed>.");
+
       return 2;
     }
+
     procedures[match[1]!] = match[2] === "passed" ? "passed" : "failed";
   }
+
   const certificate = await inspect(PROJECT_ROOT, name, { procedures, proved });
   console.log(`${certificate.verdict}: ${name}`);
   const passed = certificate.scenarios.filter(({ result }) => result === "passed").length;
   console.log(`- scenarios: ${passed} of ${certificate.scenarios.length} matched to a passing test`);
+
   for (const { spec } of certificate.scenarios.filter(({ by }) => by))
     console.log(`  by the person's word: ${spec}`);
+
   for (const { result, spec, scenario } of certificate.unproved)
     console.log(`  ${result}: ${spec} · ${scenario || "no generated test ran"}`);
+
   console.log(`- checks: ${certificate.failing.length
     ? `failing in ${certificate.failing.map(({ workstream }) => workstream).join(", ")}`
     : "every check passes"}`);
+
   const { review, e2e } = certificate;
+
   console.log(`- review: ${review.state === "run"
     ? `run, ${review.warnings.length} warning(s)`
     : `${review.state} (${review.note})`}`);
+
   if (e2e?.length)
     console.log(`- end-to-end: ${e2e.filter(({ result }) => result === "passed").length} of ${e2e.length} passing`);
+
   for (const { slug, env, treatment, outcome } of certificate.procedures)
     console.log(`- procedure ${slug} in ${env}: ${treatment}${outcome ? `, ${outcome}` : ""}`);
+
   console.log(`- evidence: openspec/changes/${name}/${EVIDENCE}`);
+
   return certificate.verdict === "verified" ? 0 : 1;
 }
 
@@ -406,6 +457,7 @@ const stageRepository = (root: string) => new StageHoldRepositoryImplementation(
     })),
     async hasCurrentVerification(name) {
       const evidence = readEvidence(root, name);
+
       return evidence?.verdict === "verified" && evidence.digest === await digestOf(root, name);
     },
     workstreams: async (building) => {
@@ -413,6 +465,7 @@ const stageRepository = (root: string) => new StageHoldRepositoryImplementation(
         products.productOf(root, building.line),
         schema.loadSchema(building.process),
       ]);
+
       return Object.entries(process.workstreams).map(([id, workstream]) => ({
         id,
         upstream: line.config.workstreams[id]?.dependsOn ?? [],
@@ -431,15 +484,21 @@ export async function holdStage(args: string[]): Promise<number> {
   const root = projectOf(runtime.environment().CLAUDE_PROJECT_DIR || cwd);
   const hold = await new HoldStageUseCase(stageRepository(root)).execute(args.includes("--helper"));
   for (const reason of hold.reasons) console.error(reason);
+
   return hold.held ? 2 : 0;
 }
 
 export { exampleFile, examples, expectFile, rules, test };
+
 export const sdkArchitecture: typeof project.architecture =
   project.architecture;
+
 export const sdkExampleArchitecture: typeof project.exampleArchitecture =
   project.exampleArchitecture;
+
 export const sdkExamples: typeof examples.examples = examples.examples;
+
 export const sdkExpectations: typeof expectations.expectations =
   expectations.expectations;
+
 export const sdkRuleIds: typeof rules.ruleIds = rules.ruleIds;

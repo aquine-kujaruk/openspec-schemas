@@ -13,6 +13,7 @@ export class PrepareLineUseCase {
     const plant = await this.plants.getPlant();
     const line = plant.findLine(name);
     if (!line) throw new EngineeringException(`Unknown line ${name}`);
+
     return this.plants.prepareRoots(plant, line);
   }
 }

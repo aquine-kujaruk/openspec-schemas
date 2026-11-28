@@ -7,4 +7,5 @@ export const WorkCenterSchema = z.object({
   parts: z.array(z.instanceof(PartValueObject)),
   waitsFor: z.array(WorkCenterIdSchema),
 });
+
 export type WorkCenterProps = z.infer<typeof WorkCenterSchema>;

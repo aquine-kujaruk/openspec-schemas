@@ -1,6 +1,5 @@
 import type { LintRules, Platform, Vetoed } from "../acl/inspection.acl.ts";
 
-/** Packages a zone may not import, under one rule id: exact names and patterns (`express/*`). */
 export type ImportVeto = {
   id: string;
   names: string[];
@@ -8,11 +7,6 @@ export type ImportVeto = {
   message: string;
 };
 
-/**
- * Several vetoes in one `no-restricted-imports` entry: oxlint keeps one configuration of a rule per
- * file, so two overrides on the same files would replace each other. Every message starts with
- * `[<id>]`: that prefix is how the spec counts the rule's violations.
- */
 export const restrictedImportsOf = (vetoes: ImportVeto[]): LintRules => ({
   "no-restricted-imports": [
     "error",
@@ -50,7 +44,6 @@ export const restrictedGlobals = (
   ],
 });
 
-/** What holds for the whole core: no framework (no-framework-import), nothing from the environment (no-environment), plus any further import veto of the zone. */
 export const coreRules = (
   vetoed: Vetoed,
   platform: Platform,
@@ -69,11 +62,6 @@ export const coreRules = (
   ...restrictedGlobals("no-environment", platform.all),
 });
 
-/**
- * schema-package-only-at-boundaries: the package the configuration names is imported only in
- * domain/schemas, infrastructure/acl and infrastructure/adapters. Each layer merges this veto into
- * its own `no-restricted-imports` entry for the folders it covers.
- */
 export const schemaPackageVeto = (o: {
   schemaPackage: string;
 }): ImportVeto => ({

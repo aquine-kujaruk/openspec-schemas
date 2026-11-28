@@ -7,6 +7,7 @@ export const InspectionRecordSchema = z.object({
   exitStatus: z.number().int().min(0),
   defects: z.array(z.object({file: z.string(), standard: z.string(), tool: z.string()})),
 });
+
 export type InspectionRecord = z.input<typeof InspectionRecordSchema>;
 
 export interface InspectionAcl {

@@ -16,6 +16,7 @@ export class FinalInspectionRepositoryImplementation implements FinalInspectionR
       return FinalInspectionRecordSchema.parse(await this.records.load(name));
     } catch (cause) {
       if (cause instanceof QualityException) throw cause;
+
       throw new QualityException(`Unable to load work order ${name}`, { cause });
     }
   }
@@ -27,8 +28,10 @@ export class FinalInspectionRepositoryImplementation implements FinalInspectionR
         scenario: title,
         passed: status === "passed",
       }));
+
       if (status === "failed" && assertions.every(test => test.passed))
         assertions.push({ requirement: "", scenario: "Vitest suite execution", passed: false });
+
       return { name, assertions };
     });
   }
@@ -67,6 +70,7 @@ export class FinalInspectionRepositoryImplementation implements FinalInspectionR
 
   saveCertificate(certificate: QualityCertificateAggregate) {
     const { change, verdict, digest, scenarios, failing, review, procedures, e2e } = certificate;
+
     return this.records.save({ change, verdict, digest, scenarios, failing, review, procedures, e2e });
   }
 

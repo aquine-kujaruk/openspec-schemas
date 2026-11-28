@@ -11,6 +11,7 @@ export class FindSuspectProceduresUseCase {
 
   async execute(root: string): Promise<string[]> {
     const holdings = await this.equipment.readHoldings(root);
+
     return this.inspection.suspectsOf(this.equipment.listProcedures(root), holdings);
   }
 }

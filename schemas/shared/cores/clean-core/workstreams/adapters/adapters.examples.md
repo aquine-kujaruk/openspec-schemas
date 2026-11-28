@@ -7,6 +7,7 @@ import type { z } from "zod";
 import { InvoiceSchema } from "../../domain/schemas/invoice.schema";
 export const InvoiceRecordSchema = InvoiceSchema;
 export type InvoiceRecord = z.infer<typeof InvoiceRecordSchema>;
+
 export interface InvoiceAcl {
   listInvoices(): Promise<InvoiceRecord[]>;
   findInvoice(invoiceId: string): Promise<InvoiceRecord | null>;
@@ -23,6 +24,7 @@ export interface ClientAcl {
 ```ts src/shared/infrastructure/adapters/http-api.adapter.ts
 import type { z } from "zod";
 import type { DomainException } from "../../domain/exceptions/domain.exceptions";
+
 export class HttpApiAdapter {
   constructor(private readonly baseUrl: string) {}
   async get<S extends z.ZodType>(
@@ -32,6 +34,7 @@ export class HttpApiAdapter {
   ): Promise<z.output<S>> {
     const response = await fetch(`${this.baseUrl}${path}`);
     if (!response.ok) throw fail(response);
+
     return schema.parse(await response.json());
   }
   async find<S extends z.ZodType>(
@@ -42,6 +45,7 @@ export class HttpApiAdapter {
     const response = await fetch(`${this.baseUrl}${path}`);
     if (response.status === 404) return null;
     if (!response.ok) throw fail(response);
+
     return schema.parse(await response.json());
   }
   async put(
@@ -54,6 +58,7 @@ export class HttpApiAdapter {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });
+
     if (!response.ok) throw fail(response);
   }
 }
@@ -64,6 +69,7 @@ import { InvoiceUnavailableException } from "../../domain/exceptions/invoice.exc
 import { HttpApiAdapter } from "../../../shared/infrastructure/adapters/http-api.adapter";
 import { InvoiceRecordSchema, type InvoiceAcl, type InvoiceRecord } from "../acl/invoice.acl";
 const unavailable = (response: Response) => new InvoiceUnavailableException({ cause: response });
+
 export class HttpInvoiceAdapter implements InvoiceAcl {
   constructor(private readonly api = new HttpApiAdapter("/api")) {}
   listInvoices(): Promise<InvoiceRecord[]> {
@@ -80,10 +86,12 @@ export class HttpInvoiceAdapter implements InvoiceAcl {
 
 ```ts src/module/infrastructure/adapters/in-memory-invoice.adapter.ts
 import { InvoiceRecordSchema, type InvoiceAcl, type InvoiceRecord } from "../acl/invoice.acl";
+
 const SEED: InvoiceRecord[] = InvoiceRecordSchema.array().parse([
   { id: "1", total: 10, status: "paid" },
   { id: "2", total: 25, status: "pending" },
 ]);
+
 export class InMemoryInvoiceAdapter implements InvoiceAcl {
   private readonly rows = SEED.map((row) => ({ ...row }));
   async listInvoices(): Promise<InvoiceRecord[]> {
@@ -94,6 +102,7 @@ export class InMemoryInvoiceAdapter implements InvoiceAcl {
   }
   async saveInvoice(invoice: InvoiceRecord): Promise<void> {
     const at = this.rows.findIndex((row) => row.id === invoice.id);
+
     if (at < 0) this.rows.push({ ...invoice });
     else this.rows[at] = { ...invoice };
   }
@@ -104,6 +113,7 @@ export class InMemoryInvoiceAdapter implements InvoiceAcl {
 import type { InvoiceAcl } from "../acl/invoice.acl";
 import { HttpInvoiceAdapter } from "./http-invoice.adapter";
 import { InMemoryInvoiceAdapter } from "./in-memory-invoice.adapter";
+
 export const invoiceAdapter: InvoiceAcl = process.env.NODE_ENV === "development"
   ? new InMemoryInvoiceAdapter()
   : new HttpInvoiceAdapter();
@@ -113,6 +123,7 @@ export const invoiceAdapter: InvoiceAcl = process.env.NODE_ENV === "development"
 import { ClientsUnavailableException } from "../../domain/exceptions/invoice.exceptions";
 import { HttpApiAdapter } from "../../../shared/infrastructure/adapters/http-api.adapter";
 import type { ClientAcl } from "../acl/client.acl";
+
 export class HttpClientAdapter implements ClientAcl {
   constructor(private readonly api = new HttpApiAdapter("/api")) {}
   listClients(segment: string): Promise<string[]> {
@@ -136,6 +147,7 @@ export const clientAdapter: ClientAcl = new HttpClientAdapter();
 ```ejs src/shared/infrastructure/adapters/http-api.adapter.ts
 import type { z } from "zod";
 import type { DomainException } from "../../domain/exceptions/domain.exceptions";
+
 export class HttpApiAdapter {
   constructor(private readonly baseUrl: string) {}
   async get<S extends z.ZodType>(
@@ -145,6 +157,7 @@ export class HttpApiAdapter {
   ): Promise<z.output<S>> {
     const response = await fetch(`${this.baseUrl}${path}`);
     if (!response.ok) throw fail(response);
+
     return schema.parse(await response.json());
   }
   async find<S extends z.ZodType>(
@@ -155,6 +168,7 @@ export class HttpApiAdapter {
     const response = await fetch(`${this.baseUrl}${path}`);
     if (response.status === 404) return null;
     if (!response.ok) throw fail(response);
+
     return schema.parse(await response.json());
   }
   async put(
@@ -167,6 +181,7 @@ export class HttpApiAdapter {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });
+
     if (!response.ok) throw fail(response);
   }
 }

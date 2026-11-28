@@ -12,7 +12,6 @@ export class InspectionAdapter implements InspectionAcl {
   }
 }
 
-/** Builds these use cases from their capabilities; importing them touches no resources. */
 export const createCheck = ({
   globSync,
   writeFileSync,
@@ -38,24 +37,15 @@ export const createCheck = ({
 
   const option = (args: string[], name: string): string | undefined => {
     const at = args.indexOf(name);
+
     return at === -1 ? undefined : args[at + 1];
   };
 
-  /**
-   * `factory check`: every rule over the product, the whole-product checks and the freshness of the
-   * generated tests. `--layer <layer>` keeps the rules of one layer; `--workstream <workstream>` keeps
-   * the rules of the layers that workstream owns, its own checks, and those of every workstream
-   * upstream of it, and never the whole-product checks, which no workstream owns. `--whole` keeps only
-   * the whole-product checks. `--module <module>` checks only that module's rules and tests' structure
-   * without the whole-product checks or freshness check.
-   *
-   * fallow (imports and calls) reports only the zones of the selected layers, oxlint lints the files
-   * of their overrides, archunit runs only their rules.
-   */
   const scopeCheck = (body: ReturnType<Check["config"]>): ReturnType<Check["config"]> => {
     const excluded = [...product.elsewhere, ...config.ignore];
     if (!excluded.length) return body;
     const { ignorePatterns = [] } = body as { ignorePatterns?: string[] };
+
     return { ...body, ignorePatterns: [...ignorePatterns, ...excluded] };
   };
 
@@ -67,12 +57,16 @@ export const createCheck = ({
     const layer = option(args, "--layer");
     const workstream = option(args, "--workstream");
     const onlyModule = option(args, "--module");
+
     if (args.includes("--module") && (!onlyModule || onlyModule.startsWith("--"))) {
       console.error("Name the module with --module <module>.");
+
       return 2;
     }
+
     if (onlyModule && args.includes("--whole")) {
       console.error("--whole checks the product and cannot be used with --module.");
+
       return 2;
     }
 
@@ -81,27 +75,35 @@ export const createCheck = ({
         const found = all
           .flatMap((w) => w.layers)
           .find((l) => l.name === layer);
+
         if (found) return { layers: [found], checks: [], whole: false };
         const known = all.flatMap((w) => w.layers.map((l) => l.name));
         console.error(`Unknown layer: ${layer}. Layers: ${known.join(", ")}`);
+
         return undefined;
       }
+
       if (args.includes("--workstream")) {
         if (all.some((w) => w.id === workstream)) {
           const ws = withUpstream(all, workstream!);
+
           return {
             layers: ws.flatMap((w) => w.layers),
             checks: ws.flatMap((w) => w.checks),
             whole: false,
           };
         }
+
         console.error(
           `Unknown workstream: ${workstream}. Workstreams: ${all.map((w) => w.id).join(", ")}`,
         );
+
         return undefined;
       }
+
       if (args.includes("--whole"))
         return { layers: [], checks: architecture.checks ?? [], whole: false };
+
       return {
         layers: all.flatMap((w) => w.layers),
         checks: [
@@ -111,31 +113,39 @@ export const createCheck = ({
         whole: true,
       };
     };
+
     const selected = select();
     if (!selected) return 2;
     const { layers, checks, whole } = selected;
 
     const cache = cacheDir(PROJECT_ROOT);
+
     const moduleRoots = onlyModule
       ? [config.modules.replace(/\/\*$/, ""), config.acceptance, config.unit, config.integration]
           .map((root) => resolve(PROJECT_ROOT, root, onlyModule) + sep)
       : [];
+
     const inModule = (file: string): boolean =>
       !onlyModule || moduleRoots.some((root) => resolve(PROJECT_ROOT, file).startsWith(root));
+
     const compose = (name: string, body: unknown): string => {
       const path = join(cache, name);
       writeFileSync(path, JSON.stringify(body, null, 2));
+
       return path;
     };
+
     let failed = false;
 
     const zones = new Set(
       layers.flatMap((l) => l.fallow?.zones.map((z) => z.name) ?? []),
     );
+
     if (zones.size) {
       console.log(
         `\n▶ fallow (imports, calls, coverage) in zones ${[...zones].join(", ")}`,
       );
+
       const { stdout } = runTool("fallow", [
         "architecture",
         "--format",
@@ -144,11 +154,13 @@ export const createCheck = ({
         "--config",
         compose("fallow.json", fallowConfig(architecture)),
       ]);
+
       const r = jsonOf(stdout) as {
         boundary_violations: { from_zone: string; from_path: string; to_zone: string }[];
         boundary_call_violations: { zone: string; path: string }[];
         boundary_coverage_violations: { path: string }[];
       };
+
       const found = [
         ...r.boundary_violations
           .filter((v) => zones.has(v.from_zone) && inModule(v.from_path))
@@ -160,10 +172,12 @@ export const createCheck = ({
           .filter((v) => inModule(v.path))
           .map((v) => `${v.path}: [${COVERAGE_RULE}]`),
       ];
+
       for (const f of found) {
         console.log(`  ${f}`);
         record?.({ file: f.split(": ")[0]!, standard: f.match(/\[([^\]]+)\]/)?.[1] ?? "architecture", tool: "fallow" });
       }
+
       if (found.length) failed = true;
       else console.log("  no violations");
     }
@@ -171,6 +185,7 @@ export const createCheck = ({
     const overrides = layers.flatMap(
       (l) => l.oxlint?.(architecture.platform) ?? [],
     );
+
     const lintFiles = [
       ...new Set(
         overrides
@@ -180,10 +195,12 @@ export const createCheck = ({
           ),
       ),
     ].filter((f) => /\.tsx?$/.test(f) && inModule(f));
+
     if (lintFiles.length) {
       console.log(
         `\n▶ oxlint (packages and globals) over ${lintFiles.length} files`,
       );
+
       const r = runTool(
         "oxlint",
         [
@@ -193,6 +210,7 @@ export const createCheck = ({
         ],
         { show: true },
       );
+
       if (r.status !== 0) {
         failed = true;
         record?.({ file: "", standard: "lint", tool: "oxlint" });
@@ -201,23 +219,29 @@ export const createCheck = ({
 
     if (layers.length) {
       console.log("\n▶ archunit (names and shape)");
+
       const only = {
         ...architecture,
         workstreams: [{ id: "", layers, checks: [], dependsOn: [] }],
       };
+
       let broken = 0;
+
       for (const { rules } of archunitRules(only))
         for (const rule of rules) {
           const violations = (await rule.check()).filter((violation) => {
             if (!onlyModule) return true;
             const { cycle } = violation as { cycle?: Array<{ sourceLabel: string }> };
+
             return cycle
               ? cycle.some(({ sourceLabel }) => inModule(sourceLabel))
               : inModule(fileOf(violation));
           });
+
           if (!violations.length) continue;
           broken += violations.length;
           console.log(`  ${rule.id} · ${rule.title}`);
+
           for (const violation of violations) {
             const file = fileOf(violation);
             const { message } = violation as { message?: string };
@@ -225,12 +249,14 @@ export const createCheck = ({
             record?.({ file, standard: rule.id, tool: "archunit" });
           }
         }
+
       if (broken) failed = true;
       else console.log("  no violations");
     }
 
     for (const c of onlyModule ? [] : checks) {
       console.log(`\n▶ ${c.id} (whole product)`);
+
       const r = runTool(
         "fallow",
         [
@@ -240,6 +266,7 @@ export const createCheck = ({
         ],
         { show: true },
       );
+
       if (r.status !== 0) {
         failed = true;
         record?.({ file: "", standard: c.id, tool: "fallow" });
@@ -248,6 +275,7 @@ export const createCheck = ({
 
     if (whole && !onlyModule) {
       console.log("\n▶ generated tests are fresh");
+
       if ((await generate(["--check"])) !== 0) {
         failed = true;
         record?.({ file: "", standard: "generated-tests-are-fresh", tool: "feat2test" });
@@ -256,5 +284,6 @@ export const createCheck = ({
 
     return failed ? 1 : 0;
   };
+
   return { check };
 };

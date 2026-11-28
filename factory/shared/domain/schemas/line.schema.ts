@@ -9,4 +9,5 @@ export const LineSchema = z.object({
   process: ProcessNameSchema,
   roots: z.instanceof(LineRootsValueObject),
 });
+
 export type LineProps = z.infer<typeof LineSchema>;

@@ -6,4 +6,5 @@ export const DecisionSchema = z.object({
   text: z.string().min(1),
   by: DecidedBySchema,
 });
+
 export type DecisionProps = z.input<typeof DecisionSchema>;
